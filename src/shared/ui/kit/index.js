@@ -26,7 +26,7 @@ export { Loader } from '../Loader';
 export { MiniChart } from '../MiniChart';
 export { MiniMap } from '../MiniMap';
 export { Modal } from '../Modal';
-export { MotionPreview } from '../MotionPreview';
+export { NetworkGraph } from '../NetworkGraph';
 export { Navbar } from '../Navbar';
 export { PricingCards } from '../PricingCards';
 export { Progress } from '../Progress';

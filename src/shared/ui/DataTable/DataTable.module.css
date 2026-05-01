@@ -1,1 +1,138 @@
-.wrap{border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;background:var(--bg)}.table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}th{background:var(--bg-2);border-bottom:1px solid var(--border);color:var(--fg-3);font-size:11.5px;font-weight:600;padding:10px 14px;text-align:left;text-transform:uppercase}td{border-bottom:1px solid var(--border);color:var(--fg-2);padding:12px 14px}tr:last-child td{border-bottom:0}.zebra tbody tr:nth-child(even){background:color-mix(in srgb,var(--bg-2) 65%,transparent)}.analytics th{background:var(--fg);color:var(--bg)}.analytics td:first-child{color:var(--fg);font-weight:600}
+.wrap {
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    background: var(--bg);
+}
+
+.caption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+}
+
+.caption strong {
+    font-size: 13.5px;
+}
+
+.caption span {
+    color: var(--fg-4);
+    font-family: var(--font-mono);
+    font-size: 11px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+}
+
+.table th {
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--border);
+    color: var(--fg-3);
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 10px 14px;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.table th button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+    text-transform: inherit;
+}
+
+.table th button:hover {
+    color: var(--fg);
+}
+
+.table th button span {
+    color: var(--fg-4);
+    font-family: var(--font-mono);
+    font-size: 9px;
+}
+
+.table td {
+    border-bottom: 1px solid var(--border);
+    color: var(--fg-2);
+    padding: 12px 14px;
+}
+
+.table tr:last-child td {
+    border-bottom: 0;
+}
+
+.checkCell {
+    width: 44px;
+}
+
+.checkCell input {
+    accent-color: var(--accent);
+}
+
+.alignRight {
+    text-align: right !important;
+}
+
+.selected td {
+    background: var(--accent-soft);
+}
+
+.sm .table th,
+.sm .table td {
+    padding: 8px 10px;
+}
+
+.zebra tbody tr:nth-child(even) {
+    background: color-mix(in srgb, var(--bg-2) 65%, transparent);
+}
+
+.analytics {
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-2);
+}
+
+.analytics .caption {
+    background: var(--fg);
+    color: var(--bg);
+}
+
+.analytics .caption span {
+    color: color-mix(in srgb, var(--bg) 72%, transparent);
+}
+
+.analytics .table th {
+    background: color-mix(in srgb, var(--fg) 92%, var(--accent));
+    color: var(--bg);
+}
+
+.analytics .table td:first-child {
+    color: var(--fg);
+    font-weight: 600;
+}
+
+.compact {
+    border-radius: var(--r-sm);
+}
+
+.compact .table th {
+    background: transparent;
+}
+
+.compact .table td {
+    padding-block: 9px;
+}

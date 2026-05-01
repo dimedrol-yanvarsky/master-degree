@@ -47,7 +47,6 @@ export const NAV = [
             { id: 'colors',    label: 'Colors' },
             { id: 'typography', label: 'Typography' },
             { id: 'spacing',   label: 'Spacing & radii' },
-            { id: 'motion',    label: 'Motion & animations' },
         ],
     },
     {
@@ -72,7 +71,7 @@ export const NAV = [
             { id: 'avatars',  label: 'Avatars & tags' },
             { id: 'table',    label: 'Table' },
             { id: 'charts',   label: 'Charts' },
-            { id: 'graph',    label: 'Graph (math)' },
+            { id: 'graph',    label: 'Graphs' },
             { id: 'sliders',  label: 'Sliders & progress' },
             { id: 'data',     label: 'Data' },
             { id: 'timeline', label: 'Timeline' },

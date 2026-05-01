@@ -1,1 +1,135 @@
-.root{display:grid;gap:14px}.root>div{display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:baseline;padding:16px 0;border-bottom:1px solid var(--border)}.root span{font-family:var(--font-mono);font-size:11px;color:var(--fg-4);text-transform:uppercase}.root strong{font-family:var(--font-display);font-size:26px;font-weight:600}.root p{margin:0;color:var(--fg-2);line-height:1.6}.root code{font-family:var(--font-mono);color:var(--accent)}
+.root {
+    display: grid;
+    gap: 16px;
+}
+
+.hero,
+.panel {
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--bg);
+}
+
+.hero {
+    display: grid;
+    gap: 10px;
+    padding: 24px;
+}
+
+.hero span,
+.panel h3,
+.weightGrid span,
+.scaleList span {
+    color: var(--fg-4);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.hero strong {
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1.08;
+}
+
+.hero p,
+.parameterGrid p {
+    margin: 0;
+    color: var(--fg-2);
+    line-height: 1.55;
+}
+
+.panel {
+    padding: 18px;
+}
+
+.panel h3 {
+    margin: 0 0 14px;
+}
+
+.weightGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.weightGrid div {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--bg-2);
+}
+
+.weightGrid strong {
+    font-size: 18px;
+}
+
+.scaleList {
+    display: grid;
+    gap: 12px;
+}
+
+.scaleList div {
+    display: grid;
+    grid-template-columns: 92px 1fr;
+    gap: 18px;
+    align-items: baseline;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.scaleList div:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.scaleList p {
+    margin: 0;
+    color: var(--fg-2);
+}
+
+.parameterGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.parameterGrid p,
+.parameterGrid code {
+    min-height: 72px;
+    margin: 0;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--bg-2);
+}
+
+.parameterGrid code {
+    color: var(--accent);
+    font-family: var(--font-mono);
+}
+
+.upper {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+    .weightGrid,
+    .parameterGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .scaleList div {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+}

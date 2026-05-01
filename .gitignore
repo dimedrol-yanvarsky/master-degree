@@ -13,6 +13,7 @@
 
 # misc
 .codex
+.dev-server.log
 .DS_Store
 .env.local
 .env.development.local

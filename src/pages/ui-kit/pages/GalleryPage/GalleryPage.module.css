@@ -28,6 +28,114 @@
     gap: 16px;
 }
 
+.questionGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.questionCard {
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--bg);
+}
+
+.questionCard h3,
+.controlPanel h3,
+.subhead {
+    margin: 0;
+    color: var(--fg);
+    font-size: 15px;
+    font-weight: 650;
+}
+
+.questionCard p {
+    margin: 0;
+    color: var(--fg-3);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.optionStack {
+    display: grid;
+    gap: 10px;
+}
+
+.checkList {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+    color: var(--fg-2);
+    font-size: 13px;
+}
+
+.checkList span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkList span::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.deltaGood {
+    color: var(--success-600);
+    font-family: var(--font-mono);
+    font-size: 11px;
+}
+
+.sparkline {
+    display: flex;
+    align-items: end;
+    gap: 6px;
+    height: 58px;
+    margin-top: 14px;
+}
+
+.sparkline span {
+    flex: 1;
+    min-height: 10px;
+    border-radius: var(--r-xs) var(--r-xs) 0 0;
+    background: var(--accent);
+}
+
+.chartGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.chartGrid > :last-child {
+    grid-column: 1 / -1;
+}
+
+.controlShowcase {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.controlPanel {
+    display: grid;
+    gap: 18px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--bg);
+}
+
+.subhead {
+    margin-bottom: 12px;
+}
+
 .statsGrid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -81,8 +189,15 @@
 @media (max-width: 760px) {
     .twoColumn,
     .cardGrid,
+    .chartGrid,
+    .controlShowcase,
+    .questionGrid,
     .statsGrid,
     .graphGrid {
         grid-template-columns: 1fr;
+    }
+
+    .chartGrid > :last-child {
+        grid-column: auto;
     }
 }

@@ -1,1 +1,73 @@
-.root{height:6px;background:var(--bg-3);border-radius:var(--r-full);overflow:hidden}.fill{height:100%;background:var(--accent);border-radius:inherit;transition:width 300ms}.ribbon{height:10px;padding:2px;border:1px solid var(--border);background:var(--bg)}.ribbon .fill{background:linear-gradient(90deg,var(--accent),oklch(72% .18 195))}.pulse .fill{background:linear-gradient(90deg,var(--accent),color-mix(in srgb,white 30%,var(--accent)),var(--accent));background-size:180% 100%;animation:shine 1.4s ease-in-out infinite}@keyframes shine{0%{background-position:0 0}100%{background-position:180% 0}}
+.shell {
+    display: grid;
+    gap: 7px;
+}
+
+.meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--fg-3);
+    font-size: 12px;
+}
+
+.meta strong {
+    color: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 11px;
+}
+
+.root {
+    height: 6px;
+    background: var(--bg-3);
+    border-radius: var(--r-full);
+    overflow: hidden;
+}
+
+.sm { height: 4px; }
+.lg { height: 14px; }
+
+.fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: inherit;
+    transition: width 300ms;
+}
+
+.success .fill { background: var(--success-500); }
+.warning .fill { background: var(--warning-500); }
+.danger .fill { background: var(--danger-500); }
+
+.ribbon {
+    height: 10px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+}
+
+.ribbon .fill {
+    background: linear-gradient(90deg, var(--accent), oklch(72% .18 195));
+}
+
+.pulse .fill {
+    background: linear-gradient(90deg, var(--accent), color-mix(in srgb, white 30%, var(--accent)), var(--accent));
+    background-size: 180% 100%;
+    animation: shine 1.4s ease-in-out infinite;
+}
+
+.meter .fill {
+    background: linear-gradient(90deg, var(--success-500), var(--warning-500), var(--danger-500));
+}
+
+.segmented {
+    height: 12px;
+    padding: 2px;
+    background:
+        repeating-linear-gradient(90deg, transparent 0 18%, color-mix(in srgb, var(--bg) 82%, transparent) 18% 20%),
+        var(--bg-3);
+}
+
+@keyframes shine {
+    0% { background-position: 0 0; }
+    100% { background-position: 180% 0; }
+}

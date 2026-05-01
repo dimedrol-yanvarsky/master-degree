@@ -1,0 +1,78 @@
+.root {
+    margin: 0;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background:
+        radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 34%),
+        var(--bg);
+}
+
+.root figcaption {
+    display: inline-flex;
+    margin-bottom: 10px;
+    padding: 3px 8px;
+    border-radius: var(--r-full);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.root svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.edge {
+    stroke: color-mix(in srgb, var(--fg-4) 70%, transparent);
+    stroke-width: 1.5;
+}
+
+.root marker path {
+    fill: var(--fg-4);
+}
+
+.node circle {
+    fill: var(--bg);
+    stroke: var(--border-2);
+    stroke-width: 1.6;
+    filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--fg) 10%, transparent));
+}
+
+.node text {
+    fill: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    text-anchor: middle;
+}
+
+.accent circle {
+    fill: var(--accent);
+    stroke: color-mix(in srgb, var(--accent) 70%, black);
+}
+
+.accent text,
+.danger text {
+    fill: var(--accent-fg);
+}
+
+.success circle {
+    fill: var(--success-500);
+    stroke: var(--success-700);
+}
+
+.success text {
+    fill: #fff;
+}
+
+.warning circle {
+    fill: var(--warning-500);
+    stroke: var(--warning-700);
+}
+
+.danger circle {
+    fill: var(--danger-500);
+    stroke: var(--danger-700);
+}

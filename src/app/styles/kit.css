@@ -1722,41 +1722,6 @@ select:focus-visible {
     color: var(--fg-3);
 }
 
-.motion-preview {
-    min-height: 180px;
-    border: 1px solid var(--border);
-    border-radius: var(--r-lg);
-    background: var(--bg-2);
-    display: grid;
-    place-items: center;
-    align-content: center;
-    gap: 12px;
-    text-align: center;
-}
-.motion-preview span {
-    width: 54px;
-    height: 54px;
-    border-radius: var(--r-lg);
-    background: var(--accent);
-    box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 30%, transparent);
-    animation: motion-lift 1.6s ease-in-out infinite;
-}
-.motion-preview strong {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--fg-2);
-}
-.motion-preview p {
-    margin: 0;
-    max-width: 320px;
-    color: var(--fg-3);
-    line-height: 1.5;
-}
-@keyframes motion-lift {
-    0%, 100% { transform: translateY(6px); }
-    50% { transform: translateY(-6px); }
-}
-
 .ui-sidebar {
     display: grid;
     gap: 4px;

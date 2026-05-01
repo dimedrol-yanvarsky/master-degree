@@ -1,2 +1,48 @@
-import { useId } from 'react';import { useControllableValue } from '../_utils';import { Field } from '../Field';import styles from './Slider.module.css';
-export function Slider({label,value,defaultValue=50,onChange,min=0,max=100,variant='default'}){const generatedId=useId();const [currentValue,setCurrentValue]=useControllableValue(value,defaultValue,onChange);return <Field label={label} htmlFor={generatedId} hint={currentValue+'%'}><input id={generatedId} type="range" className={[styles.range,styles[variant]].filter(Boolean).join(' ')} min={min} max={max} value={currentValue} onChange={event=>setCurrentValue(Number(event.target.value))}/></Field>;}
+import { useId } from 'react';
+import { cn, useControllableValue } from '../_utils';
+import { Field } from '../Field';
+import styles from './Slider.module.css';
+
+export function Slider({
+    label,
+    value,
+    defaultValue = 50,
+    onChange,
+    min = 0,
+    max = 100,
+    step = 1,
+    variant = 'default',
+    suffix = '%',
+    marks,
+    showValue = true,
+}) {
+    const generatedId = useId();
+    const [currentValue, setCurrentValue] = useControllableValue(value, defaultValue, onChange);
+    const progress = ((currentValue - min) / (max - min)) * 100;
+
+    return (
+        <Field label={label} htmlFor={generatedId} meta={showValue ? `${currentValue}${suffix}` : undefined}>
+            <div className={styles.root} style={{ '--slider-progress': `${progress}%` }}>
+                <input
+                    id={generatedId}
+                    type="range"
+                    className={cn(styles.range, styles[variant])}
+                    min={min}
+                    max={max}
+                    step={step}
+                    value={currentValue}
+                    onChange={(event) => setCurrentValue(Number(event.target.value))}
+                />
+                {marks && (
+                    <div className={styles.marks}>
+                        {marks.map((mark) => (
+                            <span key={mark.value} style={{ left: `${((mark.value - min) / (max - min)) * 100}%` }}>
+                                {mark.label}
+                            </span>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </Field>
+    );
+}
