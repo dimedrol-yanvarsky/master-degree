@@ -1,0 +1,2 @@
+import { cn } from '../_utils';import styles from './Breadcrumbs.module.css';
+export function Breadcrumbs({items,variant='slash'}){return <nav className={cn(styles.root,styles[variant])} aria-label="Breadcrumbs">{items.map((item,index)=><span key={item.label} className={styles.item}>{index>0&&<span className={styles.separator}>/</span>}{item.current?<span className={styles.current} aria-current="page">{item.label}</span>:<a href={item.href||'#'}>{item.label}</a>}</span>)}</nav>;}

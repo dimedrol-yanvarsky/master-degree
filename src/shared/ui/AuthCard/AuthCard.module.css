@@ -1,0 +1,1 @@
+.root{display:grid;gap:14px;max-width:360px;padding:22px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg);box-shadow:var(--shadow-2)}.root h3{margin:0;font-size:18px}.mark{width:28px;height:28px;border-radius:var(--r-sm);background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-family:var(--font-mono);font-weight:700}

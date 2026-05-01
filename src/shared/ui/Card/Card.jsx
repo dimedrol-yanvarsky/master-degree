@@ -1,0 +1,2 @@
+import { cn } from '../_utils';import styles from './Card.module.css';
+export function Card({title,description,mediaLabel,footer,children,variant='default'}){return <article className={cn(styles.root,styles[variant])}>{mediaLabel&&<div className={styles.media}>{mediaLabel}</div>}<div className={styles.body}><h3 className={styles.title}>{title}</h3>{description&&<div className={styles.description}>{description}</div>}{children}</div>{footer&&<div className={styles.footer}>{footer}</div>}</article>;}

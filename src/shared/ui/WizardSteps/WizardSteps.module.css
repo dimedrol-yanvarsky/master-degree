@@ -1,0 +1,1 @@
+.root{display:grid;gap:34px;padding:22px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg)}.panel{display:grid;gap:12px}.panel h3{margin:0;font-size:18px}.panel p{margin:0;color:var(--fg-3)}.panel>div:last-child{display:flex;gap:8px}

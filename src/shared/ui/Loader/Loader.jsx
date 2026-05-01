@@ -1,0 +1,2 @@
+import { cn } from '../_utils';import styles from './Loader.module.css';
+export function Loader({variant='dots'}){if(variant==='ring')return <span className={styles.ring} role="status" aria-label="Loading"/>;if(variant==='bars')return <span className={styles.bars} role="status" aria-label="Loading"><span/><span/><span/><span/><span/></span>;if(variant==='bar')return <span className={styles.progressBar} role="status" aria-label="Loading"/>;return <span className={cn(styles.dots,styles[variant])} role="status" aria-label="Loading"><span/><span/><span/></span>;}

@@ -1,0 +1,1 @@
+.root{border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg);overflow:hidden}.row{display:flex;justify-content:space-between;gap:20px;padding:16px;border-bottom:1px solid var(--border)}.row:last-child{border-bottom:0}.row strong,.row span{display:block}.row span{margin-top:3px;color:var(--fg-3);font-size:12.5px}

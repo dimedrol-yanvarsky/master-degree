@@ -1,0 +1,1 @@
+.root{display:grid;gap:10px}.root>div{display:grid;grid-template-columns:90px 1fr;align-items:center;gap:16px}.root span{display:block;height:22px;background:var(--accent);border-radius:var(--r-xs)}.root code{font-family:var(--font-mono);color:var(--fg-3)}

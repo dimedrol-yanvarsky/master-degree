@@ -1,0 +1,1 @@
+export { KitIcon } from './Icon';

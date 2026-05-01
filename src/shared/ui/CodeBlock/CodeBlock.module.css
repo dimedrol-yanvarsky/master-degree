@@ -1,0 +1,76 @@
+.block {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    font-family: var(--font-mono);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-3);
+}
+
+.lang {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0;
+    color: var(--fg-3);
+}
+
+.copy {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--fg-2);
+    padding: 3px 10px;
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    border-radius: var(--r-xs);
+    cursor: pointer;
+    transition: color 150ms, border-color 150ms;
+}
+
+.copy:hover {
+    color: var(--fg);
+    border-color: var(--fg-3);
+}
+
+.pre {
+    margin: 0;
+    padding: 16px;
+    overflow: auto;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--fg-2);
+}
+
+.code {
+    display: block;
+    white-space: pre;
+}
+
+.tag {
+    color: var(--accent);
+}
+
+.attr {
+    color: color-mix(in srgb, var(--accent) 50%, var(--fg));
+}
+
+.eq {
+    color: var(--fg-4);
+}
+
+.value {
+    color: oklch(62% 0.14 160);
+}
+
+.text {
+    color: var(--fg-2);
+}

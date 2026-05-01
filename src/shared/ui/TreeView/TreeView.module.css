@@ -1,0 +1,1 @@
+.root{max-width:360px;padding:12px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);font-size:13px}.row{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--r-sm);color:var(--fg-2)}.row:hover{background:var(--bg-2);color:var(--fg)}.children{margin-left:18px;border-left:1px solid var(--border);padding-left:8px}

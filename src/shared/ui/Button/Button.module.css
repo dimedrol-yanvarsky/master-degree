@@ -1,0 +1,377 @@
+/* =============================================================
+   Button — self-contained styles.
+
+   Visual parity with the .btn family in kit.css. Tokens come from
+   the global design system (--accent, --bg, --border, radii, etc.)
+   but the class machinery is scoped to this module.
+   ============================================================= */
+
+/* --- base --- */
+
+.root {
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    letter-spacing: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: var(--r-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background .14s, color .14s, border-color .14s, box-shadow .14s;
+    line-height: 1;
+    height: 34px;
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.root > * { position: relative; z-index: 1; }
+.root:disabled { opacity: .45; cursor: not-allowed; }
+
+.root:focus-visible {
+    outline: 0;
+    box-shadow:
+        inset 0 0 0 1.5px var(--btn-ring, var(--accent)),
+        0 0 0 3px color-mix(in srgb, var(--btn-ring, var(--accent)) 18%, transparent);
+}
+
+/* --- sizes --- */
+
+.sm {
+    height: 28px;
+    padding: 6px 10px;
+    font-size: 12.5px;
+    border-radius: var(--r-sm);
+}
+
+.lg {
+    height: 42px;
+    padding: 10px 18px;
+    font-size: 14.5px;
+    border-radius: var(--r-md);
+}
+
+.iconOnly {
+    width: 34px;
+    padding: 0;
+}
+
+.iconOnly.sm { width: 28px; }
+.iconOnly.lg { width: 42px; }
+
+.fullWidth {
+    width: 100%;
+}
+
+/* --- variants: solid/semantic --- */
+
+.primary {
+    --btn-ring: color-mix(in oklch, var(--accent) 70%, black 30%);
+    background: var(--accent);
+    color: var(--accent-fg);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 1px 2px rgba(0, 0, 0, .06);
+}
+.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 88%, black); }
+
+.secondary {
+    --btn-ring: var(--fg-2);
+    background: var(--bg);
+    color: var(--fg);
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-1);
+}
+.secondary:hover:not(:disabled) { background: var(--bg-2); }
+
+.ghost {
+    --btn-ring: var(--fg-3);
+    background: transparent;
+    color: var(--fg-2);
+}
+.ghost:hover:not(:disabled) { background: var(--bg-3); color: var(--fg); }
+
+.destructive {
+    --btn-ring: var(--danger-600);
+    background: var(--danger-500);
+    color: #fff;
+    border-color: color-mix(in srgb, var(--danger-500) 75%, black 25%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .18),
+        0 1px 2px color-mix(in srgb, var(--danger-500) 40%, transparent);
+}
+.destructive:hover:not(:disabled) { background: var(--danger-600); }
+
+.success {
+    --btn-ring: var(--success-600);
+    background: var(--success-500);
+    color: #fff;
+    border-color: color-mix(in srgb, var(--success-500) 70%, black 30%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .22),
+        0 1px 2px color-mix(in srgb, var(--success-500) 40%, transparent);
+}
+.success:hover:not(:disabled) { background: var(--success-600); }
+
+.link {
+    --btn-ring: var(--accent);
+    background: transparent;
+    color: var(--accent);
+    padding: 0;
+    height: auto;
+    border-radius: 0;
+    overflow: visible;
+}
+.link:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
+
+/* --- variants: gradient family (shared ring + 9 effects) --- */
+
+.gradient,
+.gradientConic,
+.gradientSoft,
+.gradientMesh,
+.gradientShine,
+.gradientMotion,
+.gradientAurora,
+.gradientGlow,
+.gradientGlass {
+    --btn-ring: color-mix(in oklch, var(--accent) 65%, black 35%);
+}
+
+/* radial sweep — horizontal wash from left edge */
+.gradient {
+    color: var(--accent-fg);
+    background:
+        radial-gradient(120% 180% at 0% 50%,
+            color-mix(in oklch, var(--accent) 70%, white 30%) 0%,
+            var(--accent) 45%,
+            color-mix(in oklch, var(--accent) 78%, black 22%) 100%);
+    border: 1px solid color-mix(in srgb, var(--accent) 75%, black 25%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .28),
+        inset 0 -1px 0 rgba(0, 0, 0, .10),
+        0 2px 6px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.gradient:hover:not(:disabled) {
+    filter: brightness(1.06) saturate(1.05);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .28),
+        inset 0 -1px 0 rgba(0, 0, 0, .10),
+        0 4px 14px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* dual-hue — accent → cyan */
+.gradientConic {
+    color: var(--accent-fg);
+    background:
+        linear-gradient(115deg,
+            var(--accent) 0%,
+            color-mix(in oklch, var(--accent) 60%, oklch(72% 0.18 195) 40%) 55%,
+            oklch(72% 0.18 195) 100%);
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, black 45%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .26),
+        0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.gradientConic:hover:not(:disabled) { filter: brightness(1.05); }
+
+/* soft wash — pastel tint */
+.gradientSoft {
+    color: var(--accent);
+    background:
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--accent) 18%, var(--bg)) 0%,
+            color-mix(in srgb, var(--accent)  6%, var(--bg)) 100%);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    box-shadow: none;
+}
+.gradientSoft:hover:not(:disabled) {
+    background:
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--accent) 26%, var(--bg)) 0%,
+            color-mix(in srgb, var(--accent) 10%, var(--bg)) 100%);
+}
+
+/* mesh — multi-point radial, dreamy */
+.gradientMesh {
+    color: var(--accent-fg);
+    background:
+        radial-gradient(60% 130% at 20% 20%, color-mix(in oklch, var(--accent) 55%, white 45%), transparent 60%),
+        radial-gradient(70% 140% at 100% 80%, color-mix(in oklch, var(--accent) 85%, black 15%), transparent 55%),
+        radial-gradient(80% 120% at 50% 110%, oklch(52% 0.15 340), transparent 60%),
+        var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 65%, black 35%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .28),
+        0 4px 14px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.gradientMesh:hover:not(:disabled) { filter: brightness(1.05) saturate(1.08); }
+
+/* shine — metallic sweep on hover */
+.gradientShine {
+    color: var(--accent-fg);
+    background:
+        linear-gradient(135deg,
+            color-mix(in oklch, var(--accent) 70%, white 30%) 0%,
+            var(--accent) 50%,
+            color-mix(in oklch, var(--accent) 75%, black 25%) 100%);
+    border: 1px solid color-mix(in srgb, var(--accent) 65%, black 35%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .22),
+        0 2px 6px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.gradientShine::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(120deg,
+            transparent 30%,
+            rgba(255, 255, 255, .55) 50%,
+            transparent 70%);
+    transform: translateX(-120%);
+    transition: transform .8s cubic-bezier(.25, .8, .25, 1);
+    pointer-events: none;
+}
+.gradientShine:hover:not(:disabled)::before { transform: translateX(120%); }
+
+/* motion — gradient pans on hover */
+.gradientMotion {
+    color: var(--accent-fg);
+    background:
+        linear-gradient(120deg,
+            var(--accent) 0%,
+            oklch(52% 0.15 340) 35%,
+            oklch(60% 0.14 260) 70%,
+            var(--accent) 100%);
+    background-size: 220% 100%;
+    background-position: 0% 50%;
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, black 45%);
+    transition: background-position .9s cubic-bezier(.4, .1, .2, 1), box-shadow .2s, transform .2s;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .22),
+        0 2px 8px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.gradientMotion:hover:not(:disabled) {
+    background-position: 100% 50%;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .22),
+        0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* aurora — top-edge glow bar */
+.gradientAurora {
+    color: var(--accent-fg);
+    background:
+        linear-gradient(180deg,
+            color-mix(in oklch, var(--accent) 85%, white 15%) 0%,
+            var(--accent) 18%,
+            color-mix(in oklch, var(--accent) 82%, black 18%) 100%);
+    border: 1px solid color-mix(in srgb, var(--accent) 60%, black 40%);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, .25) inset,
+        0 -2px 0 color-mix(in srgb, black 18%, transparent) inset,
+        0 2px 6px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.gradientAurora::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 20%;
+    right: 20%;
+    height: 10px;
+    background:
+        radial-gradient(closest-side,
+            color-mix(in oklch, var(--accent) 50%, white 50%) 0%,
+            transparent 100%);
+    filter: blur(4px);
+    opacity: .9;
+    pointer-events: none;
+}
+.gradientAurora:hover:not(:disabled)::after {
+    left: 10%;
+    right: 10%;
+    transition: left .3s, right .3s;
+}
+
+/* glow — outer accent halo */
+.gradientGlow {
+    color: var(--accent-fg);
+    background:
+        linear-gradient(180deg,
+            color-mix(in oklch, var(--accent) 72%, white 28%) 0%,
+            var(--accent) 60%);
+    border: 1px solid color-mix(in srgb, var(--accent) 60%, black 40%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .25),
+        0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent),
+        0 8px 24px -6px color-mix(in srgb, var(--accent) 55%, transparent);
+    transition: box-shadow .3s, transform .15s;
+}
+.gradientGlow:hover:not(:disabled) {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .25),
+        0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent),
+        0 12px 32px -4px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* glass — translucent tinted backdrop-blur */
+.gradientGlass {
+    color: var(--fg);
+    background:
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--accent) 22%, transparent) 0%,
+            color-mix(in srgb, var(--fg)      8%, transparent) 100%);
+    border: 1px solid color-mix(in srgb, var(--fg) 18%, transparent);
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 30%, transparent),
+        inset 0 -1px 0 color-mix(in srgb, black 10%, transparent);
+}
+.gradientGlass:hover:not(:disabled) {
+    background:
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--accent) 32%, transparent) 0%,
+            color-mix(in srgb, var(--fg)     12%, transparent) 100%);
+}
+
+/* --- ripple wave --- */
+
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    background: currentColor;
+    opacity: 0.28;
+    transform: scale(0);
+    animation: ripple-out 0.55s cubic-bezier(.2, .6, .2, 1) forwards;
+    z-index: 0;
+}
+
+@keyframes ripple-out {
+    to {
+        transform: scale(2.4);
+        opacity: 0;
+    }
+}
+
+/* --- loading spinner --- */
+
+.spinner {
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: btn-spin 0.8s linear infinite;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+@keyframes btn-spin {
+    to { transform: rotate(360deg); }
+}

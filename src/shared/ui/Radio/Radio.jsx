@@ -1,0 +1,2 @@
+import { cn } from '../_utils';import styles from './Radio.module.css';
+export function Radio({label,disabled=false,className='',variant='default',...props}){return <label className={cn(styles.root,styles[variant],disabled&&styles.disabled,className)}><input className={styles.input} type="radio" disabled={disabled} {...props}/><span className={styles.dot} aria-hidden="true"/>{label&&<span className={styles.label}>{label}</span>}</label>;}

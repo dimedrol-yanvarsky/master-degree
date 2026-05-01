@@ -1,0 +1,2 @@
+import { KitIcon } from '../Icon';import { cn } from '../_utils';import styles from './IconGrid.module.css';
+export function IconGrid({icons=['search','plus','check','bell','folder','file','command','spark']}){return <div className={styles.grid}>{icons.map(name=><button key={name} type="button" className={cn(styles.tile,name==='spark'&&styles.highlight)}><span className={styles.glyph}><KitIcon name={name} size={22}/></span><span className={styles.name}>{name}</span></button>)}</div>;}

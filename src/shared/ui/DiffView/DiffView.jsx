@@ -1,0 +1,2 @@
+import styles from './DiffView.module.css';
+export function DiffView(){const rows=[['-','background: #fff;'],['+','background: var(--bg);'],[' ','border-radius: var(--r-md);'],['+','box-shadow: var(--shadow-1);']];return <pre className={styles.root}>{rows.map(([type,text],index)=><span key={type+index} className={type==='+'?styles.add:type==='-'?styles.remove:''}><b>{type}</b>{text}</span>)}</pre>;}

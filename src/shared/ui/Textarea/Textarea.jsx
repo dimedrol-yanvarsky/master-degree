@@ -1,0 +1,2 @@
+import { useId } from 'react';import { cn } from '../_utils';import { Field } from '../Field';import styles from './Textarea.module.css';
+export function Textarea({label,hint,error,id,className='',variant='default',...props}){const generatedId=useId();const fieldId=id||generatedId;return <Field label={label} hint={hint} error={error} htmlFor={fieldId}><textarea id={fieldId} className={cn(styles.textarea,styles[variant],className)} aria-invalid={error?'true':props['aria-invalid']} {...props}/></Field>;}

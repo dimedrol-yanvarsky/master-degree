@@ -1,0 +1,225 @@
+/* === Buttons page layout === */
+
+/* Gradient variants grid */
+
+.gradientGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.gradientCard {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.gradientClassName {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--fg-4);
+}
+
+.gradientHint {
+    font-size: 12px;
+    color: var(--fg-3);
+    line-height: 1.5;
+}
+
+.sideBySide {
+    margin-top: 20px;
+    padding: 24px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+}
+
+.sideBySideLabel {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--fg-4);
+    text-transform: uppercase;
+    letter-spacing: 0;
+    margin-bottom: 12px;
+}
+
+.sideBySideRow {
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Sizes */
+
+.sizesGap {
+    width: 24px;
+}
+
+/* States grid */
+
+.statesGrid {
+    display: grid;
+    grid-template-columns: 120px repeat(5, 1fr);
+    gap: 10px;
+    align-items: center;
+}
+
+.stateHeader {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--fg-4);
+    text-transform: uppercase;
+    letter-spacing: 0;
+}
+
+.stateLabel {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--fg-3);
+}
+
+/* Gradient designer */
+
+.designerLede {
+    font-size: 13px;
+    color: var(--fg-3);
+    margin-top: -6px;
+    margin-bottom: 14px;
+}
+
+.designerCard {
+    padding: 22px;
+}
+
+.designerGrid {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 28px;
+    align-items: start;
+}
+
+.designerControls {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.controlLabel {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--fg-4);
+    text-transform: uppercase;
+    letter-spacing: 0;
+    margin-bottom: 8px;
+}
+
+.radioGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.radioRow {
+    padding: 4px 0;
+    cursor: pointer;
+}
+
+.radioText {
+    font-size: 13px;
+}
+
+.colorRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.colorSwatch {
+    position: relative;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border-2);
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.colorInput {
+    position: absolute;
+    inset: -4px;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.colorField {
+    flex: 1;
+}
+
+.colorLabel {
+    font-size: 11px;
+    color: var(--fg-3);
+}
+
+.colorHex {
+    height: 26px;
+    padding: 0 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.presetChip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px 3px 4px;
+    border-radius: var(--r-pill);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--fg-2);
+}
+
+.presetDot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+
+.previewStage {
+    padding: 40px 24px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.previewCode {
+    margin-top: 14px;
+    padding: 14px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--fg-3);
+    line-height: 1.6;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}

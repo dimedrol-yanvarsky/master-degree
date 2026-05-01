@@ -1,0 +1,1 @@
+export { ButtonsPage } from './ButtonsPage';

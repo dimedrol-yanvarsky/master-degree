@@ -1,0 +1,1 @@
+.root{display:grid;place-items:center;text-align:center;gap:10px;padding:42px 20px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg)}.root svg{color:var(--danger-500)}.root h3{margin:0;font-size:18px}.root p{margin:0 0 8px;color:var(--fg-3)}

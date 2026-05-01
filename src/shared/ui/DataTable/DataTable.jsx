@@ -1,0 +1,2 @@
+import { cn } from '../_utils';import styles from './DataTable.module.css';
+export function DataTable({columns,rows,variant='default'}){return <div className={cn(styles.wrap,styles[variant])}><table className={styles.table}><thead><tr>{columns.map(column=><th key={column.key}>{column.label}</th>)}</tr></thead><tbody>{rows.map(row=><tr key={row.id}>{columns.map(column=><td key={column.key}>{row[column.key]}</td>)}</tr>)}</tbody></table></div>;}

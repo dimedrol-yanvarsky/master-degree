@@ -1,0 +1,1 @@
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}.tile{border-radius:var(--r-sm);height:64px;display:flex;align-items:flex-end;padding:8px;font-family:var(--font-mono);font-size:10.5px;color:rgba(0,0,0,.55);border:1px solid rgba(0,0,0,.04)}.darkText{color:rgba(255,255,255,.85)}

@@ -1,0 +1,2 @@
+import { Badge } from '../Badge';import { Button } from '../Button';import { SteppedProgress } from '../SteppedProgress';import styles from './WizardSteps.module.css';
+export function WizardSteps({steps,current=1}){return <section className={styles.root}><SteppedProgress steps={steps} current={current}/><div className={styles.panel}><Badge tone="accent">Step {current+1}</Badge><h3>{steps[current]}</h3><p>Collect data, review constraints and confirm the action.</p><div><Button variant="secondary">Back</Button><Button>Next</Button></div></div></section>;}
