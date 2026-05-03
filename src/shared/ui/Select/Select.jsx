@@ -4,11 +4,6 @@ import { Field } from '../Field';
 import { KitIcon } from '../Icon';
 import styles from './Select.module.css';
 
-function normalizeOption(option) {
-    if (typeof option === 'string') return { value: option, label: option };
-    return option;
-}
-
 function getNextEnabledIndex(options, startIndex, direction) {
     if (!options.length) return -1;
     for (let offset = 1; offset <= options.length; offset += 1) {
@@ -18,16 +13,23 @@ function getNextEnabledIndex(options, startIndex, direction) {
     return -1;
 }
 
+const DEFAULT_OPTIONS = [
+    { value: 'weekly', label: 'Еженедельно', description: 'Сводка каждый понедельник' },
+    { value: 'daily', label: 'Ежедневно', description: 'Короткая лента важных событий' },
+    { value: 'manual', label: 'Вручную', description: 'Только по запросу' },
+    { value: 'paused', label: 'Пауза', description: 'Недоступный пример', disabled: true },
+];
+
 export function Select({
     label,
     hint,
     error,
     meta,
-    options = [],
+    options = DEFAULT_OPTIONS,
     value,
     defaultValue,
     onChange,
-    placeholder = 'Select',
+    placeholder = 'Выберите',
     id,
     variant = 'default',
     size = 'md',
@@ -46,17 +48,17 @@ export function Select({
     const [activeIndex, setActiveIndex] = useState(-1);
     const [currentValue, setCurrentValue] = useControllableValue(value, defaultValue, onChange);
 
-    const normalizedOptions = useMemo(() => options.map(normalizeOption), [options]);
+    const selectOptions = options;
     const visibleOptions = useMemo(() => {
-        if (!searchable || !query.trim()) return normalizedOptions;
-        const normalizedQuery = query.trim().toLowerCase();
-        return normalizedOptions.filter((option) => {
+        if (!searchable || !query.trim()) return selectOptions;
+        const searchQuery = query.trim().toLowerCase();
+        return selectOptions.filter((option) => {
             const haystack = `${option.label} ${option.description || ''}`.toLowerCase();
-            return haystack.includes(normalizedQuery);
+            return haystack.includes(searchQuery);
         });
-    }, [normalizedOptions, query, searchable]);
+    }, [selectOptions, query, searchable]);
 
-    const selectedOption = normalizedOptions.find((option) => option.value === currentValue);
+    const selectedOption = selectOptions.find((option) => option.value === currentValue);
 
     useEffect(() => {
         const handlePointerDown = (event) => {
@@ -166,7 +168,7 @@ export function Select({
                     <button
                         type="button"
                         className={styles.clear}
-                        aria-label="Clear selection"
+                        aria-label="Очистить выбор"
                         onClick={clearValue}>
                         x
                     </button>
@@ -182,7 +184,7 @@ export function Select({
                                 id={searchId}
                                 ref={searchRef}
                                 value={query}
-                                placeholder="Search options"
+                                placeholder="Поиск вариантов"
                                 onChange={(event) => setQuery(event.target.value)}
                                 onKeyDown={handleKeyDown}
                             />
@@ -217,7 +219,7 @@ export function Select({
                         ))}
 
                         {!visibleOptions.length && (
-                            <div className={styles.empty}>No matches</div>
+                            <div className={styles.empty}>Ничего не найдено</div>
                         )}
                     </div>
                 </div>

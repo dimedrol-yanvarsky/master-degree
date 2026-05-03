@@ -1,1 +1,121 @@
-.root{display:grid;gap:8px;padding:16px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg)}.root>span{color:var(--fg-3);font-size:12.5px}.root strong{font-size:28px}.accent{background:radial-gradient(120% 100% at 0 0,color-mix(in srgb,var(--accent) 14%,transparent),transparent 60%),var(--bg);border-color:color-mix(in srgb,var(--accent) 24%,var(--border))}
+.root {
+    display: grid;
+    gap: 10px;
+    min-height: 148px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--bg);
+    box-shadow: var(--shadow-1);
+    transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.root:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-2);
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.head > span:first-child,
+.meta,
+.trend {
+    color: var(--fg-3);
+    font-size: 12.5px;
+}
+
+.icon {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--r-sm);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.root strong {
+    font-family: var(--font-display);
+    font-size: 30px;
+    line-height: 1;
+}
+
+.root p {
+    margin: 0;
+    color: var(--fg-3);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.footer {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.trend {
+    font-family: var(--font-mono);
+}
+
+.accent,
+.primary {
+    background:
+        radial-gradient(120% 100% at 0 0, color-mix(in srgb, var(--accent) 14%, transparent), transparent 62%),
+        var(--bg);
+    border-color: color-mix(in srgb, var(--accent) 24%, var(--border));
+}
+
+.success {
+    background:
+        radial-gradient(120% 100% at 0 0, color-mix(in srgb, var(--success-500) 14%, transparent), transparent 62%),
+        var(--bg);
+    border-color: color-mix(in srgb, var(--success-500) 24%, var(--border));
+}
+
+.success .icon {
+    background: color-mix(in srgb, var(--success-500) 14%, var(--bg));
+    color: var(--success-600);
+}
+
+.warning {
+    background:
+        radial-gradient(120% 100% at 0 0, color-mix(in srgb, var(--warning-500) 18%, transparent), transparent 62%),
+        var(--bg);
+    border-color: color-mix(in srgb, var(--warning-500) 28%, var(--border));
+}
+
+.warning .icon {
+    background: color-mix(in srgb, var(--warning-500) 16%, var(--bg));
+    color: var(--warning-700);
+}
+
+.danger .icon {
+    background: color-mix(in srgb, var(--danger-500) 14%, var(--bg));
+    color: var(--danger-500);
+}
+
+.stack {
+    min-height: 172px;
+    padding: 18px;
+}
+
+.stack::after {
+    content: "";
+    height: 6px;
+    border-radius: var(--r-full);
+    background:
+        linear-gradient(90deg, currentColor 0 72%, color-mix(in srgb, currentColor 18%, transparent) 72% 100%);
+    color: var(--accent);
+    opacity: .75;
+}
+
+.stack.success::after { color: var(--success-500); }
+.stack.warning::after { color: var(--warning-500); }

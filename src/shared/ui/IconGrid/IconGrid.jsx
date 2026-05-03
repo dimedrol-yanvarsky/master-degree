@@ -11,6 +11,56 @@ const DEFAULT_ICONS = [
     'arrowLeft', 'arrowRight', 'play', 'pause', 'refresh', 'heart', 'star',
 ];
 
+const ICON_LABELS = {
+    search: 'Поиск',
+    plus: 'Добавить',
+    check: 'Готово',
+    close: 'Закрыть',
+    menu: 'Меню',
+    chevron: 'Стрелка',
+    settings: 'Настройки',
+    filter: 'Фильтр',
+    user: 'Пользователь',
+    bell: 'Уведомления',
+    mail: 'Почта',
+    lock: 'Замок',
+    eye: 'Просмотр',
+    shield: 'Защита',
+    home: 'Домой',
+    calendar: 'Календарь',
+    clock: 'Время',
+    folder: 'Папка',
+    file: 'Файл',
+    download: 'Скачать',
+    upload: 'Загрузить',
+    edit: 'Редактировать',
+    trash: 'Удалить',
+    copy: 'Копировать',
+    link: 'Ссылка',
+    command: 'Команда',
+    spark: 'Акцент',
+    warning: 'Предупреждение',
+    info: 'Информация',
+    help: 'Помощь',
+    trend: 'Тренд',
+    chart: 'График',
+    table: 'Таблица',
+    database: 'База данных',
+    terminal: 'Терминал',
+    code: 'Код',
+    layers: 'Слои',
+    grid: 'Сетка',
+    image: 'Изображение',
+    graph: 'Граф',
+    arrowLeft: 'Назад',
+    arrowRight: 'Вперед',
+    play: 'Запуск',
+    pause: 'Пауза',
+    refresh: 'Обновить',
+    heart: 'Избранное',
+    star: 'Звезда',
+};
+
 export function IconGrid({ icons = DEFAULT_ICONS }) {
     return (
         <div className={styles.grid}>
@@ -22,7 +72,7 @@ export function IconGrid({ icons = DEFAULT_ICONS }) {
                     <span className={styles.glyph}>
                         <KitIcon name={name} size={22} />
                     </span>
-                    <span className={styles.name}>{name}</span>
+                    <span className={styles.name}>{ICON_LABELS[name] || name}</span>
                 </button>
             ))}
         </div>

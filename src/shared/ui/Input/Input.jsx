@@ -87,7 +87,7 @@ export function Input({
                         <button
                             type="button"
                             className={styles.clear}
-                            aria-label="Clear input"
+                            aria-label="Очистить поле"
                             onClick={handleClear}>
                             x
                         </button>

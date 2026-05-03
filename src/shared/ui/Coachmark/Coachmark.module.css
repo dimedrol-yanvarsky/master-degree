@@ -1,1 +1,89 @@
-.root{position:relative;min-height:250px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg-2)}.target{position:absolute;left:58px;top:54px;width:128px;height:38px;border-radius:var(--r-md);background:var(--bg);border:1px solid var(--accent);box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 14%,transparent)}.card{position:absolute;left:210px;top:82px;width:260px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--shadow-3)}.card h3{margin:8px 0 0;font-size:18px}.card p{color:var(--fg-3);margin:8px 0 0;line-height:1.5}.beacon .target::after{content:'';position:absolute;inset:-8px;border-radius:inherit;border:1px solid var(--accent);animation:ping 1.4s ease-out infinite}@keyframes ping{to{opacity:0;transform:scale(1.18)}}@media(max-width:720px){.card{left:24px;right:24px;top:116px;width:auto}}
+.root {
+    position: relative;
+    min-height: 250px;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--bg-2);
+}
+
+.target {
+    position: absolute;
+    left: min(58px, 14%);
+    top: 54px;
+    width: min(128px, calc(100% - 48px));
+    height: 38px;
+    border-radius: var(--r-md);
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.card {
+    position: absolute;
+    left: min(210px, 42%);
+    top: 82px;
+    width: min(260px, calc(100% - 48px));
+    min-width: 0;
+    padding: 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-3);
+}
+
+.card h3 {
+    margin: 8px 0 0;
+    font-size: 18px;
+}
+
+.card p {
+    color: var(--fg-3);
+    margin: 8px 0 0;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.beacon .target::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: inherit;
+    border: 1px solid var(--accent);
+    animation: ping 1.4s ease-out infinite;
+}
+
+@keyframes ping {
+    to {
+        opacity: 0;
+        transform: scale(1.18);
+    }
+}
+
+@media (max-width: 720px) {
+    .target {
+        left: 24px;
+        right: 24px;
+        width: auto;
+    }
+
+    .card {
+        left: 24px;
+        right: 24px;
+        top: 116px;
+        width: auto;
+    }
+}
+
+@media (max-width: 420px) {
+    .root {
+        min-height: 280px;
+    }
+
+    .target,
+    .card {
+        left: 16px;
+        right: 16px;
+    }
+}

@@ -5,10 +5,18 @@ function isDarkShade(shade) {
     return Number(shade.step) >= 500 || shade.dark;
 }
 
-export function ColorScale({ colors }) {
+const DEFAULT_COLORS = [
+    { step: 100, value: 'oklch(96% 0.03 290)', hex: '#f5efff' },
+    { step: 300, value: 'oklch(84% 0.11 290)', hex: '#d4b8ff' },
+    { step: 500, value: 'oklch(64% 0.24 290)', hex: '#9658f5' },
+    { step: 700, value: 'oklch(47% 0.22 290)', hex: '#6125b3' },
+    { step: 900, value: 'oklch(29% 0.13 290)', hex: '#32165d' },
+];
+
+export function ColorScale({ colors = DEFAULT_COLORS }) {
     const palettes = colors?.[0]?.shades
         ? colors
-        : [{ name: 'Tokens', shades: colors?.map((color) => ({ ...color, step: color.name })) || [] }];
+        : [{ name: 'Токены', shades: colors?.map((color) => ({ ...color, step: color.name })) || [] }];
 
     return (
         <div className={styles.root}>

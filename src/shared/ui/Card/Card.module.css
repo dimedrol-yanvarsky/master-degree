@@ -70,28 +70,33 @@
 }
 
 .spotlight {
+    --spotlight-bg: oklch(18% 0.015 270);
+    --spotlight-bg-2: oklch(24% 0.03 285);
+    --spotlight-fg: oklch(98% 0.004 270);
+    --spotlight-muted: oklch(80% 0.016 270);
+
     background:
         radial-gradient(80% 120% at 12% 0, color-mix(in srgb, var(--accent) 22%, transparent), transparent 58%),
-        linear-gradient(135deg, color-mix(in srgb, var(--fg) 96%, var(--accent)), var(--fg));
+        linear-gradient(135deg, color-mix(in srgb, var(--spotlight-bg-2) 82%, var(--accent)), var(--spotlight-bg));
     border-color: color-mix(in srgb, var(--accent) 24%, var(--border));
-    color: var(--bg);
+    color: var(--spotlight-fg);
 }
 
 .spotlight .media {
     height: 86px;
     background: transparent;
-    color: color-mix(in srgb, var(--bg) 78%, transparent);
+    color: color-mix(in srgb, var(--spotlight-fg) 78%, transparent);
     place-items: end start;
     padding: 16px;
 }
 
 .spotlight .description {
-    color: color-mix(in srgb, var(--bg) 74%, transparent);
+    color: var(--spotlight-muted);
 }
 
 .spotlight .footer {
-    background: color-mix(in srgb, var(--bg) 8%, transparent);
-    border-top-color: color-mix(in srgb, var(--bg) 15%, transparent);
+    background: color-mix(in srgb, var(--spotlight-fg) 8%, transparent);
+    border-top-color: color-mix(in srgb, var(--spotlight-fg) 15%, transparent);
 }
 
 .compact .media {

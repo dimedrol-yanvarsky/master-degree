@@ -1,1 +1,212 @@
-.root{position:relative;min-height:260px;overflow:hidden;border:1px solid var(--border);border-radius:var(--r-lg);background:linear-gradient(90deg,color-mix(in srgb,var(--border) 65%,transparent) 1px,transparent 1px),linear-gradient(0deg,color-mix(in srgb,var(--border) 65%,transparent) 1px,transparent 1px),var(--bg-2);background-size:40px 40px}.route{position:absolute;left:18%;top:45%;width:64%;height:3px;background:var(--accent);transform:rotate(-12deg);border-radius:var(--r-full)}.primaryPin,.secondaryPin{position:absolute;width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--accent);box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 18%,transparent)}.primaryPin{left:18%;top:50%}.secondaryPin{right:18%;top:30%;background:var(--success-500);box-shadow:0 0 0 6px color-mix(in srgb,var(--success-500) 18%,transparent)}
+.root {
+    position: relative;
+    min-width: 0;
+    min-height: 340px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--border) 60%, transparent) 1px, transparent 1px), linear-gradient(0deg, color-mix(in srgb, var(--border) 60%, transparent) 1px, transparent 1px), var(--bg-2);
+    background-size: 40px 40px;
+    box-shadow: var(--shadow-1);
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.root:hover {
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-2);
+}
+
+.svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.minor {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 2;
+}
+
+.routeLine,
+.altRoute {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 7;
+    stroke-linecap: round;
+    filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--accent) 28%, transparent));
+    stroke-dasharray: 720;
+    animation: draw-route 1.2s ease both;
+}
+
+.altRoute {
+    stroke: var(--success-500);
+    stroke-width: 4;
+    opacity: .75;
+}
+
+.heatA,
+.heatB,
+.heatC {
+    fill: color-mix(in srgb, var(--warning-500) 24%, transparent);
+    filter: blur(2px);
+}
+
+.heatB {
+    fill: color-mix(in srgb, var(--danger-500) 20%, transparent);
+}
+
+.heatC {
+    fill: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.pin {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: min(150px, calc(100% - 24px));
+    padding: 6px 9px;
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+    border-radius: var(--r-full);
+    background: var(--bg);
+    color: var(--fg);
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    box-shadow: var(--shadow-2);
+    transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+    animation: pin-in 240ms ease both;
+}
+
+.pin:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-3);
+    transform: translateY(-2px);
+}
+
+.pin::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.pin[data-index="0"] {
+    left: 9%;
+    top: 67%;
+    animation-delay: 90ms;
+}
+
+.pin[data-index="1"] {
+    left: 41%;
+    top: 34%;
+    animation-delay: 160ms;
+}
+
+.pin[data-index="2"] {
+    right: 9%;
+    top: 28%;
+    animation-delay: 230ms;
+}
+
+.pin[data-index="3"] {
+    right: 22%;
+    bottom: 18%;
+    animation-delay: 300ms;
+}
+
+.fleet .pin[data-index="0"] {
+    left: 14%;
+    top: 25%;
+}
+
+.fleet .pin[data-index="1"] {
+    right: 10%;
+    top: 56%;
+}
+
+.fleet .pin[data-index="2"] {
+    left: 44%;
+    top: 44%;
+}
+
+.panel {
+    position: absolute;
+    left: 18px;
+    top: 18px;
+    display: grid;
+    gap: 5px;
+    width: min(220px, calc(100% - 36px));
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-2);
+    animation: map-panel-in 260ms ease both;
+}
+
+.panel strong,
+.panel span {
+    display: block;
+}
+
+.panel span {
+    color: var(--fg-3);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 420px) {
+    .root {
+        min-height: 300px;
+        background-size: 32px 32px;
+    }
+
+    .pin {
+        padding: 5px 7px;
+        font-size: 11px;
+    }
+}
+
+@keyframes draw-route {
+    from {
+        stroke-dashoffset: 720;
+    }
+
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes pin-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes map-panel-in {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}

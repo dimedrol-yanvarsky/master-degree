@@ -1,58 +1,181 @@
 .root {
+    --slider-control-height: 32px;
+    --slider-track-height: 8px;
+    --slider-thumb-size: 20px;
+    --slider-track-center: calc(var(--slider-control-height) / 2);
+
     display: grid;
     gap: 10px;
+    position: relative;
+    min-width: 0;
+    padding: 2px calc(var(--slider-thumb-size) / 2) 0;
+    overflow: visible;
 }
 
 .range {
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    z-index: 4;
     width: 100%;
-    height: 22px;
+    height: var(--slider-control-height);
     margin: 0;
     accent-color: var(--accent);
     background: transparent;
+    cursor: pointer;
 }
 
 .range::-webkit-slider-runnable-track {
-    height: 8px;
+    height: var(--slider-control-height);
     border-radius: var(--r-full);
-    background:
-        linear-gradient(90deg, var(--accent) 0 var(--slider-progress), var(--bg-3) var(--slider-progress) 100%);
+    background: transparent;
+    border: 0;
+    box-shadow: none;
 }
 
 .range::-webkit-slider-thumb {
-    width: 20px;
-    height: 20px;
-    margin-top: -6px;
-    border: 2px solid var(--bg);
+    -webkit-appearance: none;
+    appearance: none;
+    width: var(--slider-thumb-size);
+    height: var(--slider-thumb-size);
+    margin-top: calc((var(--slider-control-height) - var(--slider-thumb-size)) / 2);
+    border: 0;
     border-radius: 50%;
-    background: var(--accent);
-    box-shadow: var(--shadow-2);
+    background: transparent;
+    box-shadow: none;
+    opacity: 0;
+}
+
+.range::-moz-range-track {
+    height: var(--slider-control-height);
+    border-radius: var(--r-full);
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+.range::-moz-range-progress {
+    background: transparent;
+}
+
+.range::-moz-range-thumb {
+    width: var(--slider-thumb-size);
+    height: var(--slider-thumb-size);
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    opacity: 0;
 }
 
 .range:focus-visible {
     outline: 0;
 }
 
-.range:focus-visible::-webkit-slider-thumb {
+.range:focus-visible ~ .thumbRail .thumb {
     box-shadow: 0 0 0 4px var(--ring), var(--shadow-2);
 }
 
-.neon::-webkit-slider-runnable-track {
+.root:hover .thumb {
+    transform: translate(-50%, -50%) scale(1.05);
+}
+
+.visualTrack {
+    position: absolute;
+    z-index: 1;
+    left: calc(var(--slider-thumb-size) / 2);
+    right: calc(var(--slider-thumb-size) / 2);
+    top: calc(2px + var(--slider-track-center) - var(--slider-track-height) / 2);
+    height: var(--slider-track-height);
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    background: var(--bg-3);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border) 48%, transparent);
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.visualFill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--slider-progress);
+    border-radius: inherit;
+    background: var(--slider-fill, var(--accent));
+}
+
+.thumbRail {
+    position: absolute;
+    z-index: 3;
+    left: calc(var(--slider-thumb-size) / 2);
+    right: calc(var(--slider-thumb-size) / 2);
+    top: calc(2px + var(--slider-track-center));
+    height: 0;
+    pointer-events: none;
+}
+
+.thumb {
+    position: absolute;
+    left: var(--slider-progress);
+    top: 0;
+    width: var(--slider-thumb-size);
+    height: var(--slider-thumb-size);
+    border: 2px solid var(--bg);
+    border-radius: 50%;
+    background: var(--slider-thumb, var(--accent));
+    box-shadow: var(--shadow-2);
+    transform: translate(-50%, -50%);
+    transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.neon ~ .visualTrack {
     box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
-.meter::-webkit-slider-runnable-track {
-    background: linear-gradient(90deg, var(--success-500), var(--warning-500), var(--danger-500));
+.meter {
+    --slider-thumb: var(--warning-600);
+    --slider-fill: color-mix(in srgb, var(--warning-500) 72%, var(--success-500));
 }
 
-.stepped::-webkit-slider-runnable-track {
+.root[data-variant="meter"] .visualTrack {
     background:
-        repeating-linear-gradient(90deg, transparent 0 15%, color-mix(in srgb, var(--fg) 18%, transparent) 15% 16%),
-        linear-gradient(90deg, var(--accent) 0 var(--slider-progress), var(--bg-3) var(--slider-progress) 100%);
+        linear-gradient(90deg, var(--success-500), var(--warning-500), var(--danger-500));
+}
+
+.root[data-variant="meter"] .visualFill {
+    display: none;
+}
+
+.markDots {
+    position: absolute;
+    z-index: 2;
+    left: calc(var(--slider-thumb-size) / 2);
+    right: calc(var(--slider-thumb-size) / 2);
+    top: calc(2px + var(--slider-track-center) - var(--slider-track-height) / 2);
+    height: var(--slider-track-height);
+    pointer-events: none;
+}
+
+.markDots i {
+    position: absolute;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1px solid color-mix(in srgb, var(--fg-4) 55%, var(--border));
+    transform: translate(-50%, -50%);
+}
+
+.root[data-variant="stepped"] .markDots i {
+    width: 6px;
+    height: 6px;
 }
 
 .marks {
     position: relative;
+    min-width: 0;
     height: 18px;
+    margin: 0;
     color: var(--fg-4);
     font-family: var(--font-mono);
     font-size: 10px;
@@ -62,5 +185,16 @@
     position: absolute;
     top: 0;
     transform: translateX(-50%);
+    max-width: 34%;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.marks span:first-child {
+    transform: translateX(0);
+}
+
+.marks span:last-child {
+    transform: translateX(-100%);
 }

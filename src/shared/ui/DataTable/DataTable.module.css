@@ -1,8 +1,16 @@
 .wrap {
+    min-width: 0;
     border: 1px solid var(--border);
     border-radius: var(--r-md);
-    overflow: hidden;
+    overflow: auto;
     background: var(--bg);
+    box-shadow: var(--shadow-1);
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.wrap:hover {
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-2);
 }
 
 .caption {
@@ -10,6 +18,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    flex-wrap: wrap;
+    min-width: 0;
     padding: 12px 14px;
     border-bottom: 1px solid var(--border);
     background: var(--bg);
@@ -17,6 +27,7 @@
 
 .caption strong {
     font-size: 13.5px;
+    overflow-wrap: anywhere;
 }
 
 .caption span {
@@ -27,15 +38,16 @@
 
 .table {
     width: 100%;
+    min-width: 560px;
     border-collapse: separate;
     border-spacing: 0;
     font-size: 13px;
 }
 
 .table th {
-    background: var(--bg-2);
+    background: color-mix(in srgb, var(--bg-2) 82%, var(--accent-soft));
     border-bottom: 1px solid var(--border);
-    color: var(--fg-3);
+    color: var(--fg-2);
     font-size: 11.5px;
     font-weight: 600;
     padding: 10px 14px;
@@ -47,6 +59,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    min-width: 0;
     border: 0;
     background: transparent;
     color: inherit;
@@ -54,10 +67,12 @@
     font: inherit;
     padding: 0;
     text-transform: inherit;
+    transition: color 140ms ease, transform 140ms ease;
 }
 
 .table th button:hover {
     color: var(--fg);
+    transform: translateY(-1px);
 }
 
 .table th button span {
@@ -70,6 +85,7 @@
     border-bottom: 1px solid var(--border);
     color: var(--fg-2);
     padding: 12px 14px;
+    transition: background 140ms ease, color 140ms ease;
 }
 
 .table tr:last-child td {
@@ -78,10 +94,12 @@
 
 .checkCell {
     width: 44px;
+    min-width: 44px;
 }
 
 .checkCell input {
     accent-color: var(--accent);
+    cursor: pointer;
 }
 
 .alignRight {
@@ -90,6 +108,11 @@
 
 .selected td {
     background: var(--accent-soft);
+}
+
+.table tbody tr:hover td {
+    background: color-mix(in srgb, var(--accent-soft) 28%, transparent);
+    color: var(--fg);
 }
 
 .sm .table th,
@@ -107,17 +130,37 @@
 }
 
 .analytics .caption {
-    background: var(--fg);
-    color: var(--bg);
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 58%),
+        var(--bg);
+    color: var(--fg);
 }
 
 .analytics .caption span {
-    color: color-mix(in srgb, var(--bg) 72%, transparent);
+    color: var(--fg-3);
 }
 
 .analytics .table th {
-    background: color-mix(in srgb, var(--fg) 92%, var(--accent));
-    color: var(--bg);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--accent) 10%, var(--bg-2)), var(--bg-2));
+    color: var(--fg-2);
+    border-bottom-color: color-mix(in srgb, var(--accent) 20%, var(--border));
+}
+
+.analytics .table th:first-child {
+    border-top-left-radius: var(--r-sm);
+}
+
+.analytics .table th:last-child {
+    border-top-right-radius: var(--r-sm);
+}
+
+.analytics .table th button span {
+    color: var(--fg-4);
+}
+
+.analytics tbody tr:hover td {
+    background: color-mix(in srgb, var(--accent-soft) 45%, transparent);
 }
 
 .analytics .table td:first-child {

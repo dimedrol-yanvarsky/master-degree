@@ -4,16 +4,20 @@
 
 .gradientGrid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    width: 100%;
+    min-width: 0;
+    max-width: 760px;
 }
 
 .gradientCard {
-    padding: 20px;
+    padding: 22px;
     display: flex;
     flex-direction: column;
     gap: 10px;
     align-items: flex-start;
+    min-width: 0;
 }
 
 .gradientClassName {
@@ -26,11 +30,13 @@
     font-size: 12px;
     color: var(--fg-3);
     line-height: 1.5;
+    overflow-wrap: anywhere;
 }
 
 .sideBySide {
     margin-top: 20px;
     padding: 24px;
+    min-width: 0;
     background: var(--bg-2);
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
@@ -60,9 +66,13 @@
 
 .statesGrid {
     display: grid;
-    grid-template-columns: 120px repeat(5, 1fr);
+    grid-template-columns: 120px repeat(5, minmax(96px, 1fr));
     gap: 10px;
     align-items: center;
+    width: 100%;
+    max-width: 920px;
+    overflow-x: auto;
+    scrollbar-gutter: stable;
 }
 
 .stateHeader {
@@ -71,12 +81,14 @@
     color: var(--fg-4);
     text-transform: uppercase;
     letter-spacing: 0;
+    min-width: 0;
 }
 
 .stateLabel {
     font-family: var(--font-mono);
     font-size: 11px;
     color: var(--fg-3);
+    min-width: 0;
 }
 
 /* Gradient designer */
@@ -90,19 +102,22 @@
 
 .designerCard {
     padding: 22px;
+    min-width: 0;
 }
 
 .designerGrid {
     display: grid;
-    grid-template-columns: 260px 1fr;
-    gap: 28px;
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+    gap: 30px;
     align-items: start;
+    min-width: 0;
 }
 
 .designerControls {
     display: flex;
     flex-direction: column;
     gap: 18px;
+    min-width: 0;
 }
 
 .controlLabel {
@@ -133,6 +148,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
     margin-bottom: 8px;
 }
 
@@ -156,6 +172,7 @@
 
 .colorField {
     flex: 1;
+    min-width: 0;
 }
 
 .colorLabel {
@@ -199,6 +216,7 @@
 
 .previewStage {
     padding: 40px 24px;
+    min-width: 0;
     background: var(--bg-2);
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
@@ -222,4 +240,26 @@
     overflow: auto;
     white-space: pre-wrap;
     word-break: break-word;
+}
+
+@media (max-width: 820px) {
+    .designerGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .statesGrid {
+        grid-template-columns: 110px repeat(5, minmax(92px, 1fr));
+    }
+}
+
+@media (max-width: 520px) {
+    .gradientCard,
+    .sideBySide,
+    .designerCard {
+        padding: 18px;
+    }
+
+    .previewStage {
+        padding: 28px 16px;
+    }
 }

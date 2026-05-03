@@ -21,7 +21,11 @@ function highlightJsx(source) {
     return tokens;
 }
 
-export function CodeBlock({ code, language = 'jsx', filename }) {
+const DEFAULT_CODE = `<Button variant="primary">
+    Сохранить изменения
+</Button>`;
+
+export function CodeBlock({ code = DEFAULT_CODE, language = 'jsx', filename, variant = 'editor' }) {
     const [copied, setCopied] = useState(false);
     const tokens = highlightJsx(code);
 
@@ -36,11 +40,12 @@ export function CodeBlock({ code, language = 'jsx', filename }) {
     };
 
     return (
-        <div className={styles.block}>
+        <div className={[styles.block, styles[variant]].filter(Boolean).join(' ')}>
             <div className={styles.header}>
+                <span className={styles.dots} aria-hidden="true"><i /><i /><i /></span>
                 <span className={styles.lang}>{filename || language}</span>
                 <button type="button" onClick={copy} className={styles.copy}>
-                    {copied ? 'copied' : 'copy'}
+                    {copied ? 'Скопировано' : 'Копировать'}
                 </button>
             </div>
             <pre className={styles.pre}>

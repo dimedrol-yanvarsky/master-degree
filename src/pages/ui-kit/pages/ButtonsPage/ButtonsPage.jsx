@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Button } from '../../../../shared/ui/Button';
+import { Button, GradientButton } from '../../../../shared/ui/Button';
 import styles from './ButtonsPage.module.css';
 
-/* ---------- icons used on the page ---------- */
 function IconChevron() {
     return (
         <svg viewBox="0 0 24 24" fill="none">
@@ -10,6 +9,7 @@ function IconChevron() {
         </svg>
     );
 }
+
 function IconPlus() {
     return (
         <svg viewBox="0 0 24 24" fill="none">
@@ -17,6 +17,7 @@ function IconPlus() {
         </svg>
     );
 }
+
 function IconCheck() {
     return (
         <svg viewBox="0 0 24 24" fill="none">
@@ -25,46 +26,43 @@ function IconCheck() {
     );
 }
 
-/* ---------- data tables for the sections ---------- */
 const GRADIENT_VARIANTS = [
-    { gradient: 'radial', label: 'Radial sweep', className: '.btn-gradient',        hint: 'радиальная заливка от левого края — дефолт' },
-    { gradient: 'conic',  label: 'Dual-hue',     className: '.btn-gradient-conic',  hint: 'accent → соседний cyan, плоский' },
-    { gradient: 'soft',   label: 'Soft wash',    className: '.btn-gradient-soft',   hint: 'пастельная тональная, чуть плотнее ghost' },
-    { gradient: 'mesh',   label: 'Mesh',         className: '.btn-gradient-mesh',   hint: 'трёхточечный radial-mesh' },
-    { gradient: 'shine',  label: 'Shine',        className: '.btn-gradient-shine',  hint: 'металлический блик пробегает по диагонали при hover' },
-    { gradient: 'motion', label: 'Motion',       className: '.btn-gradient-motion', hint: 'сам градиент панорамируется при hover' },
-    { gradient: 'aurora', label: 'Aurora',       className: '.btn-gradient-aurora', hint: 'solid body + светящаяся полоска на верхнем крае' },
-    { gradient: 'glow',   label: 'Glow halo',    className: '.btn-gradient-glow',   hint: 'внешнее свечение accent-halo растёт на hover' },
-    { gradient: 'glass',  label: 'Glass',        className: '.btn-gradient-glass',  hint: 'полупрозрачное стекло с backdrop-blur' },
+    { gradient: 'radial', label: 'Радиальный',       className: '.btn-gradient',        hint: 'Радиальная заливка от левого края, вариант по умолчанию.' },
+    { gradient: 'conic',  label: 'Два оттенка',      className: '.btn-gradient-conic',  hint: 'Акцентный цвет переходит в соседний голубой оттенок.' },
+    { gradient: 'soft',   label: 'Мягкая заливка',   className: '.btn-gradient-soft',   hint: 'Пастельный тональный вариант, чуть плотнее прозрачной кнопки.' },
+    { gradient: 'mesh',   label: 'Сетка',            className: '.btn-gradient-mesh',   hint: 'Трехточечная радиальная сетка.' },
+    { gradient: 'shine',  label: 'Блик',             className: '.btn-gradient-shine',  hint: 'Металлический блик проходит по диагонали при наведении.' },
+    { gradient: 'motion', label: 'Движение',         className: '.btn-gradient-motion', hint: 'Градиент плавно сдвигается при наведении.' },
+    { gradient: 'aurora', label: 'Аврора',           className: '.btn-gradient-aurora', hint: 'Плотная основа и светящаяся полоска сверху.' },
+    { gradient: 'glow',   label: 'Свечение',         className: '.btn-gradient-glow',   hint: 'Внешнее акцентное свечение усиливается при наведении.' },
+    { gradient: 'glass',  label: 'Стекло',           className: '.btn-gradient-glass',  hint: 'Полупрозрачная стеклянная поверхность с размытием.' },
 ];
 
 const STATE_ROWS = [
-    { label: 'Primary',     props: { variant: 'primary' } },
-    { label: 'Secondary',   props: { variant: 'secondary' } },
-    { label: 'Ghost',       props: { variant: 'ghost' } },
-    { label: 'Success',     props: { variant: 'success' } },
-    { label: 'Destructive', props: { variant: 'destructive' } },
-    { label: 'Gradient',    props: { variant: 'gradient', gradient: 'radial' } },
+    { label: 'Основная',   Component: Button, props: { variant: 'primary' } },
+    { label: 'Вторичная',  Component: Button, props: { variant: 'secondary' } },
+    { label: 'Прозрачная', Component: Button, props: { variant: 'ghost' } },
+    { label: 'Успех',      Component: Button, props: { variant: 'success' } },
+    { label: 'Опасная',    Component: Button, props: { variant: 'destructive' } },
+    { label: 'Градиент',   Component: GradientButton, props: { gradient: 'radial' } },
 ];
 
-/* =========================================================
-   Gradient designer — live preview + CSS code
-   ========================================================= */
 function GradientDesigner() {
     const TYPES = [
-        { id: 'radial',   label: 'Radial sweep',  css: (c1, c2, c3) => `radial-gradient(120% 180% at 0% 50%, ${c1} 0%, ${c2} 45%, ${c3} 100%)` },
-        { id: 'linear',   label: 'Linear 135°',   css: (c1, c2, c3) => `linear-gradient(135deg, ${c1} 0%, ${c2} 50%, ${c3} 100%)` },
-        { id: 'duo',      label: 'Dual-hue 115°', css: (c1, c2, c3) => `linear-gradient(115deg, ${c1} 0%, ${c2} 55%, ${c3} 100%)` },
-        { id: 'mesh',     label: 'Mesh',          css: (c1, c2, c3) =>
+        { id: 'radial',   label: 'Радиальный',       css: (c1, c2, c3) => `radial-gradient(120% 180% at 0% 50%, ${c1} 0%, ${c2} 45%, ${c3} 100%)` },
+        { id: 'linear',   label: 'Линейный 135°',    css: (c1, c2, c3) => `linear-gradient(135deg, ${c1} 0%, ${c2} 50%, ${c3} 100%)` },
+        { id: 'duo',      label: 'Два оттенка 115°', css: (c1, c2, c3) => `linear-gradient(115deg, ${c1} 0%, ${c2} 55%, ${c3} 100%)` },
+        { id: 'mesh',     label: 'Сетка',            css: (c1, c2, c3) =>
             `radial-gradient(60% 130% at 20% 20%, ${c1}, transparent 60%), radial-gradient(70% 140% at 100% 80%, ${c2}, transparent 55%), radial-gradient(80% 120% at 50% 110%, ${c3}, transparent 60%), ${c2}` },
-        { id: 'vertical', label: 'Vertical',      css: (c1, c2, c3) => `linear-gradient(180deg, ${c1} 0%, ${c2} 50%, ${c3} 100%)` },
+        { id: 'vertical', label: 'Вертикальный',     css: (c1, c2, c3) => `linear-gradient(180deg, ${c1} 0%, ${c2} 50%, ${c3} 100%)` },
     ];
+
     const PRESETS = [
-        { l: 'Iris',   c: ['#B3A1F2', '#6366F1', '#3730A3'] },
-        { l: 'Sunset', c: ['#FFD5B5', '#FF6F61', '#8B2F4A'] },
-        { l: 'Forest', c: ['#B8E0C2', '#4D8F6E', '#224E3B'] },
-        { l: 'Ocean',  c: ['#BEE7F2', '#3FB8D6', '#1B4E7E'] },
-        { l: 'Plum',   c: ['#E8C6E2', '#A94E8E', '#4A1E55'] },
+        { l: 'Ирис',  c: ['#B3A1F2', '#6366F1', '#3730A3'] },
+        { l: 'Закат', c: ['#FFD5B5', '#FF6F61', '#8B2F4A'] },
+        { l: 'Лес',   c: ['#B8E0C2', '#4D8F6E', '#224E3B'] },
+        { l: 'Океан', c: ['#BEE7F2', '#3FB8D6', '#1B4E7E'] },
+        { l: 'Слива', c: ['#E8C6E2', '#A94E8E', '#4A1E55'] },
     ];
 
     const [type, setType] = useState('radial');
@@ -76,9 +74,6 @@ function GradientDesigner() {
     const bg = cfg.css(c1, c2, c3);
     const border = `color-mix(in srgb, ${c3} 72%, black 28%)`;
 
-    /* Custom gradient passed as inline style — Button has no variant that
-       can express arbitrary 3-color combos, so we override background,
-       border, color, box-shadow, and --btn-ring through inline style. */
     const customGradientStyle = {
         background: bg,
         border: `1px solid ${border}`,
@@ -111,9 +106,9 @@ function GradientDesigner() {
                     <div>
                         <div className={styles.controlLabel}>Цвета</div>
                         {[
-                            ['Start',  c1, setC1],
-                            ['Middle', c2, setC2],
-                            ['End',    c3, setC3],
+                            ['Начало',   c1, setC1],
+                            ['Середина', c2, setC2],
+                            ['Конец',    c3, setC3],
                         ].map(([label, val, setter]) => (
                             <div key={label} className={styles.colorRow}>
                                 <label
@@ -156,9 +151,9 @@ function GradientDesigner() {
 
                 <div>
                     <div className={styles.previewStage}>
-                        <Button size="sm" style={customGradientStyle}>Small</Button>
-                        <Button style={customGradientStyle}>Default</Button>
-                        <Button size="lg" style={customGradientStyle}>Large</Button>
+                        <Button size="sm" style={customGradientStyle}>Маленькая</Button>
+                        <Button style={customGradientStyle}>Обычная</Button>
+                        <Button size="lg" style={customGradientStyle}>Большая</Button>
                     </div>
                     <pre className={styles.previewCode}>
 {`background: ${bg};
@@ -170,40 +165,37 @@ border: 1px solid ${border};`}
     );
 }
 
-/* =========================================================
-   Buttons page
-   ========================================================= */
 export function ButtonsPage() {
     return (
         <div>
             <div className="kit-head">
-                <div className="kit-eyebrow">COMPONENTS · BUTTONS</div>
+                <div className="kit-eyebrow">КОМПОНЕНТЫ · КНОПКИ</div>
                 <h1 className="kit-title">Кнопки</h1>
                 <p className="kit-lede">
-                    Шесть вариантов: primary, secondary, ghost, success, destructive, gradient.
-                    Клик → круговая волна из курсора.
+                    Шесть вариантов: основная, вторичная, прозрачная, успех, опасная и градиентная.
+                    Клик запускает круговую волну из курсора.
                 </p>
             </div>
 
             <section className="section">
-                <h2 className="section-title">Variants</h2>
+                <h2 className="section-title">Варианты</h2>
                 <div className="demo-row">
-                    <Button variant="primary">Primary action</Button>
-                    <Button variant="secondary">Secondary</Button>
-                    <Button variant="ghost">Ghost</Button>
-                    <Button variant="success" iconLeft={<IconCheck />}>Success</Button>
-                    <Button variant="destructive">Delete</Button>
-                    <Button variant="gradient">Upgrade to Pro</Button>
-                    <Button variant="link">Link</Button>
+                    <Button variant="primary">Основное действие</Button>
+                    <Button variant="secondary">Вторичная</Button>
+                    <Button variant="ghost">Прозрачная</Button>
+                    <Button variant="success" iconLeft={<IconCheck />}>Успех</Button>
+                    <Button variant="destructive">Удалить</Button>
+                    <GradientButton>Перейти на Pro</GradientButton>
+                    <Button variant="link">Ссылка</Button>
                 </div>
             </section>
 
             <section className="section">
-                <h2 className="section-title">Gradient variants</h2>
+                <h2 className="section-title">Градиентные варианты</h2>
                 <div className={styles.gradientGrid}>
                     {GRADIENT_VARIANTS.map(g => (
                         <div key={g.gradient} className={`demo-card ${styles.gradientCard}`}>
-                            <Button variant="gradient" gradient={g.gradient}>{g.label}</Button>
+                            <GradientButton gradient={g.gradient}>{g.label}</GradientButton>
                             <div className={styles.gradientClassName}>{g.className}</div>
                             <div className={styles.gradientHint}>{g.hint}</div>
                         </div>
@@ -212,7 +204,7 @@ export function ButtonsPage() {
 
                 <div className={styles.sideBySide}>
                     <div className={styles.sideBySideLabel}>
-                        side-by-side · наведите для эффектов
+                        рядом · наведите для эффектов
                     </div>
                     <div className={`demo-row ${styles.sideBySideRow}`}>
                         {GRADIENT_VARIANTS.map(g => (
@@ -229,74 +221,74 @@ export function ButtonsPage() {
             </section>
 
             <section className="section">
-                <h2 className="section-title">Custom gradient — designer</h2>
+                <h2 className="section-title">Пользовательский градиент — конструктор</h2>
                 <p className={styles.designerLede}>
-                    Выбор типа + три цвета с живым превью и готовым CSS. Пресеты — стартовые точки.
+                    Выбор типа и трех цветов с живым превью и готовым CSS. Пресеты дают быстрые стартовые точки.
                 </p>
                 <GradientDesigner />
             </section>
 
             <section className="section">
-                <h2 className="section-title">Sizes</h2>
+                <h2 className="section-title">Размеры</h2>
                 <div className="demo-row">
-                    <Button variant="primary" size="sm">Small</Button>
-                    <Button variant="primary">Default</Button>
-                    <Button variant="primary" size="lg">Large</Button>
+                    <Button variant="primary" size="sm">Маленькая</Button>
+                    <Button variant="primary">Обычная</Button>
+                    <Button variant="primary" size="lg">Большая</Button>
                     <div className={styles.sizesGap} />
-                    <Button variant="gradient" size="sm">Small</Button>
-                    <Button variant="gradient">Default</Button>
-                    <Button variant="gradient" size="lg">Large</Button>
+                    <GradientButton size="sm">Маленькая</GradientButton>
+                    <GradientButton>Обычная</GradientButton>
+                    <GradientButton size="lg">Большая</GradientButton>
                 </div>
             </section>
 
             <section className="section">
-                <h2 className="section-title">States</h2>
+                <h2 className="section-title">Состояния</h2>
                 <div className={styles.statesGrid}>
                     <div />
-                    {['Default', 'Hover', 'Focus', 'Active', 'Disabled'].map(s => (
+                    {['По умолчанию', 'Наведение', 'Фокус', 'Нажатие', 'Отключено'].map(s => (
                         <div key={s} className={styles.stateHeader}>{s}</div>
                     ))}
 
-                    {STATE_ROWS.map(({ label, props }) => (
+                    {STATE_ROWS.map(({ label, Component, props }) => (
                         <React.Fragment key={label}>
                             <div className={styles.stateLabel}>{label}</div>
-                            <Button {...props}>Button</Button>
-                            <Button {...props} style={{ filter: 'brightness(1.05)' }}>Button</Button>
-                            <Button
+                            <Component {...props}>Кнопка</Component>
+                            <Component {...props} style={{ filter: 'brightness(1.05)' }}>Кнопка</Component>
+                            <Component
                                 {...props}
                                 style={{
                                     boxShadow:
                                         'inset 0 0 0 1px var(--btn-ring, var(--accent)),' +
                                         ' 0 0 0 3px color-mix(in srgb, var(--btn-ring, var(--accent)) 18%, transparent)',
                                 }}>
-                                Button
-                            </Button>
-                            <Button {...props} style={{ filter: 'brightness(.94)' }}>Button</Button>
-                            <Button {...props} disabled>Button</Button>
+                                Кнопка
+                            </Component>
+                            <Component {...props} style={{ filter: 'brightness(.94)' }}>Кнопка</Component>
+                            <Component {...props} disabled>Кнопка</Component>
                         </React.Fragment>
                     ))}
                 </div>
             </section>
 
             <section className="section">
-                <h2 className="section-title">With icons</h2>
+                <h2 className="section-title">С иконками</h2>
                 <div className="demo-row">
-                    <Button variant="primary" iconLeft={<IconPlus />}>New project</Button>
-                    <Button variant="secondary" iconLeft={<IconCheck />}>Approved</Button>
+                    <Button variant="primary" iconLeft={<IconPlus />}>Новый проект</Button>
+                    <Button variant="secondary" iconLeft={<IconCheck />}>Одобрено</Button>
                     <Button
                         variant="secondary"
                         iconOnly
                         iconLeft={<IconPlus />}
-                        aria-label="Add" />
-                    <Button variant="ghost" iconRight={<IconChevron />}>Continue</Button>
+                        aria-label="Добавить" />
+                    <Button variant="ghost" iconRight={<IconChevron />}>Продолжить</Button>
                 </div>
             </section>
 
             <section className="section">
-                <h2 className="section-title">Loading</h2>
+                <h2 className="section-title">Загрузка</h2>
                 <div className="demo-row">
-                    <Button variant="primary" loading>Saving…</Button>
-                    <Button variant="secondary" loading>Loading</Button>
+                    <Button variant="primary" loading>Сохранение…</Button>
+                    <Button variant="secondary" loading>Загрузка</Button>
                 </div>
             </section>
         </div>

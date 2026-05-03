@@ -24,7 +24,7 @@ export function Field({
                     )}
                     {(meta || optional) && (
                         <span className={styles.meta}>
-                            {meta || 'Optional'}
+                            {meta || 'Необязательно'}
                         </span>
                     )}
                 </div>

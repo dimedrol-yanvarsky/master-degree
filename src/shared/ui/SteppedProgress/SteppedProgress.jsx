@@ -1,2 +1,38 @@
-import { cn } from '../_utils';import styles from './SteppedProgress.module.css';
-export function SteppedProgress({steps,current=0,variant='dots'}){const maxIndex=steps.length-1;const safeIndex=Math.max(0,Math.min(maxIndex,current));const width=maxIndex===0?0:safeIndex/maxIndex*100;return <div className={cn(styles.root,styles[variant])}><div className={styles.track}/><div className={styles.fill} style={{width:width+'%'}}/><div className={styles.dots}>{steps.map((step,index)=><button key={step} type="button" className={cn(styles.dot,index<safeIndex&&styles.done,index===safeIndex&&styles.current)} aria-label={step}/>)}</div><div className={styles.labels}>{steps.map((step,index)=><span key={step} style={{left:(maxIndex===0?0:index/maxIndex*100)+'%'}}>{step}</span>)}</div></div>;}
+import { cn } from '../_utils';
+import styles from './SteppedProgress.module.css';
+
+const DEFAULT_STEPS = ['Данные', 'Проверка', 'Запуск'];
+
+export function SteppedProgress({ steps = DEFAULT_STEPS, current = 0, variant = 'dots' }) {
+    const maxIndex = steps.length - 1;
+    const safeIndex = Math.max(0, Math.min(maxIndex, current));
+    const ratio = maxIndex === 0 ? 0 : safeIndex / maxIndex;
+
+    return (
+        <div
+            className={cn(styles.root, styles[variant])}
+            style={{ '--step-progress': ratio }}>
+            <div className={styles.track} />
+            <div className={styles.fill} />
+            <div className={styles.dots}>
+                {steps.map((step, index) => (
+                    <button
+                        key={step}
+                        type="button"
+                        className={cn(
+                            styles.dot,
+                            index < safeIndex && styles.done,
+                            index === safeIndex && styles.current,
+                        )}
+                        aria-label={step}
+                    />
+                ))}
+            </div>
+            <div className={styles.labels}>
+                {steps.map((step) => (
+                    <span key={step}>{step}</span>
+                ))}
+            </div>
+        </div>
+    );
+}

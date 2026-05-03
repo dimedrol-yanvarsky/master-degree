@@ -148,6 +148,7 @@
 * { box-sizing: border-box; }
 html, body {
     margin: 0; padding: 0;
+    min-width: 0;
     background: var(--bg);
     color: var(--fg);
     font-family: var(--font-sans);
@@ -160,11 +161,13 @@ html, body {
 button { font-family: inherit; }
 
 /* ===== Shell ===== */
-.shell { min-height: 100vh; display: grid; grid-template-rows: auto 1fr; }
+.shell { min-height: 100vh; min-width: 0; display: grid; grid-template-rows: auto 1fr; }
 
 .topbar {
     position: sticky; top: 0; z-index: 40;
     display: flex; align-items: center; justify-content: space-between;
+    min-width: 0;
+    gap: 18px;
     padding: 14px 28px;
     background: color-mix(in srgb, var(--bg) 80%, transparent);
     backdrop-filter: blur(12px);
@@ -172,6 +175,7 @@ button { font-family: inherit; }
 }
 .kit-brand {
     display: flex; align-items: center; gap: 12px;
+    min-width: 0;
     font-family: var(--font-display);
     font-weight: 500;
     font-size: 14px;
@@ -189,12 +193,17 @@ button { font-family: inherit; }
 .kit-brand small {
     color: var(--fg-3); font-weight: 400;
     margin-left: 6px; font-size: 12px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.top-controls { display: flex; align-items: center; gap: 8px; }
+.top-controls { display: flex; align-items: center; gap: 8px; min-width: 0; }
 
 .theme-switch {
     display: flex; gap: 2px; padding: 2px;
+    min-width: 0;
     background: var(--bg-3);
     border: 1px solid var(--border);
     border-radius: var(--r-md);
@@ -207,6 +216,8 @@ button { font-family: inherit; }
     border-radius: calc(var(--r-md) - 2px);
     cursor: pointer;
     display: flex; align-items: center; gap: 6px;
+    min-width: 0;
+    white-space: nowrap;
     transition: all .15s;
 }
 .theme-switch button:hover { color: var(--fg); }
@@ -218,6 +229,7 @@ button { font-family: inherit; }
 
 .font-switch {
     display: flex; align-items: center; gap: 8px;
+    min-width: 0;
     padding: 6px 10px;
     background: var(--bg-3);
     border: 1px solid var(--border);
@@ -228,6 +240,8 @@ button { font-family: inherit; }
 }
 .font-switch select {
     background: transparent;
+    min-width: 0;
+    max-width: 100%;
     border: 0;
     color: var(--fg);
     font-family: var(--font-sans);
@@ -240,6 +254,7 @@ button { font-family: inherit; }
 .kit-layout {
     display: grid;
     grid-template-columns: 220px 1fr;
+    min-width: 0;
     min-height: calc(100vh - 57px);
 }
 .kit-nav {
@@ -247,6 +262,7 @@ button { font-family: inherit; }
     padding: 20px 14px;
     position: sticky; top: 57px; align-self: start;
     height: calc(100vh - 57px);
+    min-width: 0;
     overflow-y: auto;
 }
 .kit-nav-group {
@@ -260,6 +276,7 @@ button { font-family: inherit; }
 .kit-nav button,
 .kit-nav a {
     width: 100%;
+    min-width: 0;
     text-align: left;
     border: 0; background: transparent;
     padding: 7px 10px;
@@ -283,7 +300,13 @@ button { font-family: inherit; }
 [data-theme="minimal"] .kit-nav button.active,
 [data-theme="minimal"] .kit-nav a.active { color: var(--fg); background: var(--bg-3); }
 
-.kit-content { padding: 40px 48px 80px; max-width: 1200px; }
+.kit-content {
+    width: 100%;
+    min-width: 0;
+    max-width: 1280px;
+    padding: 40px 56px 80px;
+    overflow-x: clip;
+}
 
 .kit-head { margin-bottom: 32px; }
 .kit-eyebrow {
@@ -300,12 +323,14 @@ button { font-family: inherit; }
     font-size: 32px;
     letter-spacing: 0;
     margin: 0 0 8px;
+    overflow-wrap: anywhere;
 }
 .kit-lede {
     font-size: 15px;
     color: var(--fg-3);
     max-width: 640px;
     line-height: 1.55;
+    overflow-wrap: anywhere;
 }
 
 .section {
@@ -324,18 +349,26 @@ button { font-family: inherit; }
 
 .demo-grid {
     display: grid;
-    gap: 14px;
+    min-width: 0;
+    gap: 18px;
 }
 
 .demo-row {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    min-width: 0;
+    gap: 14px;
 }
 
 .demo-card {
-    background: var(--bg);
+    background: color-mix(in srgb, var(--bg) 68%, var(--bg-2));
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
-    padding: 24px;
+    min-width: 0;
+    padding: 28px;
+    box-shadow: var(--shadow-1);
+    overflow-wrap: anywhere;
 }
 .demo-card-label {
     font-family: var(--font-mono);
@@ -1472,10 +1505,12 @@ button { font-family: inherit; }
     background: rgba(0,0,0,.4);
     backdrop-filter: blur(3px);
     display: grid; place-items: center;
+    padding: 16px;
     border-radius: var(--r-lg);
 }
 .modal-box {
-    width: 380px;
+    width: min(380px, 100%);
+    min-width: 0;
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
@@ -1511,7 +1546,7 @@ button { font-family: inherit; }
 .table-wrap {
     border: 1px solid var(--border);
     border-radius: var(--r-md);
-    overflow: hidden;
+    overflow: auto;
 }
 
 /* Color swatch */
@@ -1546,8 +1581,9 @@ button { font-family: inherit; }
 /* Tweaks panel */
 #tweaks-panel {
     position: fixed;
-    bottom: 20px; right: 20px;
-    width: 260px;
+    bottom: max(12px, env(safe-area-inset-bottom)); right: max(12px, env(safe-area-inset-right));
+    width: min(260px, calc(100vw - 24px));
+    min-width: 0;
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: var(--r-md);
@@ -1564,6 +1600,7 @@ button { font-family: inherit; }
     display: inline-flex;
     flex-wrap: wrap;
     gap: 4px;
+    max-width: 100%;
     padding: 4px;
     background: var(--bg-2);
     border: 1px solid var(--border);
@@ -1593,6 +1630,8 @@ button { font-family: inherit; }
 /* Legacy .seg / .seg-btn (some pages reference these) */
 .seg {
     display: inline-flex;
+    flex-wrap: wrap;
+    max-width: 100%;
     gap: 4px;
     padding: 4px;
     background: var(--bg-2);
@@ -1674,6 +1713,7 @@ select:focus-visible {
 .type-scale > div {
     display: grid;
     grid-template-columns: 120px 1fr;
+    min-width: 0;
     gap: 16px;
     align-items: baseline;
     padding: 16px 0;
@@ -1695,6 +1735,8 @@ select:focus-visible {
     margin: 0;
     color: var(--fg-2);
     line-height: 1.6;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 .type-scale code {
     font-family: var(--font-mono);
@@ -1708,6 +1750,7 @@ select:focus-visible {
 .spacing-scale > div {
     display: grid;
     grid-template-columns: 90px 1fr;
+    min-width: 0;
     align-items: center;
     gap: 16px;
 }
@@ -1729,7 +1772,8 @@ select:focus-visible {
     border: 1px solid var(--border);
     border-radius: var(--r-md);
     background: var(--bg);
-    max-width: 260px;
+    width: min(100%, 260px);
+    min-width: 0;
 }
 .ui-sidebar a {
     color: var(--fg-2);
@@ -1748,6 +1792,7 @@ select:focus-visible {
     display: grid;
     gap: 12px;
     width: min(100%, 520px);
+    min-width: 0;
     padding: 14px;
     background: var(--bg);
     border: 1px solid var(--border);
@@ -1763,6 +1808,7 @@ select:focus-visible {
     align-items: center;
     gap: 10px;
     width: 100%;
+    min-width: 0;
     padding: 9px 10px;
     border: 0;
     border-radius: var(--r-sm);
@@ -1778,10 +1824,12 @@ select:focus-visible {
 }
 .command-list .kbd-ui {
     margin-left: auto;
+    flex-shrink: 0;
 }
 
 .tree-view {
-    max-width: 360px;
+    width: min(100%, 360px);
+    min-width: 0;
     padding: 12px;
     border: 1px solid var(--border);
     border-radius: var(--r-md);
@@ -1809,6 +1857,7 @@ select:focus-visible {
 .modal-stage {
     position: relative;
     min-height: 360px;
+    min-width: 0;
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
     overflow: hidden;
@@ -1820,6 +1869,7 @@ select:focus-visible {
 .modal-actions,
 .drawer-head {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
@@ -1859,6 +1909,7 @@ select:focus-visible {
 .dialog-card {
     display: grid;
     grid-template-columns: auto 1fr auto;
+    min-width: 0;
     gap: 14px;
     align-items: center;
     padding: 16px;
@@ -1870,6 +1921,7 @@ select:focus-visible {
     margin: 4px 0 0;
     color: var(--fg-3);
     line-height: 1.45;
+    overflow-wrap: anywhere;
 }
 .dialog-icon {
     width: 36px;
@@ -1886,6 +1938,7 @@ select:focus-visible {
 }
 .dialog-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
 }
 
@@ -1893,7 +1946,8 @@ select:focus-visible {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    max-width: 360px;
+    width: min(100%, 360px);
+    min-width: 0;
     padding: 12px;
     border: 1px solid var(--border);
     border-radius: var(--r-md);
@@ -1918,6 +1972,7 @@ select:focus-visible {
 .drawer-stage {
     position: relative;
     min-height: 320px;
+    min-width: 0;
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
     overflow: hidden;
@@ -1939,15 +1994,16 @@ select:focus-visible {
 .coachmark {
     position: relative;
     min-height: 250px;
+    min-width: 0;
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
     background: var(--bg-2);
 }
 .coachmark-target {
     position: absolute;
-    left: 58px;
+    left: min(58px, 14%);
     top: 54px;
-    width: 128px;
+    width: min(128px, calc(100% - 48px));
     height: 38px;
     border-radius: var(--r-md);
     background: var(--bg);
@@ -1956,9 +2012,10 @@ select:focus-visible {
 }
 .coachmark-card {
     position: absolute;
-    left: 210px;
+    left: min(210px, 42%);
     top: 82px;
-    width: 260px;
+    width: min(260px, calc(100% - 48px));
+    min-width: 0;
     padding: 14px;
     background: var(--bg);
     border: 1px solid var(--border);
@@ -1990,7 +2047,8 @@ select:focus-visible {
 
 .user-menu {
     position: relative;
-    width: 260px;
+    width: min(100%, 260px);
+    min-width: 0;
 }
 .user-menu-trigger,
 .user-menu-popover button {
@@ -2008,7 +2066,11 @@ select:focus-visible {
 }
 .user-menu-trigger span {
     flex: 1;
+    min-width: 0;
     text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .user-menu-popover {
     margin-top: 8px;
@@ -2030,7 +2092,8 @@ select:focus-visible {
 .chat-ui {
     display: grid;
     gap: 12px;
-    max-width: 520px;
+    width: min(100%, 520px);
+    min-width: 0;
     padding: 16px;
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
@@ -2048,6 +2111,8 @@ select:focus-visible {
     background: var(--bg-2);
     color: var(--fg-2);
     line-height: 1.45;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 .chat-message.user {
     justify-content: flex-end;
@@ -2059,6 +2124,7 @@ select:focus-visible {
 .chat-compose {
     display: grid;
     grid-template-columns: 1fr auto;
+    min-width: 0;
     gap: 8px;
 }
 
@@ -2181,12 +2247,14 @@ select:focus-visible {
 
 .kanban-ui {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    min-width: 0;
     gap: 12px;
 }
 .kanban-ui section {
     display: grid;
     gap: 8px;
+    min-width: 0;
     padding: 10px;
     border: 1px solid var(--border);
     border-radius: var(--r-md);
@@ -2202,12 +2270,14 @@ select:focus-visible {
 }
 .kanban-ui article {
     padding: 10px;
+    min-width: 0;
     border: 1px solid var(--border);
     border-radius: var(--r-sm);
     background: var(--bg);
     color: var(--fg-2);
     font-size: 13px;
     box-shadow: var(--shadow-1);
+    overflow-wrap: anywhere;
 }
 
 .stat-card {
@@ -2245,6 +2315,7 @@ select:focus-visible {
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
     background: var(--bg);
+    min-width: 0;
     padding: 14px;
 }
 .graph-ui svg {
@@ -2283,6 +2354,8 @@ select:focus-visible {
 .auth-card {
     display: grid;
     gap: 14px;
+    width: min(100%, 360px);
+    min-width: 0;
     max-width: 360px;
     padding: 22px;
     box-shadow: var(--shadow-2);
@@ -2292,6 +2365,7 @@ select:focus-visible {
 }
 .settings-row {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: 20px;
     padding: 16px;
@@ -2312,6 +2386,7 @@ select:focus-visible {
 .wizard-ui {
     display: grid;
     gap: 34px;
+    min-width: 0;
     padding: 22px;
 }
 .wizard-panel {
@@ -2324,16 +2399,18 @@ select:focus-visible {
 }
 .wizard-panel > div:last-child {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
 }
 .pricing-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
 }
 .pricing-card {
     display: grid;
     gap: 12px;
+    min-width: 0;
     padding: 18px;
 }
 .pricing-card.featured {
@@ -2373,6 +2450,29 @@ select:focus-visible {
 
     .top-controls {
         flex-wrap: wrap;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .font-switch {
+        flex: 1 1 180px;
+        min-width: 0;
+    }
+
+    .font-switch select {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .theme-switch {
+        flex: 1 1 220px;
+        min-width: 0;
+    }
+
+    .theme-switch button {
+        flex: 1 1 0;
+        min-width: 0;
+        padding-inline: 8px;
     }
 
     .kit-layout {
@@ -2412,6 +2512,90 @@ select:focus-visible {
         left: 24px;
         right: 24px;
         top: 116px;
+        width: auto;
+    }
+}
+
+@media (max-width: 560px) {
+    .topbar {
+        padding: 12px;
+    }
+
+    .kit-brand {
+        align-items: flex-start;
+    }
+
+    .kit-brand small {
+        display: block;
+        margin-left: 0;
+        margin-top: 2px;
+        white-space: normal;
+    }
+
+    .top-controls > button,
+    .font-switch,
+    .theme-switch {
+        flex-basis: 100%;
+        width: 100%;
+    }
+
+    .theme-switch {
+        overflow-x: auto;
+    }
+
+    .kit-nav {
+        padding-inline: 10px;
+    }
+
+    .kit-nav > div {
+        min-width: 150px;
+    }
+
+    .kit-content {
+        padding: 24px 12px 48px;
+    }
+
+    .kit-title {
+        font-size: 28px;
+    }
+
+    .demo-card,
+    .chart-host {
+        padding: 18px;
+    }
+
+    .modal-stage,
+    .drawer-stage {
+        min-height: 300px;
+    }
+
+    .dialog-actions,
+    .modal-actions,
+    .wizard-panel > div:last-child {
+        justify-content: stretch;
+    }
+
+    .dialog-actions > *,
+    .modal-actions > *,
+    .wizard-panel > div:last-child > * {
+        flex: 1 1 140px;
+    }
+
+    .chat-compose,
+    .type-scale > div,
+    .spacing-scale > div {
+        grid-template-columns: 1fr;
+    }
+
+    .coachmark-target {
+        left: 24px;
+        right: 24px;
+        width: auto;
+    }
+
+    .coachmark-card {
+        left: 16px;
+        right: 16px;
         width: auto;
     }
 }

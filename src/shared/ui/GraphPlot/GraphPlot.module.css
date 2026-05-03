@@ -1,1 +1,100 @@
-.root{margin:0;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg);padding:14px}.caption{display:inline-flex;margin-bottom:8px;padding:3px 8px;border-radius:var(--r-full);background:var(--accent-soft);color:var(--accent);font-family:var(--font-mono);font-size:12px}.root svg{width:100%;height:auto;display:block}.gridFill{stroke:var(--border);opacity:.8}.root pattern path{stroke:var(--border);stroke-width:.7;fill:none}.axis{stroke:var(--fg-3);stroke-width:1.4}.tick{stroke:var(--fg-4);stroke-width:1}.root text{fill:var(--fg-4);font-family:var(--font-mono);font-size:10px;text-anchor:middle}.curve{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.quadratic .curve{stroke:var(--success-600)}.logistic .curve{stroke:oklch(68% .18 25)}
+.root {
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--bg);
+    padding: 14px;
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    animation: plot-in 220ms ease both;
+}
+
+.root:hover {
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-2);
+    transform: translateY(-2px);
+}
+
+.caption {
+    display: inline-flex;
+    margin-bottom: 8px;
+    padding: 3px 8px;
+    border-radius: var(--r-full);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.root svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.gridFill {
+    stroke: var(--border);
+    opacity: .8;
+}
+
+.root pattern path {
+    stroke: var(--border);
+    stroke-width: .7;
+    fill: none;
+}
+
+.axis {
+    stroke: var(--fg-3);
+    stroke-width: 1.4;
+}
+
+.tick {
+    stroke: var(--fg-4);
+    stroke-width: 1;
+}
+
+.root text {
+    fill: var(--fg-4);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-anchor: middle;
+}
+
+.curve {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    animation: curve-draw 900ms cubic-bezier(.4, .1, .2, 1) both;
+}
+
+.quadratic .curve {
+    stroke: var(--success-600);
+}
+
+.logistic .curve {
+    stroke: var(--danger-500);
+}
+
+@keyframes curve-draw {
+    from {
+        stroke-dashoffset: 1;
+    }
+
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes plot-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}

@@ -6,7 +6,7 @@ export function Sidebar() {
         <aside className="kit-nav">
             {NAV.map(sec => (
                 <div key={sec.group}>
-                    <div className="kit-nav-group">{sec.group}</div>
+                    <div className="kit-nav-group">{sec.label || sec.group}</div>
                     {sec.items.map(item => (
                         <NavLink
                             key={item.id}

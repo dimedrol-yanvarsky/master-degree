@@ -6,12 +6,31 @@ function getEnabledTabs(tabs) {
     return tabs.filter((tab) => !tab.disabled);
 }
 
+const DEFAULT_TABS = [
+    {
+        value: 'summary',
+        label: 'Сводка',
+        content: 'Краткий обзор с главным решением и следующим действием.',
+    },
+    {
+        value: 'activity',
+        label: 'Активность',
+        badge: '12',
+        content: 'Последние обновления и заметки ревью находятся здесь.',
+    },
+    {
+        value: 'archive',
+        label: 'Архив',
+        disabled: true,
+    },
+];
+
 export function Tabs({
-    tabs,
+    tabs = DEFAULT_TABS,
     value,
     defaultValue,
     onChange,
-    ariaLabel = 'Tabs',
+    ariaLabel = 'Вкладки',
     variant = 'underline',
     size = 'md',
     stretch = false,

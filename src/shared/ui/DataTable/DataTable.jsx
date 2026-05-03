@@ -2,6 +2,19 @@ import { useMemo, useState } from 'react';
 import { cn } from '../_utils';
 import styles from './DataTable.module.css';
 
+const DEFAULT_COLUMNS = [
+    { key: 'project', label: 'Проект' },
+    { key: 'status', label: 'Статус' },
+    { key: 'owner', label: 'Владелец' },
+    { key: 'score', label: 'Оценка', align: 'right' },
+];
+
+const DEFAULT_ROWS = [
+    { id: 1, project: 'UI-кит', status: 'Готово', owner: 'Дизайн', score: 92 },
+    { id: 2, project: 'Документация', status: 'Активно', owner: 'Разработка', score: 78 },
+    { id: 3, project: 'Графики', status: 'Черновик', owner: 'Данные', score: 61 },
+];
+
 function getSortableValue(row, key) {
     const value = row[key];
     if (typeof value === 'number') return value;
@@ -10,8 +23,8 @@ function getSortableValue(row, key) {
 }
 
 export function DataTable({
-    columns,
-    rows,
+    columns = DEFAULT_COLUMNS,
+    rows = DEFAULT_ROWS,
     variant = 'default',
     sortable = false,
     selectable = false,
@@ -56,7 +69,7 @@ export function DataTable({
             {caption && (
                 <div className={styles.caption}>
                     <strong>{caption}</strong>
-                    {selectable && <span>{selectedIds.length} selected</span>}
+                    {selectable && <span>Выбрано: {selectedIds.length}</span>}
                 </div>
             )}
 
@@ -67,7 +80,7 @@ export function DataTable({
                             <th className={styles.checkCell}>
                                 <input
                                     type="checkbox"
-                                    aria-label="Select all rows"
+                                    aria-label="Выбрать все строки"
                                     checked={allSelected}
                                     onChange={() => setSelectedIds(allSelected ? [] : rows.map((row) => row.id))}
                                 />
@@ -81,7 +94,7 @@ export function DataTable({
                                     {sortable && column.sortable !== false ? (
                                         <button type="button" onClick={() => toggleSort(column)}>
                                             {column.label}
-                                            <span>{activeSort === 'asc' ? 'up' : activeSort === 'desc' ? 'down' : 'sort'}</span>
+                                            <span>{activeSort === 'asc' ? 'вверх' : activeSort === 'desc' ? 'вниз' : 'сортировать'}</span>
                                         </button>
                                     ) : column.label}
                                 </th>
@@ -96,7 +109,7 @@ export function DataTable({
                                 <td className={styles.checkCell}>
                                     <input
                                         type="checkbox"
-                                        aria-label={`Select ${row.project || row.id}`}
+                                        aria-label={`Выбрать ${row.project || row.id}`}
                                         checked={selectedIds.includes(row.id)}
                                         onChange={() => toggleRow(row.id)}
                                     />

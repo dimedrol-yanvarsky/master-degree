@@ -22,7 +22,10 @@ export function Slider({
 
     return (
         <Field label={label} htmlFor={generatedId} meta={showValue ? `${currentValue}${suffix}` : undefined}>
-            <div className={styles.root} style={{ '--slider-progress': `${progress}%` }}>
+            <div
+                className={styles.root}
+                data-variant={variant}
+                style={{ '--slider-progress': `${progress}%` }}>
                 <input
                     id={generatedId}
                     type="range"
@@ -33,6 +36,19 @@ export function Slider({
                     value={currentValue}
                     onChange={(event) => setCurrentValue(Number(event.target.value))}
                 />
+                <span className={styles.visualTrack} aria-hidden="true">
+                    <span className={styles.visualFill} />
+                </span>
+                <span className={styles.thumbRail} aria-hidden="true">
+                    <span className={styles.thumb} />
+                </span>
+                {marks && (
+                    <div className={styles.markDots} aria-hidden="true">
+                        {marks.map((mark) => (
+                            <i key={mark.value} style={{ left: `${((mark.value - min) / (max - min)) * 100}%` }} />
+                        ))}
+                    </div>
+                )}
                 {marks && (
                     <div className={styles.marks}>
                         {marks.map((mark) => (

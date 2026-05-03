@@ -50,7 +50,7 @@ const paths = {
     graph: <><circle cx="6" cy="7" r="2" /><circle cx="17" cy="5" r="2" /><circle cx="18" cy="17" r="2" /><circle cx="8" cy="18" r="2" /><path d="M8 7h7m2 0 1 8m-2 2H10m-2-1-1-7" /></>,
 };
 
-export function KitIcon({ name, size = 16, className = '', ...rest }) {
+export function KitIcon({ name = 'spark', size = 16, className = '', ...rest }) {
     return (
         <svg
             className={[styles.root, className].filter(Boolean).join(' ')}

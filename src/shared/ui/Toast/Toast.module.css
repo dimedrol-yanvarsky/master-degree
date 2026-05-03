@@ -1,1 +1,157 @@
-.root{display:flex;align-items:flex-start;gap:10px;max-width:360px;padding:12px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);box-shadow:var(--shadow-2)}.root strong,.root span{display:block}.root strong{font-size:13.5px}.root span{margin-top:2px;color:var(--fg-3);font-size:12.5px}.success>svg{color:var(--success-600)}.danger>svg{color:var(--danger-500)}.accent>svg{color:var(--accent)}.ribbon{border-left:4px solid currentColor}.glass{background:color-mix(in srgb,var(--bg) 76%,transparent);backdrop-filter:blur(12px)}
+.root {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: min(100%, 420px);
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--bg);
+    box-shadow: var(--shadow-2);
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    animation: toast-in 220ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.root:hover {
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-3);
+    transform: translateY(-2px);
+}
+
+.icon {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: var(--r-sm);
+    background: var(--bg-2);
+    color: var(--fg-3);
+}
+
+.body {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+}
+
+.root strong,
+.body span {
+    display: block;
+}
+
+.root strong {
+    font-size: 13.5px;
+}
+
+.body span {
+    color: var(--fg-3);
+    font-size: 12.5px;
+    line-height: 1.35;
+}
+
+.success .icon {
+    color: var(--success-600);
+    background: color-mix(in srgb, var(--success-500) 14%, var(--bg));
+}
+
+.danger .icon {
+    color: var(--danger-500);
+    background: color-mix(in srgb, var(--danger-500) 14%, var(--bg));
+}
+
+.accent .icon {
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.warning .icon {
+    color: var(--warning-700);
+    background: color-mix(in srgb, var(--warning-500) 16%, var(--bg));
+}
+
+.ribbon {
+    border-left: 4px solid currentColor;
+}
+
+.glass {
+    background: color-mix(in srgb, var(--bg) 76%, transparent);
+    backdrop-filter: blur(12px);
+}
+
+.compact {
+    align-items: center;
+    padding: 9px 10px;
+}
+
+.compact .body {
+    grid-template-columns: auto 1fr;
+    align-items: baseline;
+    column-gap: 8px;
+}
+
+.compact .body span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.progress {
+    display: block;
+    height: 5px;
+    margin-top: 7px;
+    overflow: hidden;
+    border-radius: var(--r-full);
+    background: var(--bg-3);
+}
+
+.progress::before {
+    content: '';
+    display: block;
+    width: var(--toast-progress);
+    height: 100%;
+    border-radius: inherit;
+    background: currentColor;
+    transform-origin: left;
+    animation: toast-progress 650ms ease-out both;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 16px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 12px;
+    bottom: 12px;
+    width: 2px;
+    border-radius: var(--r-full);
+    background: currentColor;
+    opacity: .55;
+}
+
+@keyframes toast-progress {
+    from {
+        transform: scaleX(0);
+    }
+
+    to {
+        transform: scaleX(1);
+    }
+}
+
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}

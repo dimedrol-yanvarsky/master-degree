@@ -7,7 +7,7 @@ export default function HomePage() {
             <h1 className={styles.title}>project-fuzzy-psychology</h1>
             <p className={styles.subtitle}>React + FSD · черновик приложения</p>
             <Link to="/ui-kit" className={styles.cta}>
-                Открыть UI Kit →
+                Открыть UI-кит →
             </Link>
         </main>
     );

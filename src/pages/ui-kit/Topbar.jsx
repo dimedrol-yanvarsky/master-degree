@@ -5,8 +5,8 @@ export function Topbar({ fontKey, setFontKey, theme, setTheme, tweaksOn, setTwea
         <header className="topbar">
             <div className="kit-brand">
                 <div className="kit-mark">K</div>
-                <span>Kit</span>
-                <small>— neutral modern · v0.1</small>
+                <span>UI-кит</span>
+                <small>— нейтральный современный · v0.1</small>
             </div>
 
             <div className="top-controls">
@@ -16,7 +16,7 @@ export function Topbar({ fontKey, setFontKey, theme, setTheme, tweaksOn, setTwea
                         fontSize: 10.5,
                         textTransform: 'uppercase',
                         letterSpacing: 0,
-                    }}>font</span>
+                    }}>шрифт</span>
                     <select value={fontKey} onChange={e => setFontKey(e.target.value)}>
                         {Object.entries(FONT_PAIRS).map(([k, p]) => (
                             <option key={k} value={k}>{p.label}</option>
@@ -34,7 +34,7 @@ export function Topbar({ fontKey, setFontKey, theme, setTheme, tweaksOn, setTwea
                             background: '#fff',
                             display: 'inline-block',
                         }} />
-                        Minimal
+                        Минимальная
                     </button>
                     <button className={theme === 'light' ? 'active' : ''} onClick={() => setTheme('light')}>
                         <span style={{
@@ -44,7 +44,7 @@ export function Topbar({ fontKey, setFontKey, theme, setTheme, tweaksOn, setTwea
                             background: 'var(--accent)',
                             display: 'inline-block',
                         }} />
-                        Light
+                        Светлая
                     </button>
                     <button className={theme === 'dark' ? 'active' : ''} onClick={() => setTheme('dark')}>
                         <span style={{
@@ -55,7 +55,7 @@ export function Topbar({ fontKey, setFontKey, theme, setTheme, tweaksOn, setTwea
                             border: '1px solid var(--border-2)',
                             display: 'inline-block',
                         }} />
-                        Dark
+                        Темная
                     </button>
                 </div>
 
@@ -73,7 +73,7 @@ export function Topbar({ fontKey, setFontKey, theme, setTheme, tweaksOn, setTwea
                         textTransform: 'uppercase',
                         letterSpacing: 0,
                     }}>
-                    tweaks
+                    настройки
                 </button>
             </div>
         </header>

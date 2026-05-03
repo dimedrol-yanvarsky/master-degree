@@ -1,17 +1,22 @@
 import { ACCENTS, FONT_PAIRS } from './config';
 
 const FONT_OPTIONS = Object.entries(FONT_PAIRS);
+const DENSITY_LABELS = {
+    compact: 'Плотно',
+    cozy: 'Удобно',
+    roomy: 'Свободно',
+};
 
 export function TweaksPanel({ tweaks, setTweak, onClose, fontKey, setFontKey }) {
     return (
         <div id="tweaks-panel" className="visible">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                <div style={{ fontWeight: 500 }}>Tweaks</div>
-                <button onClick={onClose} aria-label="Close tweaks" style={{ background: 'transparent', border: 0, cursor: 'pointer', color: 'var(--fg-3)', fontSize: 16 }}>x</button>
+                <div style={{ fontWeight: 500 }}>Настройки вида</div>
+                <button onClick={onClose} aria-label="Закрыть настройки вида" style={{ background: 'transparent', border: 0, cursor: 'pointer', color: 'var(--fg-3)', fontSize: 16 }}>x</button>
             </div>
 
             <div style={{ padding: '10px 0', borderTop: '1px solid var(--border)' }}>
-                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0, color: 'var(--fg-3)', marginBottom: 8 }}>Typeface</div>
+                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0, color: 'var(--fg-3)', marginBottom: 8 }}>Шрифт</div>
                 <select
                     value={fontKey}
                     onChange={event => setFontKey(event.target.value)}
@@ -19,12 +24,12 @@ export function TweaksPanel({ tweaks, setTweak, onClose, fontKey, setFontKey }) 
                     {FONT_OPTIONS.map(([key, pair]) => <option key={key} value={key}>{pair.label}</option>)}
                 </select>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--fg-4)', marginTop: 8 }}>
-                    Updates --font-sans, --font-display and --font-mono.
+                    Обновляет --font-sans, --font-display и --font-mono.
                 </div>
             </div>
 
             <div style={{ padding: '10px 0', borderTop: '1px solid var(--border)' }}>
-                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0, color: 'var(--fg-3)', marginBottom: 8 }}>Accent</div>
+                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0, color: 'var(--fg-3)', marginBottom: 8 }}>Акцент</div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {Object.entries(ACCENTS).map(([key, accent]) => (
                         <button
@@ -36,23 +41,23 @@ export function TweaksPanel({ tweaks, setTweak, onClose, fontKey, setFontKey }) 
                     ))}
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--fg-4)', marginTop: 8 }}>
-                    {ACCENTS[tweaks.accent]?.label || 'Iris'} ? OKLCH
+                    {ACCENTS[tweaks.accent]?.label || 'Ирис'} / OKLCH
                 </div>
             </div>
 
             <div style={{ padding: '10px 0', borderTop: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0, color: 'var(--fg-3)' }}>Corner radius</div>
+                    <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0, color: 'var(--fg-3)' }}>Радиус углов</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)' }}>{tweaks.radiusScale}x</div>
                 </div>
                 <input type="range" min="0" max="3" step="0.25" value={tweaks.radiusScale} onChange={event => setTweak('radiusScale', +event.target.value)} style={{ width: '100%', accentColor: 'var(--accent)' }} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--fg-4)', marginTop: 2 }}>
-                    <span>sharp</span><span>soft</span><span>pill</span>
+                    <span>остро</span><span>мягко</span><span>капсула</span>
                 </div>
             </div>
 
             <div style={{ padding: '10px 0', borderTop: '1px solid var(--border)' }}>
-                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0, color: 'var(--fg-3)', marginBottom: 8 }}>Density</div>
+                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0, color: 'var(--fg-3)', marginBottom: 8 }}>Плотность</div>
                 <div className="segmented" style={{ width: '100%' }}>
                     {['compact', 'cozy', 'roomy'].map(density => (
                         <button
@@ -64,7 +69,7 @@ export function TweaksPanel({ tweaks, setTweak, onClose, fontKey, setFontKey }) 
                                 document.documentElement.style.fontSize = String(16 * scale) + 'px';
                             }}
                             style={{ flex: 1 }}>
-                            {density}
+                            {DENSITY_LABELS[density]}
                         </button>
                     ))}
                 </div>

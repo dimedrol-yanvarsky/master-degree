@@ -46,7 +46,7 @@
 }
 
 .ribbon .fill {
-    background: linear-gradient(90deg, var(--accent), oklch(72% .18 195));
+    background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 48%, var(--success-500)));
 }
 
 .pulse .fill {

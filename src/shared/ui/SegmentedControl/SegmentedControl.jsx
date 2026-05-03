@@ -5,12 +5,18 @@ function getEnabledOptions(options) {
     return options.filter((option) => !option.disabled);
 }
 
+const DEFAULT_OPTIONS = [
+    { value: 'compact', label: 'Плотно', description: 'Компактная раскладка' },
+    { value: 'cozy', label: 'Удобно', description: 'Обычное рабочее пространство' },
+    { value: 'roomy', label: 'Свободно', description: 'Презентационный режим' },
+];
+
 export function SegmentedControl({
-    options,
+    options = DEFAULT_OPTIONS,
     value,
     defaultValue,
     onChange,
-    ariaLabel = 'Mode',
+    ariaLabel = 'Режим',
     variant = 'default',
     size = 'md',
     equal = false,

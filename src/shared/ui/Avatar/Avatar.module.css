@@ -1,1 +1,89 @@
-.root{--avatar-color:var(--accent);align-items:center;background:var(--bg-3);border:1px solid var(--border);border-radius:50%;color:var(--fg-2);display:inline-grid;flex-shrink:0;font-size:12px;font-weight:600;height:32px;overflow:hidden;place-items:center;width:32px}.root img{width:100%;height:100%;object-fit:cover;display:block}.xs{width:20px;height:20px;font-size:9px}.sm{width:24px;height:24px;font-size:10px}.md{width:32px;height:32px}.lg{width:40px;height:40px;font-size:14px}.xl{width:56px;height:56px;font-size:18px}.solid{background:var(--avatar-color);border-color:transparent;color:white}.gradient{background:radial-gradient(circle at 28% 18%,color-mix(in srgb,white 46%,transparent),transparent 32%),linear-gradient(135deg,var(--avatar-color),color-mix(in oklch,var(--avatar-color) 58%,oklch(70% .16 195)));border-color:transparent;color:white}.ring{box-shadow:0 0 0 3px color-mix(in srgb,var(--avatar-color) 18%,transparent);border-color:var(--avatar-color)}.stack{display:inline-flex}.stack .root{margin-left:-8px;box-shadow:0 0 0 2px var(--bg)}.stack .root:first-child{margin-left:0}
+.root {
+    --avatar-color: var(--accent);
+    align-items: center;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--fg-2);
+    display: inline-grid;
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 600;
+    height: 32px;
+    overflow: hidden;
+    place-items: center;
+    width: 32px;
+    transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.root:hover {
+    transform: translateY(-1px);
+    border-color: var(--avatar-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--avatar-color) 14%, transparent);
+}
+
+.root img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.xs {
+    width: 20px;
+    height: 20px;
+    font-size: 9px;
+}
+
+.sm {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+}
+
+.md {
+    width: 32px;
+    height: 32px;
+}
+
+.lg {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+}
+
+.xl {
+    width: 56px;
+    height: 56px;
+    font-size: 18px;
+}
+
+.solid {
+    background: var(--avatar-color);
+    border-color: transparent;
+    color: white;
+}
+
+.gradient {
+    background: radial-gradient(circle at 28% 18%, color-mix(in srgb, white 46%, transparent), transparent 32%), linear-gradient(135deg, var(--avatar-color), color-mix(in srgb, var(--avatar-color) 64%, var(--success-500)));
+    border-color: transparent;
+    color: white;
+}
+
+.ring {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--avatar-color) 18%, transparent);
+    border-color: var(--avatar-color);
+}
+
+.stack {
+    display: inline-flex;
+}
+
+.stack .root {
+    margin-left: -8px;
+    box-shadow: 0 0 0 2px var(--bg);
+}
+
+.stack .root:first-child {
+    margin-left: 0;
+}

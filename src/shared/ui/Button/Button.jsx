@@ -55,7 +55,7 @@ export function Button({
     disabled = false,
     fullWidth = false,
     className = '',
-    children,
+    children = 'Действие',
     onClick,
     type = 'button',
     ...rest

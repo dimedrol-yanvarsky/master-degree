@@ -1,46 +1,73 @@
 .section {
-    max-width: 720px;
+    width: 100%;
+    min-width: 0;
+    max-width: 820px;
 }
 
 .sectionWide {
-    max-width: 980px;
+    width: 100%;
+    min-width: 0;
+    max-width: 1080px;
 }
 
 .twoColumn {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-    max-width: 980px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    width: 100%;
+    min-width: 0;
+    max-width: 860px;
 }
 
 .stack {
     display: grid;
-    gap: 14px;
+    min-width: 0;
+    gap: 20px;
+}
+
+.description,
+.cardDescription {
+    margin: -6px 0 16px;
+    color: var(--fg-3);
+    font-size: 13px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.cardDescription {
+    margin: -6px 0 14px;
 }
 
 .controlWidth {
+    width: 100%;
+    min-width: 0;
     max-width: 360px;
 }
 
 .cardGrid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+    gap: 20px;
 }
 
 .questionGrid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+    gap: 20px;
 }
 
 .questionCard {
     display: grid;
     gap: 14px;
-    padding: 18px;
+    min-width: 0;
+    padding: 22px;
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
-    background: var(--bg);
+    background: color-mix(in srgb, var(--bg) 68%, var(--bg-2));
 }
 
 .questionCard h3,
@@ -57,6 +84,7 @@
     color: var(--fg-3);
     font-size: 13px;
     line-height: 1.5;
+    overflow-wrap: anywhere;
 }
 
 .optionStack {
@@ -109,27 +137,33 @@
 
 .chartGrid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+    gap: 20px;
 }
 
 .chartGrid > :last-child {
-    grid-column: 1 / -1;
+    grid-column: auto;
 }
 
 .controlShowcase {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    width: 100%;
+    min-width: 0;
+    max-width: 820px;
 }
 
 .controlPanel {
     display: grid;
     gap: 18px;
-    padding: 18px;
+    min-width: 0;
+    padding: 22px;
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
-    background: var(--bg);
+    background: color-mix(in srgb, var(--bg) 68%, var(--bg-2));
 }
 
 .subhead {
@@ -138,13 +172,48 @@
 
 .statsGrid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    width: 100%;
+    min-width: 0;
+    max-width: 760px;
+}
+
+.navbarStack {
+    display: grid;
+    justify-items: stretch;
     gap: 14px;
+    width: 100%;
+    min-width: 0;
+}
+
+.sidebarGrid,
+.userMenuGrid,
+.chatGrid,
+.authGrid,
+.codeGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 20px;
+    width: 100%;
+    min-width: 0;
+}
+
+.sidebarGrid {
+    max-width: 360px;
+}
+
+.chatGrid,
+.authGrid {
+    max-width: 560px;
 }
 
 .radiiGrid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    width: 100%;
+    min-width: 0;
     gap: 12px;
 }
 
@@ -168,22 +237,34 @@
 
 .skeletonStack {
     display: grid;
+    min-width: 0;
     gap: 12px;
 }
 
 .graphWrap {
     display: grid;
+    min-width: 0;
     gap: 16px;
 }
 
 .graphInner {
+    width: 100%;
     max-width: 520px;
+    min-width: 0;
 }
 
 .graphGrid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    width: 100%;
+    min-width: 0;
+    max-width: 760px;
+}
+
+.section *,
+.sectionWide * {
+    min-width: 0;
 }
 
 @media (max-width: 760px) {
@@ -193,11 +274,23 @@
     .controlShowcase,
     .questionGrid,
     .statsGrid,
-    .graphGrid {
+    .graphGrid,
+    .sidebarGrid,
+    .userMenuGrid,
+    .chatGrid,
+    .authGrid,
+    .codeGrid {
         grid-template-columns: 1fr;
     }
 
     .chartGrid > :last-child {
         grid-column: auto;
+    }
+}
+
+@media (max-width: 520px) {
+    .questionCard,
+    .controlPanel {
+        padding: 18px;
     }
 }

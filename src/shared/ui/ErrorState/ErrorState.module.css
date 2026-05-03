@@ -1,1 +1,50 @@
-.root{display:grid;place-items:center;text-align:center;gap:10px;padding:42px 20px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg)}.root svg{color:var(--danger-500)}.root h3{margin:0;font-size:18px}.root p{margin:0 0 8px;color:var(--fg-3)}
+.root {
+    display: grid;
+    place-items: center;
+    text-align: center;
+    gap: 10px;
+    padding: 42px 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--bg);
+    box-shadow: var(--shadow-1);
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    animation: error-in 220ms ease both;
+}
+
+.root:hover {
+    border-color: color-mix(in srgb, var(--danger-500) 28%, var(--border));
+    box-shadow: var(--shadow-2);
+    transform: translateY(-2px);
+}
+
+.root svg {
+    color: var(--danger-500);
+    transition: transform 160ms ease;
+}
+
+.root:hover svg {
+    transform: scale(1.06);
+}
+
+.root h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.root p {
+    margin: 0 0 8px;
+    color: var(--fg-3);
+}
+
+@keyframes error-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}

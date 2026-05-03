@@ -1,1 +1,79 @@
-.root{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:16px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg)}.root h3{margin:0;font-size:18px}.root p{margin:4px 0 0;color:var(--fg-3);line-height:1.45}.icon{width:36px;height:36px;display:grid;place-items:center;border-radius:var(--r-md);background:var(--accent-soft);color:var(--accent)}.actions{display:flex;gap:8px}.danger .icon{background:color-mix(in srgb,var(--danger-500) 12%,var(--bg));color:var(--danger-500)}.success .icon{background:color-mix(in srgb,var(--success-500) 12%,var(--bg));color:var(--success-600)}@media(max-width:720px){.root{grid-template-columns:1fr}}
+.root {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--bg);
+    box-shadow: var(--shadow-1);
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    animation: dialog-in 200ms ease both;
+}
+
+.root:hover {
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-2);
+    transform: translateY(-2px);
+}
+
+.root h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.root p {
+    margin: 4px 0 0;
+    color: var(--fg-3);
+    line-height: 1.45;
+}
+
+.icon {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--r-md);
+    background: var(--accent-soft);
+    color: var(--accent);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.root:hover .icon {
+    transform: scale(1.04);
+    box-shadow: 0 8px 24px color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+.danger .icon {
+    background: color-mix(in srgb, var(--danger-500) 12%, var(--bg));
+    color: var(--danger-500);
+}
+
+.success .icon {
+    background: color-mix(in srgb, var(--success-500) 12%, var(--bg));
+    color: var(--success-600);
+}
+
+@keyframes dialog-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media(max-width:720px) {
+    .root {
+        grid-template-columns: 1fr;
+    }
+}
