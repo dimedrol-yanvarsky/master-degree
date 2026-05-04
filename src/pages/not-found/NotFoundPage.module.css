@@ -1,0 +1,9 @@
+.root {
+    display: grid;
+    place-items: center;
+    min-height: min(620px, calc(100vh - 180px));
+}
+
+.root > * {
+    width: min(100%, 560px);
+}

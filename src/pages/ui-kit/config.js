@@ -26,18 +26,6 @@ export const FONT_PAIRS = {
         display: "'Geist', ui-sans-serif, sans-serif",
         label: 'Geist + Geist Mono',
     },
-    'inter-tight': {
-        sans: "'Inter Tight', ui-sans-serif, system-ui, sans-serif",
-        mono: "'JetBrains Mono', ui-monospace, monospace",
-        display: "'Inter Tight', ui-sans-serif, sans-serif",
-        label: 'Inter Tight + JetBrains Mono',
-    },
-    'general-sans': {
-        sans: "'General Sans', ui-sans-serif, system-ui, sans-serif",
-        mono: "'JetBrains Mono', ui-monospace, monospace",
-        display: "'Cabinet Grotesk', 'General Sans', sans-serif",
-        label: 'General Sans + Cabinet Grotesk',
-    },
 };
 
 export const NAV = [
@@ -63,6 +51,7 @@ export const NAV = [
             { id: 'tabs',      label: 'Вкладки' },
             { id: 'segmented', label: 'Сегментный выбор' },
             { id: 'advanced-inputs', label: 'Сложные поля' },
+            { id: 'text-editor', label: 'Редактор текста' },
         ],
     },
     {
@@ -88,6 +77,7 @@ export const NAV = [
             { id: 'navbars',     label: 'Верхняя навигация' },
             { id: 'breadcrumbs', label: 'Хлебные крошки' },
             { id: 'sidebar',     label: 'Боковая навигация' },
+            { id: 'scrollbar',   label: 'Скроллбар' },
             { id: 'palette',     label: 'Палитра команд' },
             { id: 'tree',        label: 'Дерево' },
         ],

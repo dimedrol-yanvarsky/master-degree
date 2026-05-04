@@ -39,7 +39,7 @@
     min-width: 0;
     background: var(--bg-2);
     border: 1px solid var(--border);
-    border-radius: var(--r-lg);
+    border-radius: var(--r-frame);
 }
 
 .sideBySideLabel {
@@ -219,7 +219,7 @@
     min-width: 0;
     background: var(--bg-2);
     border: 1px solid var(--border);
-    border-radius: var(--r-lg);
+    border-radius: var(--r-frame);
     display: flex;
     gap: 14px;
     align-items: center;

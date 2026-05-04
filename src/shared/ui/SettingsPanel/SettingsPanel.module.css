@@ -1,6 +1,6 @@
 .root {
     border: 1px solid var(--border);
-    border-radius: var(--r-lg);
+    border-radius: var(--r-frame);
     background: var(--bg);
     overflow: hidden;
     box-shadow: var(--shadow-1);

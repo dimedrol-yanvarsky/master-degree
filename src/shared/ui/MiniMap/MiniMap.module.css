@@ -4,7 +4,7 @@
     min-height: 340px;
     overflow: hidden;
     border: 1px solid var(--border);
-    border-radius: var(--r-lg);
+    border-radius: var(--r-frame);
     background: linear-gradient(90deg, color-mix(in srgb, var(--border) 60%, transparent) 1px, transparent 1px), linear-gradient(0deg, color-mix(in srgb, var(--border) 60%, transparent) 1px, transparent 1px), var(--bg-2);
     background-size: 40px 40px;
     box-shadow: var(--shadow-1);

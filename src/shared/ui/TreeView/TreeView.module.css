@@ -3,7 +3,7 @@
     min-width: 0;
     padding: 12px;
     border: 1px solid var(--border);
-    border-radius: var(--r-md);
+    border-radius: var(--r-frame);
     background: var(--bg);
     font-size: 13px;
     box-shadow: var(--shadow-1);

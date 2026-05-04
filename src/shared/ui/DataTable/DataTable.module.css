@@ -1,7 +1,7 @@
 .wrap {
     min-width: 0;
     border: 1px solid var(--border);
-    border-radius: var(--r-md);
+    border-radius: var(--r-frame);
     overflow: auto;
     background: var(--bg);
     box-shadow: var(--shadow-1);
@@ -125,7 +125,7 @@
 }
 
 .analytics {
-    border-radius: var(--r-lg);
+    border-radius: var(--r-frame);
     box-shadow: var(--shadow-2);
 }
 

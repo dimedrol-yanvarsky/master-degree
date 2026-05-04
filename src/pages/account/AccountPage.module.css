@@ -1,0 +1,397 @@
+.root {
+    display: grid;
+    min-height: 100%;
+    place-items: center;
+    padding: clamp(28px, 4vw, 56px);
+}
+
+.card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(430px, .92fr);
+    align-items: center;
+    gap: clamp(34px, 5vw, 72px);
+    width: min(100%, 1180px);
+    min-width: 0;
+    padding: clamp(28px, 4vw, 52px);
+    border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+    border-radius: var(--r-frame);
+    background:
+        radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 42%),
+        radial-gradient(circle at 78% 12%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 34%),
+        var(--bg);
+    box-shadow: var(--shadow-2);
+    overflow: visible;
+    transition:
+        width 520ms cubic-bezier(.22, 1, .36, 1),
+        padding 520ms cubic-bezier(.22, 1, .36, 1),
+        gap 520ms cubic-bezier(.22, 1, .36, 1),
+        border-color 220ms ease,
+        box-shadow 220ms ease;
+    view-transition-name: account-card;
+}
+
+.register {
+    grid-template-columns: minmax(450px, .94fr) minmax(0, 1.06fr);
+    width: min(100%, 1260px);
+    padding: clamp(32px, 4.4vw, 60px);
+}
+
+.visual {
+    grid-row: 1;
+    display: grid;
+    min-width: 0;
+    min-height: clamp(420px, 37vw, 560px);
+    place-items: center;
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    view-transition-name: account-visual;
+}
+
+.login .visual {
+    grid-column: 1;
+}
+
+.register .visual {
+    grid-column: 2;
+}
+
+.visualImage {
+    display: block;
+    width: min(100%, 740px);
+    height: auto;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+    transition: width 520ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.register .visualImage {
+    width: min(100%, 780px);
+}
+
+.formPanel {
+    grid-row: 1;
+    display: grid;
+    justify-self: stretch;
+    min-width: 0;
+    max-width: 560px;
+    gap: 22px;
+    view-transition-name: account-form;
+    transition:
+        max-width 520ms cubic-bezier(.22, 1, .36, 1),
+        transform 520ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.login .formPanel {
+    grid-column: 2;
+}
+
+.register .formPanel {
+    grid-column: 1;
+    max-width: 600px;
+}
+
+.header {
+    display: grid;
+    justify-items: start;
+    gap: 14px;
+    text-align: left;
+}
+
+.icon {
+    width: 64px;
+    height: 64px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--r-frame);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.header h1 {
+    margin: 2px 0 0;
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: clamp(38px, 3vw, 48px);
+    line-height: 1.04;
+    letter-spacing: 0;
+}
+
+.header p {
+    max-width: 520px;
+    margin: 0;
+    color: var(--fg-3);
+    font-size: 15.5px;
+    line-height: 1.58;
+}
+
+.fields {
+    display: grid;
+    gap: 17px;
+}
+
+.formPanel input:not([type='checkbox']) {
+    min-height: 48px;
+    font-size: 15px;
+}
+
+.formPanel label {
+    font-size: 14px;
+}
+
+.formPanel button[type='submit'] {
+    min-height: 50px;
+    font-size: 15px;
+}
+
+.options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 14px;
+}
+
+.options a,
+.footer a {
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 160ms ease, text-shadow 160ms ease;
+}
+
+.options a:hover,
+.footer a:hover {
+    color: var(--fg);
+    text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.options a:focus-visible,
+.footer a:focus-visible {
+    outline: 0;
+    color: var(--fg);
+    text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.footer {
+    margin: 0;
+    color: var(--fg-3);
+    font-size: 14.5px;
+    text-align: center;
+}
+
+.accountRoot {
+    display: grid;
+    min-height: 100%;
+    place-items: start center;
+    padding: clamp(28px, 4vw, 56px);
+}
+
+.profileCard {
+    display: grid;
+    gap: 28px;
+    width: min(100%, 1040px);
+    min-width: 0;
+    padding: clamp(28px, 4vw, 52px);
+    border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+    border-radius: var(--r-frame);
+    background:
+        radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 40%),
+        radial-gradient(circle at 86% 12%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 32%),
+        var(--bg);
+    box-shadow: var(--shadow-2);
+}
+
+.profileHeader {
+    display: grid;
+    justify-items: start;
+    gap: 14px;
+    max-width: 720px;
+}
+
+.profileHeader h1 {
+    margin: 2px 0 0;
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: clamp(38px, 3vw, 52px);
+    line-height: 1.04;
+    letter-spacing: 0;
+}
+
+.profileHeader p {
+    margin: 0;
+    color: var(--fg-3);
+    font-size: 16px;
+    line-height: 1.62;
+}
+
+.profileGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    width: 100%;
+    min-width: 0;
+}
+
+.profileStat {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-frame);
+    background: color-mix(in srgb, var(--bg) 76%, var(--bg-2));
+}
+
+.profileStat span {
+    color: var(--fg-3);
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.profileStat strong {
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: 34px;
+    line-height: 1;
+}
+
+.profileStat p {
+    margin: 0;
+    color: var(--fg-3);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.profileActions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+::view-transition-group(account-card),
+::view-transition-group(account-form),
+::view-transition-group(account-visual) {
+    animation-duration: 560ms;
+    animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+}
+
+::view-transition-old(account-card),
+::view-transition-new(account-card),
+::view-transition-old(account-form),
+::view-transition-new(account-form),
+::view-transition-old(account-visual),
+::view-transition-new(account-visual) {
+    height: 100%;
+    overflow: clip;
+}
+
+@media (max-width: 1040px) {
+    .card,
+    .register {
+        grid-template-columns: 1fr;
+        width: min(100%, 780px);
+        padding: clamp(26px, 5vw, 42px);
+    }
+
+    .visual,
+    .login .visual,
+    .register .visual,
+    .formPanel,
+    .login .formPanel,
+    .register .formPanel {
+        grid-column: 1;
+    }
+
+    .visual {
+        min-height: clamp(280px, 48vw, 430px);
+    }
+
+    .visualImage,
+    .register .visualImage {
+        width: min(100%, 680px);
+        transform: none;
+    }
+
+    .formPanel,
+    .register .formPanel {
+        max-width: none;
+    }
+
+    .header {
+        justify-items: center;
+        text-align: center;
+    }
+
+    .header p {
+        max-width: 560px;
+    }
+}
+
+@media (max-width: 760px) {
+    .profileGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .root,
+    .accountRoot {
+        padding: 18px;
+    }
+
+    .card,
+    .register {
+        padding: 22px;
+        gap: 24px;
+    }
+
+    .visual {
+        min-height: 220px;
+    }
+
+    .header h1 {
+        font-size: 32px;
+    }
+
+    .header p {
+        font-size: 14px;
+    }
+
+    .options {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .profileCard {
+        padding: 22px;
+    }
+
+    .profileHeader h1 {
+        font-size: 32px;
+    }
+
+    .profileActions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card,
+    .visualImage,
+    .formPanel,
+    .options a,
+    .footer a {
+        transition: none;
+    }
+
+    .card,
+    .visual,
+    .formPanel {
+        view-transition-name: none;
+    }
+}

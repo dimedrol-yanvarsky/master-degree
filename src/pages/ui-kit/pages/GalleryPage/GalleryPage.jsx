@@ -37,11 +37,13 @@ import {
     SettingsPanel,
     SidebarNav,
     Skeleton,
+    ScrollArea,
     Slider,
     SpacingScale,
     StatCard,
     SteppedProgress,
     Tabs,
+    TextEditor,
     Textarea,
     Timeline,
     Toast,
@@ -66,6 +68,7 @@ const PAGE_DESCRIPTIONS = {
     tabs: 'Вкладки переключают содержимое, поддерживают отключенные состояния и разные модели навигации.',
     segmented: 'Сегментный переключатель подходит для выбора режима, плотности или представления данных.',
     'advanced-inputs': 'Сложные поля объединяют ввод, быстрые действия и пошаговые индикаторы.',
+    'text-editor': 'Панель редактирования текста поддерживает выделение фрагмента и быстрые команды начертания.',
     icons: 'Иконки используются как функциональные маркеры действий и состояний, а не как декор.',
     cards: 'Карточки показывают контентные поверхности: метрики, действия, промо и краткие списки.',
     avatars: 'Аватары и бейджи помогают показать участников, статусы и группировку пользователей.',
@@ -79,6 +82,7 @@ const PAGE_DESCRIPTIONS = {
     navbars: 'Верхняя навигация демонстрирует разные модели меню и одинаковое выравнивание по левому краю.',
     breadcrumbs: 'Хлебные крошки показывают путь, этапы и быстрые действия с интерактивным выбором уровня.',
     sidebar: 'Боковая навигация включает обычный список, узкий режим и плотный вариант рабочей области.',
+    scrollbar: 'Кастомный скроллбар показывает прокручиваемые области без системной белой полосы и работает в светлой и темной теме.',
     palette: 'Палитра команд показывает быстрый поиск действий и клавиатурные подсказки.',
     tree: 'Дерево отображает иерархию проекта и группы вложенных элементов.',
     loaders: 'Индикаторы загрузки задают ожидание без лишнего визуального шума.',
@@ -203,6 +207,17 @@ const selectOptions = [
     { value: 'paused', label: 'Пауза', description: 'Недоступный пример', disabled: true },
 ];
 
+const scrollItems = [
+    { title: 'Профиль эмоций', meta: 'Обновлен после утренней записи' },
+    { title: 'Рекомендация дня', meta: 'Короткая практика на 7 минут' },
+    { title: 'Сигнал перегрузки', meta: 'Порог внимания превышен дважды' },
+    { title: 'Заметка терапевта', meta: 'Проверить сон и уровень энергии' },
+    { title: 'Восстановление', meta: 'Три спокойных окна в календаре' },
+    { title: 'Тестирование', meta: 'Новая анкета готова к прохождению' },
+    { title: 'Сводка недели', meta: 'Показатели стали стабильнее' },
+    { title: 'Архив наблюдений', meta: 'Доступны предыдущие записи' },
+];
+
 const tabsPreview = [
     { value: 'summary', label: 'Сводка', badge: '4', content: 'Краткий обзор с главным решением, уровнем риска и следующим действием.' },
     { value: 'activity', label: 'Активность', badge: '12', content: 'Последние обновления, смены владельца и заметки ревью находятся здесь.' },
@@ -262,6 +277,7 @@ function Forms({ type }) {
     if (type === 'select') return <div className={styles.twoColumn}><DemoCard label="С поиском"><Select searchable clearable label="Частота отчетов" options={selectOptions} defaultValue="weekly" hint="Введите текст для фильтрации, используйте стрелки и Enter для выбора." /></DemoCard><DemoCard label="Тональный"><Select variant="tonal" label="Приоритет" options={selectOptions} defaultValue="daily" /></DemoCard><DemoCard label="Стеклянный"><Select variant="glass" label="Окружение" options={selectOptions} defaultValue="manual" /></DemoCard><DemoCard label="Крупный тихий"><Select variant="quiet" size="lg" label="Релизный поток" options={selectOptions} placeholder="Выберите частоту" /></DemoCard></div>;
     if (type === 'tabs') return <Section title="Вкладки"><div className={styles.stack}><Tabs variant="underline" tabs={tabsPreview} defaultValue="summary" /><Tabs variant="pill" tabs={tabsPreview} defaultValue="activity" renderPanel={false} /><Tabs variant="cards" tabs={tabsPreview} defaultValue="files" stretch /><Tabs variant="rail" tabs={tabsPreview} defaultValue="summary" /></div></Section>;
     if (type === 'segmented') return <Section title="Сегментный переключатель"><div className={styles.stack}><SegmentedControl variant="default" options={densityOptions} defaultValue="cozy" /><SegmentedControl variant="floating" options={densityOptions} defaultValue="compact" /><SegmentedControl variant="toolbar" options={densityOptions} defaultValue="roomy" /><SegmentedControl variant="cards" options={densityOptions} defaultValue="cozy" equal /></div></Section>;
+    if (type === 'text-editor') return <Section title="Панель редактирования текста" description="Выделите слово или фразу внутри поля и примените жирное начертание, курсив или подчеркивание." wide><div className={styles.textEditorShowcase}><TextEditor defaultValue="Сегодня я отмечаю спокойствие, ясность и готовность двигаться дальше. Выделите любой фрагмент этого текста и измените его начертание." minHeight={220} /></div></Section>;
     return <div className={styles.twoColumn}><DemoCard label="Композиция поля"><Input label="API-ключ" action={<Kbd>Ctrl</Kbd>} defaultValue="sk_live_hidden" /></DemoCard><DemoCard label="Пошаговый ввод"><SteppedProgress variant="cards" steps={['Данные', 'Проверка', 'Запуск']} current={1} /></DemoCard></div>;
 }
 
@@ -287,6 +303,7 @@ function Navigation({ type }) {
     if (type === 'navbars') return <Section title="Варианты верхней навигации" description="Все навбары занимают одну ширину контейнера и стартуют от одной левой границы." wide><div className={styles.navbarStack}>{['default', 'pill', 'glass', 'bordered', 'dark', 'command', 'wings'].map(variant => <Navbar key={variant} variant={variant} />)}</div></Section>;
     if (type === 'breadcrumbs') return <Section title="Хлебные крошки" description="Варианты не просто рисуют путь: можно выбрать уровень, увидеть текущий шаг и выполнить быстрое действие."><div className={styles.stack}>{['slash', 'pill', 'steps', 'path'].map(variant => <Breadcrumbs key={variant} variant={variant} items={[{ label: 'Проекты' }, { label: 'UI-кит' }, { label: 'Компоненты', current: true }]} />)}</div></Section>;
     if (type === 'sidebar') return <Section title="Боковая навигация" description="Боковая навигация показывает обычный список, узкий режим и вариант рабочей области с бейджами и активным пунктом." wide><div className={styles.sidebarGrid}><SidebarNav title="Дизайн-система" items={[{ label: 'Обзор', icon: 'home', count: 4 }, { label: 'Компоненты', icon: 'layers', count: 42, tone: 'accent' }, { label: 'Токены', icon: 'settings' }, { label: 'Изменения', icon: 'file', count: 8, tone: 'warning' }]} /><SidebarNav variant="rail" items={[{ label: 'Домой', icon: 'home' }, { label: 'Слои', icon: 'layers' }, { label: 'Данные', icon: 'database' }, { label: 'Настройки', icon: 'settings' }]} /><SidebarNav variant="workspace" title="Рабочая область" items={[{ label: 'Входящие', icon: 'bell', count: 12, tone: 'warning' }, { label: 'План работ', icon: 'trend', count: 6, tone: 'success' }, { label: 'Файлы', icon: 'folder' }, { label: 'Безопасность', icon: 'shield' }]} /><SidebarNav variant="stacked" title="Разделы" items={[{ label: 'Основа', icon: 'grid', count: 3 }, { label: 'Паттерны', icon: 'layers', count: 5 }, { label: 'Обратная связь', icon: 'spark', count: 8 }]} /></div></Section>;
+    if (type === 'scrollbar') return <Section title="Кастомный скроллбар" description="Компонент подходит для списков, панелей и блоков кода: дорожка прозрачная, бегунок не выбивается на темном фоне и остается заметным на светлом." wide><div className={styles.scrollbarGrid}><ScrollArea items={scrollItems} height={340} /><ScrollArea variant="inset" items={scrollItems.slice().reverse()} height={340} /></div></Section>;
     if (type === 'palette') return <Section title="Палитра команд" wide><CommandPalette variant="spotlight" commands={['Создать компонент', 'Открыть токены', 'Скопировать импорт']} /></Section>;
     if (type === 'tree') return <Section title="Дерево"><TreeView nodes={[{ label: 'src', children: ['App.js', 'index.js'] }, { label: 'shared', children: ['ui', 'lib'] }, { label: 'package.json' }]} /></Section>;
     return null;

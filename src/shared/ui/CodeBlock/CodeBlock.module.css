@@ -1,7 +1,7 @@
 .block {
     background: var(--bg-2);
     border: 1px solid var(--border);
-    border-radius: var(--r-lg);
+    border-radius: var(--r-frame);
     overflow: hidden;
     font-family: var(--font-mono);
     box-shadow: var(--shadow-2);

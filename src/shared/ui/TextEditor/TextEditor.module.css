@@ -1,0 +1,151 @@
+.root {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    gap: 12px;
+}
+
+.header {
+    display: grid;
+    min-width: 0;
+    gap: 6px;
+}
+
+.label {
+    color: var(--fg);
+    font-size: 14px;
+    font-weight: 650;
+}
+
+.header p {
+    margin: 0;
+    color: var(--fg-3);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.panel {
+    display: grid;
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--r-frame);
+    background:
+        radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 42%),
+        var(--bg);
+    box-shadow: var(--shadow-1);
+    overflow: hidden;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg-2) 72%, transparent);
+}
+
+.toolButton {
+    width: 34px;
+    height: 34px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid transparent;
+    border-radius: var(--r-frame);
+    background: transparent;
+    color: var(--fg-2);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1;
+    transition:
+        background 140ms ease,
+        border-color 140ms ease,
+        color 140ms ease,
+        box-shadow 140ms ease;
+}
+
+.toolButton:hover {
+    background: var(--bg);
+    color: var(--fg);
+    border-color: color-mix(in srgb, var(--border-2) 72%, transparent);
+}
+
+.toolButton:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+}
+
+.bold {
+    font-weight: 800;
+}
+
+.italic {
+    font-style: italic;
+    font-weight: 700;
+}
+
+.underline {
+    font-weight: 750;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.editor {
+    min-width: 0;
+    padding: 18px;
+    color: var(--fg);
+    font: inherit;
+    font-size: 15px;
+    line-height: 1.65;
+    outline: 0;
+    overflow-wrap: anywhere;
+}
+
+.editor:focus {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.editor[data-empty='true']::before {
+    content: attr(data-placeholder);
+    color: var(--fg-4);
+    pointer-events: none;
+}
+
+.editor b,
+.editor strong {
+    font-weight: 750;
+}
+
+.editor i,
+.editor em {
+    font-style: italic;
+}
+
+.editor u {
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+}
+
+@media (max-width: 560px) {
+    .toolbar {
+        padding: 8px;
+    }
+
+    .toolButton {
+        width: 32px;
+        height: 32px;
+    }
+
+    .editor {
+        padding: 16px;
+        font-size: 14px;
+    }
+}

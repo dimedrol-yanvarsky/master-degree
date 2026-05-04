@@ -18,6 +18,8 @@ const paths = {
     settings: <path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Zm8 3.8 1.2 1.1-1.8 3.1-1.6-.5a7.1 7.1 0 0 1-1.3.8l-.3 1.6h-3.6l-.3-1.6a7.1 7.1 0 0 1-1.3-.8l-1.6.5-1.8-3.1L4 12l1.2-1.1c.1-.5.2-1 .4-1.5L5 7.8l1.8-3.1 1.6.5c.4-.3.8-.6 1.3-.8l.3-1.6h3.6l.3 1.6c.5.2.9.5 1.3.8l1.6-.5 1.8 3.1-.6 1.6c.2.5.3 1 .4 1.5Z" />,
     heart: <path d="M20.8 5.6a5.1 5.1 0 0 0-7.2 0L12 7.2l-1.6-1.6a5.1 5.1 0 0 0-7.2 7.2L12 21l8.8-8.2a5.1 5.1 0 0 0 0-7.2Z" />,
     star: <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z" />,
+    sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>,
+    moon: <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 7 7 0 1 0 20.5 14.5Z" />,
     calendar: <path d="M7 3v4M17 3v4M4 8h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Zm3 7h3m3 0h3M8 16h3m3 0h3" />,
     clock: <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-13v5l3 2" />,
     mail: <path d="M4 6h16v12H4V6Zm0 1 8 6 8-6" />,
@@ -50,7 +52,9 @@ const paths = {
     graph: <><circle cx="6" cy="7" r="2" /><circle cx="17" cy="5" r="2" /><circle cx="18" cy="17" r="2" /><circle cx="8" cy="18" r="2" /><path d="M8 7h7m2 0 1 8m-2 2H10m-2-1-1-7" /></>,
 };
 
-export function KitIcon({ name = 'spark', size = 16, className = '', ...rest }) {
+export function KitIcon({ name = 'spark', size = 16, className = '', strokeWidth, ...rest }) {
+    const iconStrokeWidth = strokeWidth ?? 1.8;
+
     return (
         <svg
             className={[styles.root, className].filter(Boolean).join(' ')}
@@ -59,7 +63,7 @@ export function KitIcon({ name = 'spark', size = 16, className = '', ...rest }) 
             height={size}
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.8"
+            strokeWidth={iconStrokeWidth}
             strokeLinecap="round"
             strokeLinejoin="round"
             aria-hidden="true"

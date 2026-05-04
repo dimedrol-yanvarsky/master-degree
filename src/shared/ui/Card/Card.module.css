@@ -1,7 +1,7 @@
 .root {
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: var(--r-lg);
+    border-radius: var(--r-frame);
     overflow: hidden;
     transition: box-shadow 180ms, transform 180ms, border-color 180ms;
 }

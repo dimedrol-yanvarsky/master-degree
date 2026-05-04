@@ -1,0 +1,368 @@
+.root,
+.questionnaire {
+    display: grid;
+    gap: 24px;
+    width: min(100%, 1120px);
+    margin-inline: auto;
+    padding: clamp(24px, 3vw, 38px);
+    box-sizing: border-box;
+}
+
+.hero,
+.questionnaireHead,
+.manualPanel {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+    padding: clamp(24px, 3vw, 34px);
+    border: 1px solid var(--border);
+    border-radius: var(--r-frame);
+    background:
+        radial-gradient(circle at 14% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 42%),
+        var(--bg);
+    box-shadow: var(--shadow-1);
+}
+
+.hero {
+    justify-items: center;
+    text-align: center;
+}
+
+.icon,
+.modalIcon {
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--r-frame);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.hero h1,
+.questionnaireHead h1,
+.manualIntro h2 {
+    margin: 4px 0 0;
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: clamp(34px, 3vw, 48px);
+    line-height: 1.05;
+    letter-spacing: 0;
+}
+
+.hero p,
+.questionnaireHead p,
+.manualIntro p {
+    max-width: 760px;
+    margin: 0;
+    color: var(--fg-3);
+    font-size: 15.5px;
+    line-height: 1.65;
+}
+
+.testingGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    width: 100%;
+    min-width: 0;
+}
+
+.testCard {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+    min-width: 0;
+    padding: 26px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-frame);
+    background:
+        radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 44%),
+        color-mix(in srgb, var(--bg) 78%, var(--bg-2));
+    box-shadow: var(--shadow-1);
+}
+
+.testTopline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+}
+
+.testCode {
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+}
+
+.testCard h2 {
+    margin: 4px 0 0;
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: clamp(27px, 2.4vw, 38px);
+    line-height: 1.08;
+    letter-spacing: 0;
+}
+
+.testCard p {
+    margin: 0;
+    color: var(--fg-3);
+    font-size: 15px;
+    line-height: 1.62;
+}
+
+.testCard .testMeta {
+    color: var(--fg-2);
+    font-size: 13.5px;
+    font-weight: 700;
+}
+
+.testCard ul {
+    display: grid;
+    gap: 10px;
+    margin: 2px 0 8px;
+    padding: 0;
+    list-style: none;
+}
+
+.testCard li {
+    display: flex;
+    gap: 10px;
+    color: var(--fg-2);
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.testCard li::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 7px;
+    height: 7px;
+    margin-top: .48em;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.startButton {
+    justify-self: start;
+    margin-top: 2px;
+}
+
+.manualPanel {
+    grid-template-columns: minmax(0, .9fr) minmax(320px, 1.1fr);
+    align-items: start;
+    gap: 24px;
+}
+
+.manualIntro {
+    display: grid;
+    gap: 13px;
+}
+
+.manualForm {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+}
+
+.formNotice {
+    margin: -2px 0 0;
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.modalLayer {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: color-mix(in srgb, #08070d 72%, transparent);
+    backdrop-filter: blur(10px);
+}
+
+.modal {
+    position: relative;
+    display: grid;
+    justify-items: start;
+    gap: 14px;
+    width: min(100%, 520px);
+    padding: 30px;
+    border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+    border-radius: var(--r-frame);
+    background: var(--bg);
+    box-shadow: var(--shadow-2);
+}
+
+.modal h2 {
+    margin: 0;
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: 30px;
+    line-height: 1.08;
+    letter-spacing: 0;
+}
+
+.modal p {
+    margin: 0;
+    color: var(--fg-3);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.closeButton {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: var(--r-frame);
+    background: var(--bg-2);
+    color: var(--fg-2);
+    cursor: pointer;
+    transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.closeButton:hover,
+.closeButton:focus-visible {
+    border-color: color-mix(in srgb, var(--accent) 36%, var(--border));
+    background: var(--accent-soft);
+    color: var(--accent);
+    outline: 0;
+}
+
+.modalActions,
+.submitRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.questionnaireHead {
+    justify-items: start;
+}
+
+.questionnaireHead span,
+.questionnaireHead small {
+    color: var(--fg-3);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.backLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 160ms ease;
+}
+
+.backLink:hover,
+.backLink:focus-visible {
+    color: var(--fg);
+    outline: 0;
+}
+
+.questions {
+    display: grid;
+    gap: 14px;
+}
+
+.questionCard {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+    margin: 0;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-frame);
+    background: var(--bg);
+    box-shadow: var(--shadow-1);
+}
+
+.questionCard legend {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    padding: 0;
+    color: var(--fg);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.questionCard legend span {
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.9;
+}
+
+.scale {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.scale label {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-frame);
+    background: color-mix(in srgb, var(--bg) 78%, var(--bg-2));
+    color: var(--fg-2);
+    font-size: 12px;
+    line-height: 1.35;
+    cursor: pointer;
+}
+
+.scale input {
+    accent-color: var(--accent);
+}
+
+@media (max-width: 900px) {
+    .testingGrid,
+    .manualPanel {
+        grid-template-columns: 1fr;
+    }
+
+    .scale {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .root,
+    .questionnaire {
+        padding: 18px;
+    }
+
+    .testTopline,
+    .modalActions,
+    .submitRow {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .startButton,
+    .modalActions button,
+    .submitRow button {
+        width: 100%;
+    }
+}

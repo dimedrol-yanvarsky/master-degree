@@ -1,0 +1,154 @@
+.root {
+    height: 100vh;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, transparent), transparent 320px),
+        var(--bg-2);
+    color: var(--fg);
+}
+
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 22px clamp(20px, 4vw, 64px) 0;
+}
+
+.navbar {
+    min-height: 82px;
+    border-radius: var(--r-frame);
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: blur(16px) saturate(1.18);
+}
+
+.logoMark {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+}
+
+.logoMark svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.logoTile {
+    fill: color-mix(in srgb, var(--bg) 90%, #f0e8ff);
+    stroke: none;
+    filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--accent) 20%, transparent));
+}
+
+.logoHalo {
+    fill: none;
+    stroke: color-mix(in srgb, var(--accent) 16%, transparent);
+    stroke-width: 3.2;
+}
+
+.logoOrbitMuted,
+.logoOrbitMain,
+.logoOrbitDotted {
+    fill: none;
+    stroke-linecap: round;
+}
+
+.logoOrbitMuted {
+    stroke: color-mix(in srgb, var(--accent) 24%, transparent);
+    stroke-width: 3;
+}
+
+.logoOrbitMain {
+    stroke: url("#logo-orbit");
+    stroke-width: 3.4;
+}
+
+.logoOrbitDotted {
+    stroke: color-mix(in srgb, var(--accent) 58%, transparent);
+    stroke-width: 2.2;
+    stroke-dasharray: .1 5;
+}
+
+.logoFace {
+    fill: url("#logo-face");
+    filter: url("#logo-soft-shadow");
+}
+
+.logoEye,
+.logoSmile {
+    fill: none;
+    stroke: color-mix(in srgb, #2f178f 78%, var(--accent));
+    stroke-linecap: round;
+    stroke-width: 2.6;
+}
+
+.logoSmile {
+    stroke-width: 2.8;
+}
+
+.logoPlanet,
+.logoPlanetSmall {
+    fill: url("#logo-face");
+    stroke: color-mix(in srgb, #ffffff 68%, var(--accent-soft));
+    stroke-width: 3;
+    filter: url("#logo-soft-shadow");
+}
+
+.logoText {
+    background:
+        radial-gradient(circle at 20% 20%, #f7eaff 0%, #caa7ff 28%, #8d5af0 58%, #5127c9 100%);
+    background-clip: text;
+    color: transparent;
+    font-size: 19px;
+    font-weight: 760;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.navbar a {
+    font-size: 16px;
+    padding: 11px 18px;
+}
+
+.navbar button {
+    width: 46px;
+    height: 46px;
+}
+
+.main {
+    width: min(100%, 1680px);
+    min-height: 0;
+    margin: 0 auto;
+    padding: 36px clamp(20px, 4vw, 64px) 80px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+}
+
+.main::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.uiKitMain {
+    width: auto;
+    max-width: none;
+    margin: 0;
+    overflow-y: auto;
+}
+
+@media (max-width: 720px) {
+    .header {
+        padding: 12px 12px 0;
+    }
+
+    .main {
+        padding: 24px 12px 56px;
+    }
+}

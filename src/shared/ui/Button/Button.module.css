@@ -18,7 +18,7 @@
     justify-content: center;
     gap: 8px;
     padding: 8px 14px;
-    border-radius: var(--r-md);
+    border-radius: var(--r-frame);
     border: 1px solid transparent;
     cursor: pointer;
     transition: background .14s, color .14s, border-color .14s, box-shadow .14s;
@@ -33,6 +33,12 @@
 .root > * { position: relative; z-index: 1; }
 .root:disabled { opacity: .45; cursor: not-allowed; }
 
+.root:not(.iconOnly) svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+}
+
 .root:focus-visible {
     outline: 0;
     box-shadow:
@@ -46,14 +52,24 @@
     height: 28px;
     padding: 6px 10px;
     font-size: 12.5px;
-    border-radius: var(--r-sm);
+    border-radius: var(--r-frame);
+}
+
+.sm:not(.iconOnly) svg {
+    width: 14px;
+    height: 14px;
 }
 
 .lg {
     height: 42px;
     padding: 10px 18px;
     font-size: 14.5px;
-    border-radius: var(--r-md);
+    border-radius: var(--r-frame);
+}
+
+.lg:not(.iconOnly) svg {
+    width: 18px;
+    height: 18px;
 }
 
 .iconOnly {

@@ -1,0 +1,109 @@
+.root {
+    --scrollbar-thumb: color-mix(in srgb, var(--fg-4) 58%, transparent);
+    --scrollbar-thumb-hover: color-mix(in srgb, var(--accent) 62%, var(--fg-4));
+    width: min(100%, 560px);
+    height: var(--scroll-area-height, 320px);
+    max-height: var(--scroll-area-max-height, none);
+    min-width: 0;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-frame);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--bg) 84%, transparent), transparent 58%),
+        var(--bg);
+    color: var(--fg-2);
+    box-shadow: var(--shadow-1);
+}
+
+.root::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.root::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.root::-webkit-scrollbar-thumb {
+    min-height: 44px;
+    border: 3px solid transparent;
+    border-radius: var(--r-full);
+    background: var(--scrollbar-thumb);
+    background-clip: padding-box;
+}
+
+.root::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+    background-clip: padding-box;
+}
+
+.root::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+.root:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+}
+
+.list {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    padding-right: 4px;
+}
+
+.item {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    padding: 13px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: color-mix(in srgb, var(--bg) 72%, var(--bg-2));
+}
+
+.item strong {
+    color: var(--fg);
+    font-size: 14px;
+    font-weight: 650;
+}
+
+.item span {
+    color: var(--fg-3);
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.subtle {
+    background: color-mix(in srgb, var(--bg) 68%, var(--bg-2));
+    box-shadow: none;
+}
+
+.inset {
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+    background:
+        radial-gradient(circle at top left, color-mix(in srgb, var(--accent) 12%, transparent), transparent 42%),
+        var(--bg-2);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 16%, transparent);
+}
+
+.compact {
+    width: min(100%, 420px);
+    padding: 10px;
+}
+
+.compact .item {
+    padding: 10px 11px;
+}
+
+@media (max-width: 560px) {
+    .root {
+        width: 100%;
+        padding: 12px;
+    }
+}

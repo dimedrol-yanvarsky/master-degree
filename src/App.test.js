@@ -1,15 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { HomePage } from './pages/home';
+import { MyEmotionsPage } from './pages/my-emotions';
 
-jest.mock('react-router-dom', () => ({
-    Link: ({ to, children, ...props }) => {
-        const React = require('react');
-        return React.createElement('a', { href: to, ...props }, children);
-    },
-}), { virtual: true });
-
-test('renders ui kit entry link', () => {
-    render(<HomePage />);
-    const linkElement = screen.getByText(/Открыть UI Kit/i);
-    expect(linkElement).toBeInTheDocument();
+test('renders my emotions start page', () => {
+    render(<MyEmotionsPage />);
+    expect(screen.getByRole('heading', { name: /Мои эмоции/i })).toBeInTheDocument();
 });

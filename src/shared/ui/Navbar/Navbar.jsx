@@ -9,10 +9,35 @@ const LINKS = [
     { label: 'Отчеты' },
 ];
 
-export function Navbar({ variant = 'default' }) {
-    if (variant === 'wings') {
+const defaultBrand = (
+    <>
+        <span>Н</span>
+        Нексус
+    </>
+);
+
+function DefaultLinks() {
+    return LINKS.map((link) => (
+        <a key={link.label} href={`#${link.label}`} className={link.active ? styles.active : ''}>
+            {link.label}
+        </a>
+    ));
+}
+
+export function Navbar({
+    variant = 'default',
+    brand = defaultBrand,
+    links,
+    actions,
+    className = '',
+    ariaLabel = 'Основная навигация',
+    size = 'md',
+}) {
+    const hasCustomSlots = links !== undefined || actions !== undefined || brand !== defaultBrand;
+
+    if (variant === 'wings' && !hasCustomSlots) {
         return (
-            <nav className={cn(styles.root, styles.wings)}>
+            <nav className={cn(styles.root, styles.wings, styles[size], className)} aria-label={ariaLabel}>
                 <div className={styles.wingLinks}>
                     <a href="#a">Работа</a>
                     <a href="#b" className={styles.active}>Кейсы</a>
@@ -27,9 +52,9 @@ export function Navbar({ variant = 'default' }) {
     }
 
     return (
-        <nav className={cn(styles.root, styles[variant])}>
-            <div className={styles.brand}><span>Н</span>Нексус</div>
-            {variant === 'command' ? (
+        <nav className={cn(styles.root, styles[variant], styles[size], className)} aria-label={ariaLabel}>
+            <div className={styles.brand}>{brand}</div>
+            {variant === 'command' && links === undefined ? (
                 <div className={styles.search}>
                     <KitIcon name="search" />
                     Поиск документов, команд и людей
@@ -37,14 +62,12 @@ export function Navbar({ variant = 'default' }) {
                 </div>
             ) : (
                 <div className={styles.links}>
-                    {LINKS.map((link) => (
-                        <a key={link.label} href={`#${link.label}`} className={link.active ? styles.active : ''}>
-                            {link.label}
-                        </a>
-                    ))}
+                    {links ?? <DefaultLinks />}
                 </div>
             )}
-            <div className={styles.right}><Badge tone="accent">В эфире</Badge></div>
+            <div className={styles.actions}>
+                {actions ?? <Badge tone="accent">В эфире</Badge>}
+            </div>
         </nav>
     );
 }
