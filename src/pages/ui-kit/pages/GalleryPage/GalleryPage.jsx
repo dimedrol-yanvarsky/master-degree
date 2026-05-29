@@ -117,16 +117,16 @@ const GROUP_LABELS = {
 };
 
 const COLORS = [
-    { name: 'Ирис', description: 'Основной акцент', shades: [
-        { step: 100, value: 'oklch(96% 0.03 290)', hex: '#f5efff' },
-        { step: 200, value: 'oklch(91% 0.06 290)', hex: '#e8d9ff' },
-        { step: 300, value: 'oklch(84% 0.11 290)', hex: '#d4b8ff' },
-        { step: 400, value: 'oklch(74% 0.18 290)', hex: '#b889ff' },
-        { step: 500, value: 'oklch(64% 0.24 290)', hex: '#9658f5' },
-        { step: 600, value: 'oklch(56% 0.25 290)', hex: '#7b35dc' },
-        { step: 700, value: 'oklch(47% 0.22 290)', hex: '#6125b3' },
-        { step: 800, value: 'oklch(38% 0.18 290)', hex: '#481c85' },
-        { step: 900, value: 'oklch(29% 0.13 290)', hex: '#32165d' },
+    { name: 'Шалфей', description: 'Основной акцент', shades: [
+        { step: 100, value: 'oklch(94% 0.035 145)', hex: '#ddf2dd' },
+        { step: 200, value: 'oklch(88% 0.055 145)', hex: '#c2e2c2' },
+        { step: 300, value: 'oklch(78% 0.080 145)', hex: '#98c598' },
+        { step: 400, value: 'oklch(64% 0.105 145)', hex: '#619d64' },
+        { step: 500, value: 'oklch(52% 0.110 145)', hex: '#3b793f' },
+        { step: 600, value: 'oklch(45% 0.105 145)', hex: '#29642e' },
+        { step: 700, value: 'oklch(38% 0.090 145)', hex: '#1e4e22' },
+        { step: 800, value: 'oklch(30% 0.070 145)', hex: '#133716' },
+        { step: 900, value: 'oklch(23% 0.055 145)', hex: '#09230b' },
     ] },
     { name: 'Бирюза', description: 'Информация и данные', shades: [
         { step: 100, value: 'oklch(96% 0.04 195)', hex: '#e9fbff' },
@@ -327,7 +327,7 @@ function Special({ type }) {
     if (type === 'kbd') return <Section title="Клавиши клавиатуры"><div className="demo-row"><Kbd>Ctrl</Kbd><Kbd variant="accent">K</Kbd><Kbd>Shift</Kbd><Kbd variant="dark">Enter</Kbd></div></Section>;
     if (type === 'map') return <Section title="Карта" description="Карта показывает несколько прикладных режимов: маршрут, тепловую карту и логистику." wide><div className={styles.stack}><MiniMap variant="route" /><MiniMap variant="heat" /><MiniMap variant="fleet" /></div></Section>;
     if (type === 'diff') return <Section title="Сравнение" description="Сравнение читается как инструмент ревью: есть заголовок файла, номера строк, единый и разделенный режимы." wide><div className={styles.stack}><DiffView /><DiffView variant="split" /></div></Section>;
-    if (type === 'code') return <Section title="Код" description="Код показывает оформление редактора, режим терминала, подсветку JSX и кнопку копирования." wide><div className={styles.codeGrid}><Code filename="ButtonExample.jsx" code={`import { Button, GradientButton, Input } from '@your-scope/ui-kit';\n\nexport function Toolbar() {\n    return (\n        <form>\n            <Input label="Проект" placeholder="UI-кит" />\n            <Button>Сохранить</Button>\n            <GradientButton gradient="mesh">Обновить</GradientButton>\n        </form>\n    );\n}`} /><Code variant="terminal" filename="terminal" code={`npm run build\n\nСборка прошла успешно.\nРазмеры файлов после gzip:\n  68.4 kB  build/static/js/main.js`} /><Code variant="paper" filename="tokens.css" code={`:root {\n    --accent: oklch(60% 0.25 290);\n    --radius: var(--r-md);\n}`} /></div></Section>;
+    if (type === 'code') return <Section title="Код" description="Код показывает оформление редактора, режим терминала, подсветку JSX и кнопку копирования." wide><div className={styles.codeGrid}><Code filename="ButtonExample.jsx" code={`import { Button, GradientButton, Input } from '@your-scope/ui-kit';\n\nexport function Toolbar() {\n    return (\n        <form>\n            <Input label="Проект" placeholder="UI-кит" />\n            <Button>Сохранить</Button>\n            <GradientButton gradient="mesh">Обновить</GradientButton>\n        </form>\n    );\n}`} /><Code variant="terminal" filename="terminal" code={`npm run build\n\nСборка прошла успешно.\nРазмеры файлов после gzip:\n  68.4 kB  build/static/js/main.js`} /><Code variant="paper" filename="tokens.css" code={`:root {\n    --accent: oklch(52% 0.11 145);\n    --radius: var(--r-md);\n}`} /></div></Section>;
     return null;
 }
 

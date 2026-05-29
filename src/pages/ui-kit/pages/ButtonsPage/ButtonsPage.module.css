@@ -1,6 +1,6 @@
-/* === Buttons page layout === */
 
-/* Gradient variants grid */
+
+
 
 .gradientGrid {
     display: grid;
@@ -56,13 +56,13 @@
     gap: 10px;
 }
 
-/* Sizes */
+
 
 .sizesGap {
     width: 24px;
 }
 
-/* States grid */
+
 
 .statesGrid {
     display: grid;
@@ -91,7 +91,7 @@
     min-width: 0;
 }
 
-/* Gradient designer */
+
 
 .designerLede {
     font-size: 13px;

@@ -6,11 +6,11 @@ function isDarkShade(shade) {
 }
 
 const DEFAULT_COLORS = [
-    { step: 100, value: 'oklch(96% 0.03 290)', hex: '#f5efff' },
-    { step: 300, value: 'oklch(84% 0.11 290)', hex: '#d4b8ff' },
-    { step: 500, value: 'oklch(64% 0.24 290)', hex: '#9658f5' },
-    { step: 700, value: 'oklch(47% 0.22 290)', hex: '#6125b3' },
-    { step: 900, value: 'oklch(29% 0.13 290)', hex: '#32165d' },
+    { step: 100, value: 'oklch(94% 0.035 145)', hex: '#ddf2dd' },
+    { step: 300, value: 'oklch(78% 0.080 145)', hex: '#98c598' },
+    { step: 500, value: 'oklch(52% 0.110 145)', hex: '#3b793f' },
+    { step: 700, value: 'oklch(38% 0.090 145)', hex: '#1e4e22' },
+    { step: 900, value: 'oklch(23% 0.055 145)', hex: '#09230b' },
 ];
 
 export function ColorScale({ colors = DEFAULT_COLORS }) {

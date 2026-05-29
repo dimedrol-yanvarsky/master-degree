@@ -30,77 +30,28 @@
     flex: 0 0 auto;
     display: grid;
     place-items: center;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--bg) 92%, var(--accent-soft));
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
-.logoMark svg {
+.logoImage {
     width: 100%;
     height: 100%;
     display: block;
-}
-
-.logoTile {
-    fill: color-mix(in srgb, var(--bg) 90%, #f0e8ff);
-    stroke: none;
-    filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--accent) 20%, transparent));
-}
-
-.logoHalo {
-    fill: none;
-    stroke: color-mix(in srgb, var(--accent) 16%, transparent);
-    stroke-width: 3.2;
-}
-
-.logoOrbitMuted,
-.logoOrbitMain,
-.logoOrbitDotted {
-    fill: none;
-    stroke-linecap: round;
-}
-
-.logoOrbitMuted {
-    stroke: color-mix(in srgb, var(--accent) 24%, transparent);
-    stroke-width: 3;
-}
-
-.logoOrbitMain {
-    stroke: url("#logo-orbit");
-    stroke-width: 3.4;
-}
-
-.logoOrbitDotted {
-    stroke: color-mix(in srgb, var(--accent) 58%, transparent);
-    stroke-width: 2.2;
-    stroke-dasharray: .1 5;
-}
-
-.logoFace {
-    fill: url("#logo-face");
-    filter: url("#logo-soft-shadow");
-}
-
-.logoEye,
-.logoSmile {
-    fill: none;
-    stroke: color-mix(in srgb, #2f178f 78%, var(--accent));
-    stroke-linecap: round;
-    stroke-width: 2.6;
-}
-
-.logoSmile {
-    stroke-width: 2.8;
-}
-
-.logoPlanet,
-.logoPlanetSmall {
-    fill: url("#logo-face");
-    stroke: color-mix(in srgb, #ffffff 68%, var(--accent-soft));
-    stroke-width: 3;
-    filter: url("#logo-soft-shadow");
+    object-fit: cover;
+    transform: scale(1.28);
+    transform-origin: center;
 }
 
 .logoText {
-    background:
-        radial-gradient(circle at 20% 20%, #f7eaff 0%, #caa7ff 28%, #8d5af0 58%, #5127c9 100%);
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--accent) 74%, #6f7d4f),
+        color-mix(in srgb, var(--accent) 42%, var(--fg))
+    );
     background-clip: text;
     color: transparent;
     font-size: 19px;
@@ -117,6 +68,57 @@
 .navbar button {
     width: 46px;
     height: 46px;
+}
+
+.navbar .accountAction {
+    width: 46px;
+    min-width: 46px;
+    height: 46px;
+    min-height: 46px;
+    flex: 0 0 46px;
+    aspect-ratio: 1;
+    padding: 0;
+    color: var(--fg-2);
+    border-radius: 50%;
+    background: var(--bg-3);
+    border-color: transparent;
+    box-shadow: none;
+    transition:
+        background 140ms ease,
+        color 140ms ease,
+        border-color 140ms ease,
+        box-shadow 140ms ease,
+        transform 140ms ease;
+}
+
+.accountInitials {
+    display: inline-grid;
+    width: 100%;
+    height: 100%;
+    place-items: center;
+    color: inherit;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 760;
+    line-height: 1;
+    letter-spacing: 0;
+}
+
+.navbar .accountAction:hover {
+    color: var(--fg);
+    background: var(--bg-2);
+    border-color: color-mix(in srgb, var(--border-2) 72%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-2) 72%, transparent);
+}
+
+.navbar .accountActionActive {
+    color: var(--fg);
+    background: var(--bg);
+    border-color: color-mix(in srgb, var(--border-2) 82%, transparent);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--border-2) 82%, transparent),
+        var(--shadow-1);
+    transform: translateY(-1px);
 }
 
 .main {

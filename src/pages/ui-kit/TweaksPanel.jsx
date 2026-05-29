@@ -41,7 +41,7 @@ export function TweaksPanel({ tweaks, setTweak, onClose, fontKey, setFontKey }) 
                     ))}
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--fg-4)', marginTop: 8 }}>
-                    {ACCENTS[tweaks.accent]?.label || 'Ирис'} / OKLCH
+                    {ACCENTS[tweaks.accent]?.label || 'Шалфей'} / OKLCH
                 </div>
             </div>
 

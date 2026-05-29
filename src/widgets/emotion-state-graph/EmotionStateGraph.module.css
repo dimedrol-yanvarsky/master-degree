@@ -1,0 +1,193 @@
+.root {
+    display: grid;
+    gap: 20px;
+    width: 100%;
+    max-width: 1140px;
+    min-width: 0;
+    margin: 0 auto;
+}
+
+.head {
+    min-width: 0;
+}
+
+.title {
+    margin: 0;
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: clamp(22px, 2.2vw, 28px);
+    font-weight: 600;
+    line-height: 1.16;
+    letter-spacing: 0;
+}
+
+.chartArea {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+    min-width: 0;
+}
+
+/* Левая ось со шкалой — фиксированный масштаб, не прокручивается. */
+.axis {
+    display: block;
+    flex: 0 0 auto;
+}
+
+/* Область графика прокручивается по горизонтали при росте числа колонок. */
+.scrollArea {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 6px;
+}
+
+.plot {
+    display: block;
+    overflow: visible;
+}
+
+.scaleLabelMain,
+.scaleLabelSub {
+    text-anchor: start;
+    dominant-baseline: middle;
+    letter-spacing: 0;
+}
+
+.scaleLabelMain {
+    fill: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.scaleLabelSub {
+    fill: var(--fg-3);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 400;
+}
+
+.gridLine {
+    stroke: var(--border);
+    stroke-width: 1.2;
+    stroke-dasharray: 4 7;
+}
+
+.areaFill {
+    pointer-events: none;
+}
+
+.trendLine {
+    fill: none;
+    stroke-width: 3.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.activePoint {
+    cursor: pointer;
+    outline: none;
+}
+
+/* Вторичная вершина: альтернативный терм с меньшей степенью истинности.
+   Стилизованное пунктирное кольцо с точкой по центру — визуально подчинено активной точке. */
+.secondaryPoint {
+    cursor: pointer;
+    outline: none;
+}
+
+.secondaryRing {
+    fill: var(--bg);
+    stroke-width: 2;
+    stroke-dasharray: 3.5 4;
+    opacity: 0.85;
+    transition: opacity 140ms ease;
+}
+
+.secondaryDot {
+    opacity: 0.85;
+    transition: opacity 140ms ease;
+}
+
+.secondaryPoint:hover .secondaryRing,
+.secondaryPoint:focus-visible .secondaryRing,
+.secondaryPoint:hover .secondaryDot,
+.secondaryPoint:focus-visible .secondaryDot {
+    opacity: 1;
+}
+
+.secondaryPoint:hover .nodeTooltip,
+.secondaryPoint:focus-visible .nodeTooltip {
+    opacity: 1;
+}
+
+.pointCircle {
+    stroke: var(--bg);
+    stroke-width: 3;
+    transition: r 140ms ease;
+}
+
+.activePoint:hover .pointCircle,
+.activePoint:focus-visible .pointCircle {
+    r: 16;
+}
+
+.dateLabel,
+.weekdayLabel {
+    text-anchor: middle;
+    letter-spacing: 0;
+}
+
+.dateLabel {
+    fill: var(--fg);
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.weekdayLabel {
+    fill: var(--fg-3);
+    font-size: 15px;
+    font-weight: 400;
+}
+
+.nodeTooltip {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 140ms ease;
+}
+
+.activePoint:hover .nodeTooltip,
+.activePoint:focus-visible .nodeTooltip {
+    opacity: 1;
+}
+
+.nodeTooltipBox {
+    fill: var(--bg);
+    stroke: var(--border-2);
+    stroke-width: 1.2;
+    filter: drop-shadow(0 6px 12px rgb(17 24 39 / 16%));
+}
+
+.nodeTooltip text {
+    fill: var(--fg-2);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    text-anchor: middle;
+}
+
+/* Инфо-панель: расширяем kit-Toast только в этом месте, не трогая глобальный компонент.
+   !important — чтобы перекрыть width:min(100%,420px) у Toast независимо от порядка стилей в бандле. */
+.note {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+/* Гасим hover-эффект Toast (подъём + тень) только для этой панели. */
+.note:hover {
+    border-color: var(--border) !important;
+    box-shadow: var(--shadow-2) !important;
+    transform: none !important;
+}

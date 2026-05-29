@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import styles from './CodeBlock.module.css';
 
-/* Very small JSX highlighter: splits into tag names, attribute names,
-   attribute values, and plain text. Good enough for usage examples. */
 function highlightJsx(source) {
     const tokens = [];
     const re = /(<\/?[A-Za-z][A-Za-z0-9]*)|(\s[A-Za-z-]+)(?==)|(=)|("[^"]*"|'[^']*'|\{[^}]*\})|(\/?>)/g;
@@ -35,7 +33,6 @@ export function CodeBlock({ code = DEFAULT_CODE, language = 'jsx', filename, var
             setCopied(true);
             setTimeout(() => setCopied(false), 1400);
         } catch {
-            /* ignore */
         }
     };
 

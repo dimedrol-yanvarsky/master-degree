@@ -8,14 +8,16 @@ export function Toast({
     title = 'Сохранено',
     description = 'Изменения применены.',
     variant = 'default',
+    icon,
     action,
     progress,
+    className,
 }) {
-    const icon = tone === 'danger' ? 'warning' : tone === 'accent' ? 'spark' : 'check';
+    const iconName = icon ?? (tone === 'danger' ? 'warning' : tone === 'accent' ? 'spark' : 'check');
 
     return (
-        <div className={cn(styles.root, styles[tone], styles[variant])} role="status">
-            <span className={styles.icon}><KitIcon name={icon} /></span>
+        <div className={cn(styles.root, styles[tone], styles[variant], className)} role="status">
+            <span className={styles.icon}><KitIcon name={iconName} /></span>
             <div className={styles.body}>
                 <strong>{title}</strong>
                 <span>{description}</span>

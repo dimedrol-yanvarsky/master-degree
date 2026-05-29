@@ -1,37 +1,33 @@
-/* =========================================================
-      UI Kit — foundations
-      Three themes: minimal (mono), light, dark
-      ========================================================= */
+
 
 :root {
-    /* Neutral spectrum — OKLCH warm stone, 11 steps. 
-          Replaces cool Bootstrap-era grays with Pantone Cloud-Dancer-adjacent tones. */
-    --n-50:  oklch(98.8% 0.003 85);   /* #FBFAF8 */
-    --n-100: oklch(97%   0.004 85);   /* #F5F3EF */
-    --n-150: oklch(95%   0.005 85);   /* #EFECE6 */
-    --n-200: oklch(92%   0.006 85);   /* #E7E3DB */
-    --n-300: oklch(86%   0.007 85);   /* #D6D1C6 */
-    --n-400: oklch(70%   0.008 85);   /* #ACA69A */
-    --n-500: oklch(56%   0.008 85);   /* #857F73 */
-    --n-600: oklch(44%   0.008 85);   /* #655F55 */
-    --n-700: oklch(33%   0.007 85);   /* #494540 */
-    --n-800: oklch(23%   0.006 85);   /* #30302C */
-    --n-900: oklch(16%   0.005 85);   /* #1F1F1C */
-    --n-950: oklch(10%   0.004 85);   /* #121210 */
 
-    /* Accent — Electric Iris (OKLCH). Precise, single-channel feel, not corporate blue. */
-    --a-50:  oklch(97%   0.02  290);
-    --a-100: oklch(94%   0.04  290);
-    --a-200: oklch(88%   0.09  290);
-    --a-300: oklch(78%   0.16  290);
-    --a-400: oklch(68%   0.22  290);
-    --a-500: oklch(60%   0.25  290);  /* main */
-    --a-600: oklch(52%   0.25  290);
-    --a-700: oklch(44%   0.22  290);
-    --a-800: oklch(36%   0.18  290);
-    --a-900: oklch(28%   0.14  290);
+    --n-50:  oklch(98.8% 0.003 85);
+    --n-100: oklch(97%   0.004 85);
+    --n-150: oklch(95%   0.005 85);
+    --n-200: oklch(92%   0.006 85);
+    --n-300: oklch(86%   0.007 85);
+    --n-400: oklch(70%   0.008 85);
+    --n-500: oklch(56%   0.008 85);
+    --n-600: oklch(44%   0.008 85);
+    --n-700: oklch(33%   0.007 85);
+    --n-800: oklch(23%   0.006 85);
+    --n-900: oklch(16%   0.005 85);
+    --n-950: oklch(10%   0.004 85);
 
-    /* Semantic — muted, modern (not stoplight) */
+
+    --a-50:  oklch(97%   0.018 145);
+    --a-100: oklch(94%   0.035 145);
+    --a-200: oklch(88%   0.055 145);
+    --a-300: oklch(78%   0.080 145);
+    --a-400: oklch(64%   0.105 145);
+    --a-500: oklch(52%   0.110 145);
+    --a-600: oklch(45%   0.105 145);
+    --a-700: oklch(38%   0.090 145);
+    --a-800: oklch(30%   0.070 145);
+    --a-900: oklch(23%   0.055 145);
+
+
     --success-100: oklch(94% 0.05 155);
     --success-200: oklch(90% 0.08 155);
     --success-300: oklch(82% 0.13 155);
@@ -52,7 +48,7 @@
     --warning-800: oklch(42% 0.12 58);
     --warning-900: oklch(30% 0.09 54);
 
-    /* Deeper crimson, not highlighter-neon */
+
     --danger-100:  oklch(94% 0.04 22);
     --danger-200:  oklch(90% 0.08 22);
     --danger-300:  oklch(82% 0.13 22);
@@ -63,7 +59,7 @@
     --danger-800:  oklch(30% 0.15 22);
     --danger-900:  oklch(22% 0.11 22);
 
-    /* Radii (tweakable) */
+
     --r-scale: 1;
     --r-xs: calc(2px * var(--r-scale));
     --r-sm: calc(4px * var(--r-scale));
@@ -77,17 +73,17 @@
     --r-3: var(--r-lg);
     --r-pill: var(--r-full);
 
-    /* Spacing scale */
+
     --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
     --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
     --s-12: 48px; --s-16: 64px;
 
-    /* Fonts (tweakable) */
+
     --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'Geist Mono', ui-monospace, monospace;
     --font-display: 'Geist', var(--font-sans);
 
-    /* Theme tokens — defaults = Light (warm stone) */
+
     --bg:        var(--n-50);
     --bg-2:      var(--n-100);
     --bg-3:      var(--n-150);
@@ -97,16 +93,16 @@
     --fg-4:      var(--n-400);
     --border:    var(--n-200);
     --border-2:  var(--n-300);
-    --accent:       oklch(60% 0.25 290);
-    --accent-fg:    oklch(98% 0.01 290);
-    --accent-soft:  oklch(94% 0.04 290);
-    --ring:         oklch(60% 0.25 290 / 0.28);
+    --accent:       oklch(52% 0.11 145);
+    --accent-fg:    oklch(98% 0.01 145);
+    --accent-soft:  oklch(94% 0.035 145);
+    --ring:         oklch(52% 0.11 145 / 0.28);
     --shadow-1:  0 1px 2px oklch(10% 0.005 85 / 0.04);
     --shadow-2:  0 1px 2px oklch(10% 0.005 85 / 0.04), 0 4px 8px oklch(10% 0.005 85 / 0.05);
     --shadow-3:  0 1px 2px oklch(10% 0.005 85 / 0.06), 0 12px 28px oklch(10% 0.005 85 / 0.08);
 }
 
-/* Minimal — pure achromatic, editorial. Inspired by Vercel's mono-plus-accent discipline. */
+
 [data-theme="minimal"] {
     --bg:        oklch(100% 0 0);
     --bg-2:      oklch(98% 0 0);
@@ -126,21 +122,21 @@
     --shadow-3: 0 1px 2px rgba(0,0,0,.05), 0 16px 40px rgba(0,0,0,.08);
 }
 
-/* Dark — Linear-style, near-black with cool undertone + soft accent lift */
+
 [data-theme="dark"] {
-    --bg:        oklch(14% 0.005 270);  /* #0B0C0F */
-    --bg-2:      oklch(17% 0.006 270);  /* #121318 */
-    --bg-3:      oklch(22% 0.008 270);  /* #191B22 */
+    --bg:        oklch(14% 0.005 270);
+    --bg-2:      oklch(17% 0.006 270);
+    --bg-3:      oklch(22% 0.008 270);
     --fg:        oklch(97% 0.003 270);
     --fg-2:      oklch(86% 0.005 270);
     --fg-3:      oklch(64% 0.008 270);
     --fg-4:      oklch(48% 0.008 270);
     --border:    oklch(25% 0.010 270);
     --border-2:  oklch(32% 0.012 270);
-    --accent:       oklch(76% 0.16 290);
-    --accent-fg:    oklch(12% 0.02 290);
-    --accent-soft:  oklch(76% 0.16 290 / 0.14);
-    --ring:         oklch(76% 0.16 290 / 0.38);
+    --accent:       oklch(74% 0.11 145);
+    --accent-fg:    oklch(13% 0.025 145);
+    --accent-soft:  oklch(74% 0.11 145 / 0.16);
+    --ring:         oklch(74% 0.11 145 / 0.38);
     --shadow-1: 0 1px 0 rgba(0,0,0,.4);
     --shadow-2: 0 1px 2px rgba(0,0,0,.5), 0 4px 12px rgba(0,0,0,.4);
     --shadow-3: 0 1px 2px rgba(0,0,0,.6), 0 20px 48px rgba(0,0,0,.55);
@@ -166,7 +162,7 @@ select {
     font-family: inherit;
 }
 
-/* ===== Shell ===== */
+
 .shell { min-height: 100vh; min-width: 0; display: grid; grid-template-rows: auto 1fr; }
 
 .topbar {
@@ -256,7 +252,7 @@ select {
     cursor: pointer;
 }
 
-/* ===== Layout: side nav + content ===== */
+
 .kit-layout {
     display: grid;
     grid-template-columns: 260px minmax(0, 1fr);
@@ -472,338 +468,13 @@ select {
 
 .divider { height: 1px; background: var(--border); margin: 32px 0; border: 0; }
 
-/* =========================================================
-      COMPONENTS
-      ========================================================= */
 
-/* Buttons */
-/* =========================================================================
-   Button styles — COMMENTED OUT.
-   The canonical Button component now lives at shared/ui/Button/. Its own
-   Button.module.css holds the scoped copy of these rules. This block is
-   kept here for reference; to re-enable remove the wrapper below and
-   restore internal `* /` sequences to close-comment markers.
-   ========================================================================= */
-/*
-.btn {
-    font-family: inherit;
-    font-size: 13.5px;
-    font-weight: 500;
-    letter-spacing: 0;
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 8px 14px;
-    border-radius: var(--r-md);
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: background .14s, color .14s, border-color .14s, box-shadow .14s;
-    line-height: 1;
-    height: 34px;
-    white-space: nowrap;
-    position: relative;
-    overflow: hidden;
-    isolation: isolate;
-}
-.btn > * { position: relative; z-index: 1; }
-.btn:disabled { opacity: .45; cursor: not-allowed; }
-/* Thin inner outline, derived from the button's own hue (--btn-ring),
-      fall back to --accent for variants that don't declare one. * /
-.btn:focus-visible {
-    outline: 0;
-    box-shadow:
-        inset 0 0 0 1.5px var(--btn-ring, var(--accent)),
-        0 0 0 3px color-mix(in srgb, var(--btn-ring, var(--accent)) 18%, transparent);
-}
-.btn-primary      { --btn-ring: color-mix(in oklch, var(--accent) 70%, black 30%); }
-.btn-secondary    { --btn-ring: var(--fg-2); }
-.btn-ghost        { --btn-ring: var(--fg-3); }
-.btn-success      { --btn-ring: var(--success-600); }
-.btn-destructive  { --btn-ring: var(--danger-600); }
-.btn-link         { --btn-ring: var(--accent); }
-.btn-gradient,
-.btn-gradient-conic,
-.btn-gradient-soft,
-.btn-gradient-mesh,
-.btn-gradient-shine,
-.btn-gradient-motion,
-.btn-gradient-aurora,
-.btn-gradient-glow,
-.btn-gradient-glass {
-    --btn-ring: color-mix(in oklch, var(--accent) 65%, black 35%);
-}
 
-/* Ripple — circular wave from click point. Non-blocking. * /
-.btn .ripple {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    background: currentColor;
-    opacity: 0.28;
-    transform: scale(0);
-    animation: ripple-out 0.55s cubic-bezier(.2,.6,.2,1) forwards;
-    z-index: 0;
-}
-@keyframes ripple-out {
-    to { transform: scale(2.4); opacity: 0; }
-}
 
-.btn-sm { height: 28px; padding: 6px 10px; font-size: 12.5px; border-radius: var(--r-frame); }
-.btn-lg { height: 42px; padding: 10px 18px; font-size: 14.5px; border-radius: var(--r-frame); }
 
-.btn-primary {
-    background: var(--accent);
-    color: var(--accent-fg);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 1px 2px rgba(0,0,0,.06);
-}
-.btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 88%, black); }
 
-.btn-secondary {
-    background: var(--bg);
-    color: var(--fg);
-    border-color: var(--border-2);
-    box-shadow: var(--shadow-1);
-}
-.btn-secondary:hover:not(:disabled) { background: var(--bg-2); }
 
-.btn-ghost {
-    background: transparent;
-    color: var(--fg-2);
-}
-.btn-ghost:hover:not(:disabled) { background: var(--bg-3); color: var(--fg); }
 
-.btn-destructive {
-    background: var(--danger-500);
-    color: #fff;
-    border-color: color-mix(in srgb, var(--danger-500) 75%, black 25%);
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.18),
-        0 1px 2px color-mix(in srgb, var(--danger-500) 40%, transparent);
-}
-.btn-destructive:hover:not(:disabled) { background: var(--danger-600); }
-
-.btn-success {
-    background: var(--success-500);
-    color: #fff;
-    border-color: color-mix(in srgb, var(--success-500) 70%, black 30%);
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.22),
-        0 1px 2px color-mix(in srgb, var(--success-500) 40%, transparent);
-}
-.btn-success:hover:not(:disabled) { background: var(--success-600); }
-
-/* ============================================================
-      Gradient buttons — family of 6 variants.
-      All keep the thin-ring focus + ripple from .btn base.
-      ============================================================ * /
-
-/* 1) Radial sweep — horizontal wash from left edge * /
-.btn-gradient {
-    color: var(--accent-fg);
-    background:
-        radial-gradient(120% 180% at 0% 50%,
-            color-mix(in oklch, var(--accent) 70%, white 30%) 0%,
-            var(--accent) 45%,
-            color-mix(in oklch, var(--accent) 78%, black 22%) 100%);
-    border: 1px solid color-mix(in srgb, var(--accent) 75%, black 25%);
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.28),
-        inset 0 -1px 0 rgba(0,0,0,.10),
-        0 2px 6px color-mix(in srgb, var(--accent) 35%, transparent);
-}
-.btn-gradient:hover:not(:disabled) {
-    filter: brightness(1.06) saturate(1.05);
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.28),
-        inset 0 -1px 0 rgba(0,0,0,.10),
-        0 4px 14px color-mix(in srgb, var(--accent) 45%, transparent);
-}
-
-/* 2) Dual-hue conic — accent → +60°-hue, flat, modern * /
-.btn-gradient-conic {
-    color: var(--accent-fg);
-    background:
-        linear-gradient(115deg,
-            var(--accent) 0%,
-            color-mix(in oklch, var(--accent) 60%, oklch(72% 0.18 195) 40%) 55%,
-            oklch(72% 0.18 195) 100%);
-    border: 1px solid color-mix(in srgb, var(--accent) 55%, black 45%);
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.26),
-        0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent);
-}
-.btn-gradient-conic:hover:not(:disabled) { filter: brightness(1.05); }
-
-/* 4) Soft gradient — pastel wash on tinted bg, subtle * /
-.btn-gradient-soft {
-    color: var(--accent);
-    background:
-        linear-gradient(135deg,
-            color-mix(in srgb, var(--accent) 18%, var(--bg)) 0%,
-            color-mix(in srgb, var(--accent)  6%, var(--bg)) 100%);
-    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-    box-shadow: none;
-}
-.btn-gradient-soft:hover:not(:disabled) {
-    background:
-        linear-gradient(135deg,
-            color-mix(in srgb, var(--accent) 26%, var(--bg)) 0%,
-            color-mix(in srgb, var(--accent) 10%, var(--bg)) 100%);
-}
-
-/* 5) Mesh — multi-point radial, dreamy * /
-.btn-gradient-mesh {
-    color: var(--accent-fg);
-    background:
-        radial-gradient(60% 130% at 20% 20%, color-mix(in oklch, var(--accent) 55%, white 45%), transparent 60%),
-        radial-gradient(70% 140% at 100% 80%, color-mix(in oklch, var(--accent) 85%, black 15%), transparent 55%),
-        radial-gradient(80% 120% at 50% 110%, oklch(52% 0.15 340), transparent 60%),
-        var(--accent);
-    border: 1px solid color-mix(in srgb, var(--accent) 65%, black 35%);
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.28),
-        0 4px 14px color-mix(in srgb, var(--accent) 40%, transparent);
-}
-.btn-gradient-mesh:hover:not(:disabled) { filter: brightness(1.05) saturate(1.08); }
-
-/* 7) Shine — metallic sweep that slides across on hover * /
-.btn-gradient-shine {
-    position: relative;
-    color: var(--accent-fg);
-    background:
-        linear-gradient(135deg,
-            color-mix(in oklch, var(--accent) 70%, white 30%) 0%,
-            var(--accent) 50%,
-            color-mix(in oklch, var(--accent) 75%, black 25%) 100%);
-    border: 1px solid color-mix(in srgb, var(--accent) 65%, black 35%);
-    overflow: hidden;
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.22),
-        0 2px 6px color-mix(in srgb, var(--accent) 30%, transparent);
-}
-.btn-gradient-shine::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-        linear-gradient(120deg,
-            transparent 30%,
-            rgba(255,255,255,.55) 50%,
-            transparent 70%);
-    transform: translateX(-120%);
-    transition: transform .8s cubic-bezier(.25,.8,.25,1);
-    pointer-events: none;
-}
-.btn-gradient-shine:hover:not(:disabled)::before { transform: translateX(120%); }
-
-/* 8) Animated motion — the gradient itself pans on hover * /
-.btn-gradient-motion {
-    color: var(--accent-fg);
-    background:
-        linear-gradient(120deg,
-            var(--accent) 0%,
-            oklch(52% 0.15 340) 35%,
-            oklch(60% 0.14 260) 70%,
-            var(--accent) 100%);
-    background-size: 220% 100%;
-    background-position: 0% 50%;
-    border: 1px solid color-mix(in srgb, var(--accent) 55%, black 45%);
-    transition: background-position .9s cubic-bezier(.4,.1,.2,1), box-shadow .2s, transform .2s;
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.22),
-        0 2px 8px color-mix(in srgb, var(--accent) 28%, transparent);
-}
-.btn-gradient-motion:hover:not(:disabled) {
-    background-position: 100% 50%;
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.22),
-        0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent);
-}
-
-/* 9) Aurora — top edge glow bar + solid body * /
-.btn-gradient-aurora {
-    position: relative;
-    color: var(--accent-fg);
-    background:
-        linear-gradient(180deg,
-            color-mix(in oklch, var(--accent) 85%, white 15%) 0%,
-            var(--accent) 18%,
-            color-mix(in oklch, var(--accent) 82%, black 18%) 100%);
-    border: 1px solid color-mix(in srgb, var(--accent) 60%, black 40%);
-    box-shadow:
-        0 1px 0 rgba(255,255,255,.25) inset,
-        0 -2px 0 color-mix(in srgb, black 18%, transparent) inset,
-        0 2px 6px color-mix(in srgb, var(--accent) 25%, transparent);
-}
-.btn-gradient-aurora::after {
-    content: '';
-    position: absolute;
-    top: -2px; left: 20%; right: 20%;
-    height: 10px;
-    background: radial-gradient(closest-side,
-        color-mix(in oklch, var(--accent) 50%, white 50%) 0%,
-        transparent 100%);
-    filter: blur(4px);
-    opacity: .9;
-    pointer-events: none;
-}
-.btn-gradient-aurora:hover:not(:disabled)::after {
-    left: 10%; right: 10%;
-    transition: left .3s, right .3s;
-}
-
-/* 10) Glow — subtle body + external accent halo (SaaS CTA vibe) * /
-.btn-gradient-glow {
-    color: var(--accent-fg);
-    background:
-        linear-gradient(180deg,
-            color-mix(in oklch, var(--accent) 72%, white 28%) 0%,
-            var(--accent) 60%);
-    border: 1px solid color-mix(in srgb, var(--accent) 60%, black 40%);
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.25),
-        0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent),
-        0 8px 24px -6px color-mix(in srgb, var(--accent) 55%, transparent);
-    transition: box-shadow .3s, transform .15s;
-}
-.btn-gradient-glow:hover:not(:disabled) {
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.25),
-        0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent),
-        0 12px 32px -4px color-mix(in srgb, var(--accent) 70%, transparent);
-}
-
-/* 11) Glass — translucent tinted glass with backdrop blur * /
-.btn-gradient-glass {
-    color: var(--fg);
-    background:
-        linear-gradient(135deg,
-            color-mix(in srgb, var(--accent) 22%, transparent) 0%,
-            color-mix(in srgb, var(--fg)      8%, transparent) 100%);
-    border: 1px solid color-mix(in srgb, var(--fg) 18%, transparent);
-    backdrop-filter: blur(10px) saturate(1.2);
-    -webkit-backdrop-filter: blur(10px) saturate(1.2);
-    box-shadow:
-        inset 0 1px 0 color-mix(in srgb, white 30%, transparent),
-        inset 0 -1px 0 color-mix(in srgb, black 10%, transparent);
-}
-.btn-gradient-glass:hover:not(:disabled) {
-    background:
-        linear-gradient(135deg,
-            color-mix(in srgb, var(--accent) 32%, transparent) 0%,
-            color-mix(in srgb, var(--fg)     12%, transparent) 100%);
-}
-
-.btn-link {
-    background: transparent;
-    color: var(--accent);
-    padding: 0;
-    height: auto;
-    border-radius: 0;
-    overflow: visible;
-}
-.btn-link:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
-*/
-
-/* Inputs */
 .input, .textarea, .select-trigger {
     font-family: inherit;
     font-size: 13.5px;
@@ -819,7 +490,7 @@ select {
 }
 .input::placeholder, .textarea::placeholder { color: var(--fg-4); }
 .input:hover, .textarea:hover { border-color: var(--fg-4); }
-/* No more chunky halo: thin accent border + tiny soft glow */
+
 .input:focus, .textarea:focus, .select-trigger:focus,
 .select-trigger.is-open {
     border-color: var(--accent);
@@ -865,7 +536,7 @@ select {
 .input-group .input-right:hover { color: var(--fg-2); }
 .input-group.has-right .input { padding-right: 34px; }
 
-/* Checkbox / Radio / Toggle */
+
 .ck {
     display: inline-flex; align-items: center; gap: 10px;
     cursor: pointer;
@@ -961,7 +632,7 @@ select {
 .toggle input:checked + .toggle-track { background: var(--accent); }
 .toggle input:checked + .toggle-track::after { left: 16px; }
 
-/* Segmented */
+
 .segmented {
     display: inline-flex;
     padding: 2px;
@@ -986,7 +657,7 @@ select {
     box-shadow: var(--shadow-1);
 }
 
-/* Tabs — underline */
+
 .tabs-under {
     display: flex;
     border-bottom: 1px solid var(--border);
@@ -1010,7 +681,7 @@ select {
     border-bottom: 2px solid var(--accent);
 }
 
-/* Select (fake) */
+
 .select-trigger {
     display: inline-flex; align-items: center; justify-content: space-between;
     cursor: pointer;
@@ -1041,7 +712,7 @@ select {
 .popover-item.active { background: var(--accent-soft); color: var(--accent); }
 [data-theme="minimal"] .popover-item.active { background: var(--bg-3); color: var(--fg); }
 
-/* Tags / Badges */
+
 .badge {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 2px 8px;
@@ -1062,7 +733,7 @@ select {
 [data-theme="dark"] .badge-warning { color: #FCD34D; background: rgba(245,158,11,.12); }
 [data-theme="dark"] .badge-danger  { color: #FCA5A5; background: rgba(239,68,68,.12); }
 
-/* Avatar */
+
 .avatar-ui {
     width: 32px; height: 32px; border-radius: 50%;
     background: var(--bg-3);
@@ -1081,7 +752,7 @@ select {
 .avatar-stack .avatar-ui { margin-left: -8px; box-shadow: 0 0 0 2px var(--bg); }
 .avatar-stack .avatar-ui:first-child { margin-left: 0; }
 
-/* Icons library grid */
+
 .icons-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
@@ -1128,7 +799,7 @@ select {
 }
 
 
-/* Card */
+
 .ui-card {
     background: var(--bg);
     border: 1px solid var(--border);
@@ -1164,7 +835,7 @@ select {
     background: var(--bg-2);
 }
 
-/* Progress / Slider */
+
 .progress {
     height: 6px;
     background: var(--bg-3);
@@ -1200,7 +871,7 @@ select {
     box-shadow: var(--shadow-1);
 }
 
-/* Tooltip — hover only */
+
 .tooltip-host { position: relative; display: inline-flex; }
 .tooltip-box {
     background: var(--fg);
@@ -1229,7 +900,7 @@ select {
 .tt-right  { left: 100%; top: 50%; transform: translate(-2px, -50%); margin-left: 8px; }
 .tooltip-host:hover .tt-right  { transform: translate(0, -50%); }
 
-/* Stepped progress — discrete positions */
+
 .progress-stepped {
     position: relative;
     height: 28px;
@@ -1288,7 +959,7 @@ select {
     text-align: center;
 }
 
-/* Skeleton */
+
 .sk {
     background:
         linear-gradient(90deg,
@@ -1308,7 +979,7 @@ select {
 .sk-circle { border-radius: 50%; }
 .sk-block { border-radius: var(--r-md); }
 
-/* Loaders */
+
 .spinner-dots {
     display: inline-flex; gap: 4px; align-items: center;
 }
@@ -1365,10 +1036,7 @@ select {
 }
 @keyframes spb { to { left: 100%; } }
 
-/* Breadcrumbs — equal visual spacing on both sides of the separator.
-      Links/current carry the hit area (padding) but no margin; the sep
-      is a fixed-width element with its own margin. Because every item
-      contributes the same amount, the rhythm is perfectly even. */
+
 .crumbs {
     display: inline-flex; align-items: center;
     font-size: 13px;
@@ -1391,7 +1059,7 @@ select {
     margin: 0; padding: 0;
 }
 
-/* Navbars */
+
 .nav-bar {
     display: flex; align-items: center;
     padding: 12px 20px;
@@ -1452,8 +1120,7 @@ select {
     backdrop-filter: blur(14px) saturate(1.3);
 }
 
-/* Bordered minimal — no background, thin hair bottom border.
-      Tech/docs feel. Links animate an underline on hover/active. */
+
 .nav-bordered {
     background: transparent;
     border: 0;
@@ -1487,8 +1154,7 @@ select {
     background: var(--fg-3);
 }
 
-/* Dark inverted — full-width dark band with glowing active pill.
-      Marketing/hero feel, strong contrast against page background. */
+
 .nav-dark {
     background: oklch(20% 0.01 270);
     color: oklch(92% 0.005 270);
@@ -1516,8 +1182,7 @@ select {
 }
 .nav-dark .badge { background: oklch(30% 0.02 270); color: #fff; border-color: transparent; }
 
-/* Centered logo with wings — brand sits in the middle, links flank it.
-      Editorial / news-site vibe. */
+
 .nav-wings {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -1557,7 +1222,7 @@ select {
     background: var(--accent);
 }
 
-/* Command — single tall bar with built-in search taking most of the width */
+
 .nav-command {
     gap: 12px;
     padding: 10px 14px;
@@ -1590,7 +1255,7 @@ select {
     padding: 1px 4px; min-width: 14px; text-align: center;
 }
 
-/* Modal */
+
 .modal-overlay {
     position: absolute; inset: 0;
     background: rgba(0,0,0,.4);
@@ -1609,7 +1274,7 @@ select {
     padding: 22px;
 }
 
-/* Table */
+
 .table-ui {
     width: 100%;
     border-collapse: separate; border-spacing: 0;
@@ -1640,7 +1305,7 @@ select {
     overflow: auto;
 }
 
-/* Color swatch */
+
 .swatch-tile {
     border-radius: var(--r-sm);
     height: 64px;
@@ -1653,7 +1318,7 @@ select {
 }
 .swatch-tile.dark-text { color: rgba(255,255,255,.85); }
 
-/* Chart host */
+
 .chart-host {
     background: var(--bg);
     border: 1px solid var(--border);
@@ -1669,7 +1334,7 @@ select {
     margin-bottom: 12px;
 }
 
-/* Tweaks panel */
+
 #tweaks-panel {
     position: fixed;
     bottom: max(12px, env(safe-area-inset-bottom)); right: max(12px, env(safe-area-inset-right));
@@ -1686,7 +1351,7 @@ select {
 }
 #tweaks-panel.visible { display: block; }
 
-/* Sub-tabs — used by advanced pages to switch between demo sections */
+
 .kit-subtabs {
     display: inline-flex;
     flex-wrap: wrap;
@@ -1718,7 +1383,7 @@ select {
     box-shadow: var(--shadow-1);
 }
 
-/* Legacy .seg / .seg-btn (some pages reference these) */
+
 .seg {
     display: inline-flex;
     flex-wrap: wrap;
@@ -1746,10 +1411,7 @@ select {
     box-shadow: var(--shadow-1);
 }
 
-/* =========================================================
-      COMPONENT LIBRARY EXTRAS
-      Shared by exported React primitives and the UI-kit gallery.
-      ========================================================= */
+
 
 a:focus-visible,
 button:focus-visible,

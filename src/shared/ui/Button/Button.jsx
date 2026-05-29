@@ -1,6 +1,5 @@
 import styles from './Button.module.css';
 
-/* Maps `gradient` prop → module class; primary key is the effect id. */
 const GRADIENT_CLASS = {
     radial: styles.gradient,
     conic:  styles.gradientConic,
@@ -13,7 +12,6 @@ const GRADIENT_CLASS = {
     glass:  styles.gradientGlass,
 };
 
-/* `variant` → module class. The 'gradient' case is handled via GRADIENT_CLASS. */
 const VARIANT_CLASS = {
     primary:     styles.primary,
     secondary:   styles.secondary,
@@ -29,7 +27,6 @@ const SIZE_CLASS = {
     lg: styles.lg,
 };
 
-/* Spawns a circular wave from the click point inside the button. */
 function spawnRipple(event) {
     const btn = event.currentTarget;
     const rect = btn.getBoundingClientRect();

@@ -1,0 +1,1 @@
+export { RecommendationBase } from './RecommendationBase';

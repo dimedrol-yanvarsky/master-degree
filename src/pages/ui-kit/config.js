@@ -1,4 +1,5 @@
 export const ACCENTS = {
+    sage:     { label: 'Шалфей',      hue: 145, c: 0.11,  L: 52, swatch: 'oklch(52% 0.11 145)' },
     iris:     { label: 'Ирис',        hue: 290, c: 0.25,  L: 60, swatch: 'oklch(60% 0.25 290)' },
     navy:     { label: 'Темно-синий', hue: 260, c: 0.10,  L: 38, swatch: 'oklch(38% 0.10 260)' },
     midnight: { label: 'Полночь',     hue: 245, c: 0.06,  L: 28, swatch: 'oklch(28% 0.06 245)' },

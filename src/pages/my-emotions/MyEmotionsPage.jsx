@@ -1,86 +1,78 @@
-import { Badge, Button, KitIcon, StatCard } from '../../shared/ui/kit';
+import { Badge, Button, KitIcon } from '../../shared/ui/kit';
+import { buildEmotionGraphPoints } from '../../entities/emotion';
+import { EmotionGraphAccessNotice, getMissingEmotionGraphTests } from '../../features/emotion-graph-access';
+import { EmotionStateGraph } from '../../widgets/emotion-state-graph';
 import styles from './MyEmotionsPage.module.css';
 
-const emotionMarks = [
-    { label: 'Спокойствие', value: '72%', tone: 'success' },
-    { label: 'Тревожность', value: '18%', tone: 'warning' },
-    { label: 'Усталость', value: '31%', tone: 'primary' },
-];
 
-export default function MyEmotionsPage() {
+function GuestPlaceholder() {
+    const navigateTo = (path) => {
+        window.location.assign(path);
+    };
+
+    return (
+        <section className={styles.guestRoot}>
+            <div className={styles.guestPanel}>
+                <div className={styles.guestIcon} aria-hidden="true">
+                    <KitIcon name="lock" size={28} />
+                </div>
+                <Badge tone="accent">Нужна авторизация</Badge>
+                <h1>Мои эмоции</h1>
+                <p>
+                    Авторизуйтесь, чтобы вести личные записи, отслеживать динамику состояния
+                    и получать рекомендации на основе истории самонаблюдения.
+                </p>
+                <div className={styles.guestActions}>
+                    <Button
+                        size="lg"
+                        variant="gradient"
+                        gradient="radial"
+                        iconRight={<KitIcon name="arrowRight" size={18} />}
+                        onClick={() => navigateTo('/login')}>
+                        Войти в аккаунт
+                    </Button>
+                    <Button
+                        size="lg"
+                        variant="secondary"
+                        iconRight={<KitIcon name="plus" size={18} />}
+                        onClick={() => navigateTo('/register')}>
+                        Создать аккаунт
+                    </Button>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+export default function MyEmotionsPage({ isAuth = false, status = null, testStatus = null }) {
+    if (!isAuth) return <GuestPlaceholder />;
+
+    const isAdmin = status === 'admin';
+    const missingEmotionTests = isAdmin ? [] : getMissingEmotionGraphTests(testStatus);
+    const graphPoints = buildEmotionGraphPoints(testStatus);
+    const shouldShowGraphNotice = !isAdmin && missingEmotionTests.length > 0;
+    const shouldShowGraph = !isAdmin && missingEmotionTests.length === 0;
+
     return (
         <section className={styles.root}>
-            <div className={styles.heading}>
-                <div>
-                    <Badge tone="accent">Рабочая область</Badge>
-                    <h1>Мои эмоции</h1>
-                    <p>
-                        Здесь появится главный экран самонаблюдения: быстрый чек-ин,
-                        динамика состояния и мягкие подсказки по дальнейшим действиям.
-                    </p>
+            {!shouldShowGraph && (
+                <div className={styles.heading}>
+                    <div>
+                        <h1>Мои эмоции</h1>
+                        <p>
+                            Граф эмоционального состояния пополняется по мере прохождения теста на текущее эмоциональное состояние.
+                        </p>
+                    </div>
                 </div>
-                <Button size="lg" iconLeft={<KitIcon name="plus" size={18} />}>
-                    Добавить запись
-                </Button>
-            </div>
+            )}
 
-            <div className={styles.stats}>
-                <StatCard
-                    label="Текущее состояние"
-                    value="Ровное"
-                    delta="Сегодня"
-                    description="Последняя отметка показывает стабильный фон без резких перепадов."
-                    tone="success"
-                />
-                <StatCard
-                    label="Записей за неделю"
-                    value="12"
-                    delta="+4"
-                    description="Регулярность растет, данных уже достаточно для первых рекомендаций."
-                    tone="primary"
-                />
-                <StatCard
-                    label="Фокус внимания"
-                    value="Сон"
-                    delta="Важно"
-                    description="Сон чаще всего связан с изменением эмоционального фона."
-                    tone="warning"
-                />
-            </div>
-
-            <div className={styles.grid}>
-                <article className={styles.panel}>
-                    <div className={styles.panelHead}>
-                        <span>Сегодня</span>
-                        <KitIcon name="heart" size={18} />
-                    </div>
-                    <h2>Быстрый эмоциональный срез</h2>
-                    <div className={styles.markList}>
-                        {emotionMarks.map((mark) => (
-                            <div key={mark.label} className={styles.mark}>
-                                <span>{mark.label}</span>
-                                <strong>{mark.value}</strong>
-                                <i style={{ width: mark.value }} />
-                            </div>
-                        ))}
-                    </div>
-                </article>
-
-                <article className={styles.panel}>
-                    <div className={styles.panelHead}>
-                        <span>Следующий шаг</span>
-                        <KitIcon name="spark" size={18} />
-                    </div>
-                    <h2>Мягкая рекомендация</h2>
-                    <p>
-                        После первой полноценной записи приложение сможет предложить
-                        персональный сценарий: дыхание, дневник мыслей или короткую паузу.
-                    </p>
-                    <Button variant="secondary" iconRight={<KitIcon name="arrowRight" size={16} />}>
-                        Перейти к рекомендациям
-                    </Button>
-                </article>
-            </div>
+            {shouldShowGraphNotice ? (
+                <EmotionGraphAccessNotice missingTests={missingEmotionTests} />
+            ) : (
+                shouldShowGraph && (
+                    <EmotionStateGraph points={graphPoints} />
+                )
+            )}
         </section>
     );
 }
