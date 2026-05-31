@@ -1,5 +1,15 @@
 import { useEffect, useState } from 'react';
-import { apiLogout, apiMe, apiMyTestResults, apiSubmitTestResult, clearAccessToken, getAccessToken } from '../../../shared/api';
+import { clearAccessToken, getAccessToken } from '../../../shared/api';
+import {
+    apiChangePassword,
+    apiDeleteOwnAccount,
+    apiLogout,
+    apiMe,
+    apiStartYandexLink,
+    apiUnlinkYandex,
+    apiUpdateProfile,
+} from '../../../entities/user';
+import { apiMyTestResults, apiSubmitTestResult } from '../../../entities/test';
 import { SessionContext } from './model/SessionContext';
 import {
     clearAuthUser,
@@ -9,7 +19,7 @@ import {
     saveAuthUser,
     saveUserStatus,
 } from './model/sessionStorage';
-import { SERVER_TEST_CODES, testStatusFromServerResults } from './model/testCompletion';
+import { testStatusFromServerResults } from './model/testCompletion';
 
 export function SessionProvider({ children }) {
     const [authUser, setAuthUser] = useState(readAuthUser);
@@ -86,19 +96,40 @@ export function SessionProvider({ children }) {
         setTestStatus(readUserStatus(null));
     };
 
-    const handleUserUpdate = (nextUserData) => {
-        const nextUser = {
+    const handleUserUpdate = async (nextUserData) => {
+        if (!authUser) return null;
+
+        const nextUserDraft = {
             ...authUser,
             ...nextUserData,
         };
+        const nextUser = await apiUpdateProfile(nextUserDraft);
 
         saveAuthUser(nextUser);
         saveUserStatus(nextUser, testStatus);
         setAuthUser(nextUser);
+        return nextUser;
     };
 
-    const handleAccountDelete = () => {
-        apiLogout();
+    const handlePasswordChange = async (passwords) => {
+        await apiChangePassword(passwords);
+    };
+
+    const handleYandexLinkStart = async () => {
+        const payload = await apiStartYandexLink();
+        return payload?.redirectUrl || '';
+    };
+
+    const handleYandexUnlink = async () => {
+        const nextUser = await apiUnlinkYandex();
+        saveAuthUser(nextUser);
+        saveUserStatus(nextUser, testStatus);
+        setAuthUser(nextUser);
+        return nextUser;
+    };
+
+    const handleAccountDelete = async () => {
+        await apiDeleteOwnAccount();
         clearAuthUser();
         setAuthUser(null);
         setTestStatus(readUserStatus(null));
@@ -118,7 +149,7 @@ export function SessionProvider({ children }) {
         saveUserStatus(authUser, nextTestStatus);
         setTestStatus(nextTestStatus);
 
-        if (getAccessToken() && SERVER_TEST_CODES.includes(testId)) {
+        if (getAccessToken()) {
             apiSubmitTestResult({
                 testCode: testId,
                 score: result.score ?? fallbackScore ?? 0,
@@ -143,8 +174,11 @@ export function SessionProvider({ children }) {
         handleAccountDelete,
         handleAuthSuccess,
         handleLogout,
+        handlePasswordChange,
         handleTestComplete,
         handleUserUpdate,
+        handleYandexLinkStart,
+        handleYandexUnlink,
         isAuth,
         status,
         testStatus,
@@ -154,6 +188,9 @@ export function SessionProvider({ children }) {
         onLogout: handleLogout,
         onUserUpdate: handleUserUpdate,
         onAccountDelete: handleAccountDelete,
+        onPasswordChange: handlePasswordChange,
+        onYandexLinkStart: handleYandexLinkStart,
+        onYandexUnlink: handleYandexUnlink,
         onTestComplete: handleTestComplete,
     };
 

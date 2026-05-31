@@ -4,9 +4,12 @@ import (
 	"context"
 	"log"
 
+	appaccount "github.com/dimedrol-yanvarsky/master-degree/server/internal/application/account"
 	appauth "github.com/dimedrol-yanvarsky/master-degree/server/internal/application/auth"
 	appcollaboration "github.com/dimedrol-yanvarsky/master-degree/server/internal/application/collaboration"
+	appfeedback "github.com/dimedrol-yanvarsky/master-degree/server/internal/application/feedback"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/application/port"
+	apprecommendation "github.com/dimedrol-yanvarsky/master-degree/server/internal/application/recommendation"
 	appspecialist "github.com/dimedrol-yanvarsky/master-degree/server/internal/application/specialist"
 	appsupport "github.com/dimedrol-yanvarsky/master-degree/server/internal/application/support"
 	apptesting "github.com/dimedrol-yanvarsky/master-degree/server/internal/application/testing"
@@ -23,8 +26,11 @@ import (
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/infrastructure/security"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/infrastructure/system"
 	apphttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http"
+	accounthttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http/account"
 	authhttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http/auth"
 	collaborationhttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http/collaboration"
+	feedbackhttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http/feedback"
+	recommendationhttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http/recommendation"
 	specialisthttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http/specialist"
 	supporthttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http/support"
 	testinghttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http/testing"
@@ -33,10 +39,8 @@ import (
 func main() {
 	cfg := config.Load()
 
-	// MongoDB на этом этапе опциональна: адаптер доступа к данным подключён, но
-	// коллекции ещё не привязаны, поэтому сервер запускается и без работающей
-	// БД. Состояние аккаунтов хранится в памяти, пока не реализованы конкретные
-	// репозитории MongoDB (с привязкой коллекций).
+	// MongoDB опциональна для локального запуска: при наличии подключения
+	// основные данные читаются из коллекций, иначе используется in-memory fallback.
 	adapter := connectMongo(cfg.Mongo)
 
 	// Общие примитивы инфраструктуры.
@@ -44,26 +48,43 @@ func main() {
 	clock := system.Clock{}
 	hasher := security.NewPasswordHasher(cfg.Security.BcryptCost)
 
-	// Хранилища в памяти. Репозиторий пользователей общий: его используют и auth,
-	// и подсистема тестирования (чтобы видеть одних и тех же специалистов/клиентов).
-	users := memory.NewUserRepository()
-	sessions := memory.NewSessionRepository()
-	collaborations := memory.NewCollaborationRepository()
-	graphs := memory.NewEmotionGraphRepository()
-	var tests port.TestRepository
+	// In-memory fallback нужен только когда MongoDB недоступна.
+	memoryUsers := memory.NewUserRepository()
+	memorySessions := memory.NewSessionRepository()
+	memoryCollaborations := memory.NewCollaborationRepository()
+	memoryGraphs := memory.NewEmotionGraphRepository()
+	memoryTests := memory.NewTestRepository()
+	memoryFeedback := memory.NewFeedbackRepository()
+	memoryRecommendationAssignments := memory.NewRecommendationAssignmentRepository()
+
+	var users port.UserRepository = memoryUsers
+	var sessions port.SessionRepository = memorySessions
+	var collaborations port.CollaborationRepository = memoryCollaborations
+	var graphs port.EmotionGraphRepository = memoryGraphs
+	var tests port.TestRepository = memoryTests
 	var testResults port.TestResultRepository = memory.NewTestResultRepository()
 	var clientCollaborations port.ClientCollaborationRepository
+	var feedbackRepository port.FeedbackRepository = memoryFeedback
+	var recommendationRepository port.RecommendationRepository
+	var recommendationAssignments port.RecommendationAssignmentRepository = memoryRecommendationAssignments
 	if adapter.Connected() {
+		users = mongopersistence.NewUserRepository(adapter)
+		sessions = mongopersistence.NewSessionRepository(adapter)
+		collaborations = mongopersistence.NewCollaborationRepository(adapter)
+		graphs = mongopersistence.NewEmotionGraphRepository(adapter)
 		tests = mongopersistence.NewTestRepository(adapter)
 		testResults = mongopersistence.NewTestResultRepository(adapter)
 		clientCollaborations = mongopersistence.NewClientCollaborationRepository(adapter)
+		feedbackRepository = mongopersistence.NewFeedbackRepository(adapter)
+		recommendationRepository = mongopersistence.NewRecommendationRepository(adapter)
+		recommendationAssignments = mongopersistence.NewRecommendationAssignmentRepository(adapter)
 	}
 	specialists := mongopersistence.NewSpecialistRepository(adapter)
 
 	// Демо-данные для локального запуска: аккаунты (пароль lumen123) и принятая
 	// связь специалист↔клиент, чтобы вход и оповещение по почте работали без БД.
-	if cfg.SeedDevData {
-		seedDevData(users, collaborations, hasher, idGenerator, clock)
+	if cfg.SeedDevData && !adapter.Connected() {
+		seedDevData(memoryUsers, memoryCollaborations, hasher, idGenerator, clock)
 	}
 
 	// Внешний вход (Yandex) и оповещение специалистов по почте. Без секретов в
@@ -87,16 +108,18 @@ func main() {
 
 	// Обработка учётных записей и разграничение доступа (пароль + OAuth).
 	authService := appauth.NewService(appauth.Deps{
-		Users:      users,
-		Sessions:   sessions,
-		Hasher:     hasher,
-		Tokens:     tokenIssuer{security.NewTokenIssuer(cfg.Security.JWTSecret, cfg.Security.AccessTokenTTL)},
-		IDs:        idGenerator,
-		Clock:      clock,
-		Limiter:    memory.NewAttemptLimiter(cfg.Security.MaxLoginAttempts),
-		OAuth:      yandexProvider,
-		AccessTTL:  cfg.Security.AccessTokenTTL,
-		RefreshTTL: cfg.Security.RefreshTokenTTL,
+		Users:          users,
+		Sessions:       sessions,
+		Hasher:         hasher,
+		Tokens:         tokenIssuer{security.NewTokenIssuer(cfg.Security.JWTSecret, cfg.Security.AccessTokenTTL)},
+		IDs:            idGenerator,
+		Clock:          clock,
+		Limiter:        memory.NewAttemptLimiter(cfg.Security.MaxLoginAttempts),
+		OAuth:          yandexProvider,
+		PasswordResets: notifier,
+		FrontendURL:    cfg.FrontendURL,
+		AccessTTL:      cfg.Security.AccessTokenTTL,
+		RefreshTTL:     cfg.Security.RefreshTokenTTL,
 	})
 
 	// Приём результатов тестов: новая вершина графа → письмо сотрудничающим
@@ -115,9 +138,34 @@ func main() {
 	router := apphttp.NewRouter(apphttp.Dependencies{
 		SupportHandler: supportHandler,
 		AuthHandler:    authhttp.NewHandler(authService, cfg.FrontendURL),
-		CollaborationHandler: collaborationhttp.NewHandler(appcollaboration.NewService(appcollaboration.Deps{
-			Collaborations: clientCollaborations,
+		AccountHandler: accounthttp.NewHandler(appaccount.NewService(appaccount.Deps{
 			Users:          users,
+			Hasher:         hasher,
+			IDs:            idGenerator,
+			Clock:          clock,
+			PasswordResets: notifier,
+			FrontendURL:    cfg.FrontendURL,
+		})),
+		CollaborationHandler: collaborationhttp.NewHandler(appcollaboration.NewService(appcollaboration.Deps{
+			ClientCollaborations: clientCollaborations,
+			Collaborations:       collaborations,
+			Users:                users,
+			IDs:                  idGenerator,
+			Clock:                clock,
+		})),
+		FeedbackHandler: feedbackhttp.NewHandler(appfeedback.NewService(appfeedback.Deps{
+			Feedback: feedbackRepository,
+			Users:    users,
+			IDs:      idGenerator,
+			Clock:    clock,
+		})),
+		RecommendationHandler: recommendationhttp.NewHandler(apprecommendation.NewService(apprecommendation.Deps{
+			Repository:     recommendationRepository,
+			Assignments:    recommendationAssignments,
+			Collaborations: collaborations,
+			Users:          users,
+			IDs:            idGenerator,
+			Clock:          clock,
 		})),
 		SpecialistHandler: specialisthttp.NewHandler(appspecialist.NewService(specialists)),
 		TestingHandler:    testinghttp.NewHandler(testingService),
@@ -202,8 +250,7 @@ func seedDevData(users *memory.UserRepository, collaborations *memory.Collaborat
 }
 
 // connectMongo пытается подключиться к MongoDB. Сбой некритичен: возвращает
-// неподключённый адаптер и пишет предупреждение, т.к. коллекции пока не
-// используются.
+// неподключённый адаптер, чтобы сервер мог работать с in-memory fallback.
 func connectMongo(cfg config.MongoConfig) *mongodb.Adapter {
 	connection, err := mongodb.Connect(context.Background(), mongodb.Config{
 		URI:          cfg.URI,

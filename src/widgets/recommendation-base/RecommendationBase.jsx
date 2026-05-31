@@ -9,7 +9,8 @@ import { RecommendationSection } from './ui/RecommendationSection';
 export function RecommendationBase({ status = null }) {
     const {
         editingId,
-        currentPage,
+        isLoading,
+        loadError,
         permissions,
         sectionOptions,
         paginatedBase,
@@ -52,36 +53,46 @@ export function RecommendationBase({ status = null }) {
                 </div>
             )}
 
-            <div className={styles.tree}>
-                <div className={styles.pageMeta}>
-                    <span>
-                        Показаны блоки {paginatedBase.startBlock}-{paginatedBase.endBlock} из {paginatedBase.totalBlocks}
-                    </span>
-                    <span>До {RECOMMENDATION_BLOCKS_PER_PAGE} блоков на странице</span>
+            {isLoading && <p className={styles.statusMessage}>Загружаем рекомендательную базу...</p>}
+            {!isLoading && loadError && <p className={styles.statusMessage}>{loadError}</p>}
+            {!isLoading && !loadError && paginatedBase.totalBlocks === 0 && (
+                <p className={styles.statusMessage}>В базе пока нет опубликованных рекомендаций.</p>
+            )}
+
+            {!isLoading && !loadError && paginatedBase.totalBlocks > 0 && (
+                <div className={styles.tree}>
+                    <div className={styles.pageMeta}>
+                        <span>
+                            Показаны блоки {paginatedBase.startBlock}-{paginatedBase.endBlock} из {paginatedBase.totalBlocks}
+                        </span>
+                        <span>До {RECOMMENDATION_BLOCKS_PER_PAGE} блоков на странице</span>
+                    </div>
+
+                    {paginatedBase.sections.map((section, index) => (
+                        <RecommendationSection
+                            key={section.id}
+                            section={section}
+                            number={String(index + 1)}
+                            permissions={permissions}
+                            editingId={editingId}
+                            onDeleteBlock={handleDeleteBlock}
+                            onDeleteSection={handleDeleteSection}
+                            onEdit={setEditingId}
+                            onEditCancel={() => setEditingId(null)}
+                            onSaveBlock={handleSaveBlock}
+                            onSaveSection={handleSaveSection}
+                        />
+                    ))}
                 </div>
+            )}
 
-                {paginatedBase.sections.map((section, index) => (
-                    <RecommendationSection
-                        key={section.id}
-                        section={section}
-                        number={String(index + 1)}
-                        permissions={permissions}
-                        editingId={editingId}
-                        onDeleteBlock={handleDeleteBlock}
-                        onDeleteSection={handleDeleteSection}
-                        onEdit={setEditingId}
-                        onEditCancel={() => setEditingId(null)}
-                        onSaveBlock={handleSaveBlock}
-                        onSaveSection={handleSaveSection}
-                    />
-                ))}
-            </div>
-
-            <RecommendationPagination
-                page={paginatedBase.page}
-                pageCount={paginatedBase.pageCount}
-                onPageChange={setCurrentPage}
-            />
+            {!isLoading && !loadError && paginatedBase.totalBlocks > 0 && (
+                <RecommendationPagination
+                    page={paginatedBase.page}
+                    pageCount={paginatedBase.pageCount}
+                    onPageChange={setCurrentPage}
+                />
+            )}
         </section>
     );
 }

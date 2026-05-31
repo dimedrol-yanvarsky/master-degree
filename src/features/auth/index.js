@@ -4,3 +4,4 @@ export { generateStrongPassword } from './model/passwordGenerator';
 export { AccountIllustration } from './ui/AccountIllustration';
 export { AuthAccess } from './ui/AuthAccess';
 export { PasswordInput } from './ui/PasswordInput';
+export * from './api';

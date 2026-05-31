@@ -8,10 +8,12 @@ import "time"
 type Status string
 
 const (
-	StatusPending  Status = "pending"
-	StatusAccepted Status = "accepted"
-	StatusRejected Status = "rejected"
-	StatusFinished Status = "finished"
+	StatusPending           Status = "pending"
+	StatusPendingClient     Status = "pending_client"
+	StatusPendingSpecialist Status = "pending_specialist"
+	StatusAccepted          Status = "accepted"
+	StatusRejected          Status = "rejected"
+	StatusFinished          Status = "finished"
 )
 
 // Collaboration связывает специалиста и клиента. Принятое сотрудничество
@@ -30,6 +32,10 @@ func (c Collaboration) GrantsAccess() bool {
 	return c.Status == StatusAccepted
 }
 
+func (c Collaboration) Pending() bool {
+	return c.Status == StatusPending || c.Status == StatusPendingClient || c.Status == StatusPendingSpecialist
+}
+
 type ClientSpecialist struct {
 	ID                    string
 	SpecialistID          string
@@ -38,4 +44,19 @@ type ClientSpecialist struct {
 	SpecialistDescription string
 	StartedAt             time.Time
 	Status                Status
+}
+
+type WorkRequest struct {
+	ID                     string
+	SpecialistID           string
+	ClientID               string
+	CounterpartID          string
+	CounterpartName        string
+	CounterpartEmail       string
+	CounterpartRole        string
+	CounterpartDescription string
+	StartedAt              time.Time
+	Status                 Status
+	Direction              string
+	CanRespond             bool
 }

@@ -1,16 +1,41 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Avatar, Badge, Button, KitIcon } from '../../shared/ui/kit';
-import { apiSpecialists } from '../../shared/api';
-import { getSpecialistsPage } from '../../entities/specialist';
+import { apiClients, apiUsers } from '../../entities/user';
+import { apiSpecialists, getSpecialistsPage } from '../../entities/specialist';
 import { SpecialistWorkButton } from '../../features/specialist-work-request';
 import styles from './SpecialistCatalog.module.css';
 
+const roleLabels = {
+    client: 'Клиент',
+    specialist: 'Специалист',
+    admin: 'Администратор',
+};
+
+const accountStatusLabels = {
+    active: 'Активна',
+    blocked: 'Заблокирована',
+    deleted: 'Удалена',
+};
+
+function formatAccountDate(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat('ru-RU', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+    }).format(date);
+}
+
 export function SpecialistCatalog({ isAuth = false, status = null }) {
     const [searchParams, setSearchParams] = useSearchParams();
-    const [specialists, setSpecialists] = useState([]);
+    const [items, setItems] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
+    const isUserCatalog = isAuth && status === 'admin';
+    const isClientCatalog = isAuth && status === 'specialist';
     const pageParam = searchParams.get('page');
     const requestedPage = Number(pageParam || 1);
 
@@ -19,12 +44,14 @@ export function SpecialistCatalog({ isAuth = false, status = null }) {
 
         setIsLoading(true);
         setLoadError('');
-        apiSpecialists()
+        const request = isUserCatalog ? apiUsers : isClientCatalog ? apiClients : apiSpecialists;
+        request()
             .then((items) => {
-                if (isActual) setSpecialists(items);
+                if (!isActual) return;
+                setItems(isClientCatalog ? items.filter((item) => item.role === 'client' && item.status === 'active') : items);
             })
             .catch((error) => {
-                if (isActual) setLoadError(error.message || 'Не удалось загрузить специалистов.');
+                if (isActual) setLoadError(error.message || (isUserCatalog ? 'Не удалось загрузить пользователей.' : isClientCatalog ? 'Не удалось загрузить клиентов.' : 'Не удалось загрузить специалистов.'));
             })
             .finally(() => {
                 if (isActual) setIsLoading(false);
@@ -33,11 +60,11 @@ export function SpecialistCatalog({ isAuth = false, status = null }) {
         return () => {
             isActual = false;
         };
-    }, []);
+    }, [isUserCatalog, isClientCatalog]);
 
     const catalogPage = useMemo(
-        () => getSpecialistsPage(specialists, requestedPage),
-        [specialists, requestedPage]
+        () => getSpecialistsPage(items, requestedPage),
+        [items, requestedPage]
     );
 
     useEffect(() => {
@@ -55,54 +82,72 @@ export function SpecialistCatalog({ isAuth = false, status = null }) {
         <section className={styles.root}>
             <header className={styles.heading}>
                 <div>
-                    <h1>Специалисты</h1>
-                    <p>Выберите понравившегося специалиста</p>
+                    <h1>{isUserCatalog ? 'Пользователи' : isClientCatalog ? 'Клиенты' : 'Специалисты'}</h1>
+                    <p>{isUserCatalog ? 'Список учетных записей, загруженный из системы.' : isClientCatalog ? 'Список клиентов, которым специалист может отправить заявку на совместную работу.' : 'Выберите понравившегося специалиста'}</p>
                 </div>
                 <div className={styles.summary}>
                     <KitIcon name="user" size={18} />
-                    <span>{isLoading ? 'Загрузка...' : `${specialists.length} специалистов`}</span>
+                    <span>{isLoading ? 'Загрузка...' : `${items.length} ${isUserCatalog ? 'пользователей' : isClientCatalog ? 'клиентов' : 'специалистов'}`}</span>
                 </div>
             </header>
 
-            {isLoading && <p className={styles.statusMessage}>Загружаем специалистов...</p>}
+            {isLoading && <p className={styles.statusMessage}>{isUserCatalog ? 'Загружаем пользователей...' : isClientCatalog ? 'Загружаем клиентов...' : 'Загружаем специалистов...'}</p>}
             {!isLoading && loadError && <p className={styles.statusMessage}>{loadError}</p>}
-            {!isLoading && !loadError && specialists.length === 0 && (
-                <p className={styles.statusMessage}>В базе пока нет специалистов для отображения.</p>
+            {!isLoading && !loadError && items.length === 0 && (
+                <p className={styles.statusMessage}>{isUserCatalog ? 'В базе пока нет пользователей для отображения.' : isClientCatalog ? 'В базе пока нет активных клиентов.' : 'В базе пока нет специалистов для отображения.'}</p>
             )}
 
-            {!isLoading && !loadError && specialists.length > 0 && (
+            {!isLoading && !loadError && items.length > 0 && (
                 <div className={styles.grid}>
-                    {catalogPage.items.map((specialist) => (
-                        <article className={styles.card} key={specialist.id || specialist.name}>
+                    {catalogPage.items.map((item) => (
+                        <article className={styles.card} key={item.id || item.name || item.email}>
                             <div className={styles.cardTop}>
                                 <Avatar
-                                    name={specialist.name}
+                                    name={item.displayName || item.name}
                                     size="lg"
                                     variant="ring"
-                                    color={specialist.color}
+                                    color={item.color}
                                 />
                                 <div className={styles.specialistHead}>
-                                    <h2>{specialist.name}</h2>
-                                    {specialist.experience && (
+                                    <h2>{item.displayName || item.name}</h2>
+                                    {isUserCatalog || isClientCatalog ? (
                                         <div className={styles.tags}>
-                                            <Badge tone="accent" appearance="glass">стаж: {specialist.experience}</Badge>
+                                            <Badge tone="accent" appearance="glass">{roleLabels[item.role] || item.role}</Badge>
+                                            <Badge tone={item.status === 'active' ? 'success' : item.status === 'blocked' ? 'warning' : 'danger'} appearance="glass">
+                                                {accountStatusLabels[item.status] || item.status}
+                                            </Badge>
+                                        </div>
+                                    ) : item.experience && (
+                                        <div className={styles.tags}>
+                                            <Badge tone="accent" appearance="glass">стаж: {item.experience}</Badge>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            <p className={styles.description}>{specialist.description}</p>
+                            <p className={styles.description}>
+                                {isUserCatalog || isClientCatalog
+                                    ? [item.email, formatAccountDate(item.createdAt) && `создана ${formatAccountDate(item.createdAt)}`].filter(Boolean).join(' · ')
+                                    : item.description}
+                            </p>
 
-                            <div className={styles.cardFooter}>
-                                <SpecialistWorkButton isAuth={isAuth} status={status} />
-                            </div>
+                            {!isUserCatalog && (
+                                <div className={styles.cardFooter}>
+                                    <SpecialistWorkButton
+                                        isAuth={isAuth}
+                                        status={status}
+                                        specialistId={item.id}
+                                        targetRole={isClientCatalog ? 'client' : 'specialist'}
+                                    />
+                                </div>
+                            )}
                         </article>
                     ))}
                 </div>
             )}
 
-            {!isLoading && !loadError && specialists.length > 0 && (
-                <nav className={styles.pagination} aria-label="Пагинация специалистов">
+            {!isLoading && !loadError && items.length > 0 && (
+                <nav className={styles.pagination} aria-label={isUserCatalog ? 'Пагинация пользователей' : isClientCatalog ? 'Пагинация клиентов' : 'Пагинация специалистов'}>
                     <Button
                         variant="ghost"
                         iconLeft={<KitIcon name="arrowLeft" size={16} />}

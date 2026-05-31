@@ -1,21 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-    addRecommendationBlock,
-    addRecommendationSection,
-    deleteRecommendationBlock,
-    deleteRecommendationSection,
+    apiCreateRecommendationBlock,
+    apiCreateRecommendationSection,
+    apiDeleteRecommendationBlock,
+    apiDeleteRecommendationSection,
+    apiRecommendations,
+    apiUpdateRecommendationBlock,
+    apiUpdateRecommendationSection,
     getRecommendationSectionOptions,
     paginateRecommendationBase,
     RECOMMENDATION_BLOCKS_PER_PAGE,
-    readRecommendationBase,
-    saveRecommendationBase,
-    updateRecommendationBlock,
-    updateRecommendationSection,
 } from '../../../entities/recommendation';
 import { getRecommendationPermissions } from '../../../features/recommendation-editor';
 
 export function useRecommendationBase(status) {
-    const [sections, setSections] = useState(readRecommendationBase);
+    const [sections, setSections] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
     const [editingId, setEditingId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const permissions = getRecommendationPermissions(status);
@@ -26,8 +27,27 @@ export function useRecommendationBase(status) {
     );
 
     useEffect(() => {
-        saveRecommendationBase(sections);
-    }, [sections]);
+        let active = true;
+        setIsLoading(true);
+        setLoadError('');
+        apiRecommendations()
+            .then((items) => {
+                if (!active) return;
+                setSections(items);
+            })
+            .catch((error) => {
+                if (!active) return;
+                setSections([]);
+                setLoadError(error.message || 'Не удалось загрузить рекомендательную базу.');
+            })
+            .finally(() => {
+                if (active) setIsLoading(false);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, []);
 
     useEffect(() => {
         if (currentPage !== paginatedBase.page) {
@@ -35,12 +55,23 @@ export function useRecommendationBase(status) {
         }
     }, [currentPage, paginatedBase.page]);
 
+    const applyMutation = async (request) => {
+        try {
+            setLoadError('');
+            const nextSections = await request();
+            setSections(nextSections);
+            setEditingId(null);
+        } catch (error) {
+            setLoadError(error.message || 'Не удалось сохранить изменения в рекомендательной базе.');
+        }
+    };
+
     const handleAddSection = (parentId, draft) => {
-        setSections((current) => addRecommendationSection(current, parentId, draft));
+        applyMutation(() => apiCreateRecommendationSection({ ...draft, parentId }));
     };
 
     const handleAddBlock = (sectionId, draft) => {
-        setSections((current) => addRecommendationBlock(current, sectionId, draft));
+        applyMutation(() => apiCreateRecommendationBlock({ ...draft, sectionId }));
     };
 
     const handleDeleteSection = (sectionId, title) => {
@@ -48,8 +79,7 @@ export function useRecommendationBase(status) {
             return;
         }
 
-        setEditingId(null);
-        setSections((current) => deleteRecommendationSection(current, sectionId));
+        applyMutation(() => apiDeleteRecommendationSection(sectionId));
     };
 
     const handleDeleteBlock = (blockId, title) => {
@@ -57,23 +87,22 @@ export function useRecommendationBase(status) {
             return;
         }
 
-        setEditingId(null);
-        setSections((current) => deleteRecommendationBlock(current, blockId));
+        applyMutation(() => apiDeleteRecommendationBlock(blockId));
     };
 
     const handleSaveSection = (sectionId, draft) => {
-        setSections((current) => updateRecommendationSection(current, sectionId, draft));
-        setEditingId(null);
+        applyMutation(() => apiUpdateRecommendationSection(sectionId, draft));
     };
 
     const handleSaveBlock = (blockId, draft) => {
-        setSections((current) => updateRecommendationBlock(current, blockId, draft));
-        setEditingId(null);
+        applyMutation(() => apiUpdateRecommendationBlock(blockId, draft));
     };
 
     return {
         editingId,
         currentPage,
+        isLoading,
+        loadError,
         permissions,
         sectionOptions,
         paginatedBase,

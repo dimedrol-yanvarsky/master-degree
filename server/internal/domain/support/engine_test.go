@@ -47,6 +47,14 @@ func TestMembershipMatchesReference(t *testing.T) {
 	}
 }
 
+func TestDefaultRuleBaseContainsAllActiveRules(t *testing.T) {
+	e := NewEngine()
+
+	if got := len(e.rules); got != 59 {
+		t.Fatalf("default rules count = %d, want 59", got)
+	}
+}
+
 // TestDefuzzificationMatchesReference воспроизводит агрегацию и центр тяжести
 // разобранного примера (РПЗ формула 8 → формула 12): при силах активации
 // средняя=0.70, высокая=0.304, очень высокая=0.30 центр тяжести ≈61.82.

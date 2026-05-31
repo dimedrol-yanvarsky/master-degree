@@ -1,7 +1,5 @@
 import { DEFAULT_USER_STATUS, getTestStatusKey } from '../../../../entities/user';
 
-export const SERVER_TEST_CODES = ['bfi-2', 'bds'];
-
 export function testStatusFromServerResults(results) {
     const nextStatus = { ...DEFAULT_USER_STATUS };
     const seenTests = new Set();

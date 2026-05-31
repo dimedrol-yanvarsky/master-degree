@@ -26,21 +26,21 @@ function getResultLevel(testId, averageScore) {
     }
 
     if (testId === 'bds') {
-        if (averageScore <= 1.75) {
+        if (averageScore <= 28) {
             return {
                 level: 'Низкая выраженность дистресса',
                 summary: 'Ответы указывают на умеренно спокойный эмоциональный фон после расставания.',
             };
         }
 
-        if (averageScore <= 2.5) {
+        if (averageScore <= 40) {
             return {
                 level: 'Умеренная выраженность дистресса',
                 summary: 'Есть заметные переживания; полезно продолжать самонаблюдение и поддержку.',
             };
         }
 
-        if (averageScore <= 3.25) {
+        if (averageScore <= 52) {
             return {
                 level: 'Высокая выраженность дистресса',
                 summary: 'Переживания выражены сильно; стоит обсудить состояние со специалистом.',
@@ -85,9 +85,10 @@ export function buildTestResult(test, answers) {
         .sort(([leftIndex], [rightIndex]) => Number(leftIndex) - Number(rightIndex))
         .map(([, value]) => Number(value));
     const total = values.reduce((sum, value) => sum + value, 0);
-    const score = values.length ? Math.round((total / values.length) * 10) / 10 : null;
     const maxAnswerValue = test.id === 'bds' ? 4 : 5;
     const maxTotal = values.length * maxAnswerValue;
+    const averageScore = values.length ? Math.round((total / values.length) * 10) / 10 : null;
+    const score = values.length ? (test.id === 'bds' ? total : averageScore) : null;
     const { level, summary } = getResultLevel(test.id, score);
     const domains = test.id === 'bfi-2'
         ? BFI2_DOMAIN_KEYS.map((domain) => {

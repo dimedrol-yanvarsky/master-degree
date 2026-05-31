@@ -13,3 +13,4 @@ export {
     updateRecommendationBlock,
     updateRecommendationSection,
 } from './model/recommendationBase';
+export * from './api';

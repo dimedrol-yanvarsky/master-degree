@@ -30,16 +30,68 @@ function getRowBySupportNeedLevel(supportNeedLevel) {
     return clamp(emotionGraphLevels.length - supportNeedLevel, 0, emotionGraphLevels.length - 1);
 }
 
-function formatTruth(value) {
-    return value.toFixed(2);
+function getRowBySupportNeedScore(score) {
+    const normalizedScore = Number(score);
+    if (!Number.isFinite(normalizedScore)) return 2;
+    const scorePercent = normalizedScore > 0 && normalizedScore <= 5
+        ? (normalizedScore / 5) * 100
+        : normalizedScore;
+    if (scorePercent <= 20) return 0;
+    if (scorePercent <= 40) return 1;
+    if (scorePercent <= 60) return 2;
+    if (scorePercent <= 80) return 3;
+    return 4;
 }
 
-export function buildEmotionGraphPoints() {
-    return emotionGraphColumns.map((column, index) => {
-        const secondaryTruth = 1 - column.truth;
+function formatDateLabel(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return new Intl.DateTimeFormat('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    }).format(date);
+}
 
-        const activeRow = getRowBySupportNeedLevel(column.supportNeedLevel);
-        const secondaryRow = getRowBySupportNeedLevel(column.secondarySupportNeedLevel);
+function formatTruth(value) {
+    const truth = Number(value);
+    return Number.isFinite(truth) ? truth.toFixed(2) : '1.00';
+}
+
+function normalizeGraphColumn(point = {}) {
+    const supportNeed = Number(point.supportNeed ?? point.score);
+    const hasSupportNeedLevel = Number.isFinite(Number(point.supportNeedLevel));
+    const activeRow = hasSupportNeedLevel
+        ? getRowBySupportNeedLevel(Number(point.supportNeedLevel))
+        : getRowBySupportNeedScore(supportNeed);
+    const secondaryRow = Number.isFinite(Number(point.secondarySupportNeedLevel))
+        ? getRowBySupportNeedLevel(Number(point.secondarySupportNeedLevel))
+        : activeRow;
+
+    return {
+        ...point,
+        label: point.label || formatDateLabel(point.date),
+        score: point.score ?? point.supportNeed ?? '',
+        supportNeedLevel: point.supportNeedLevel,
+        secondaryScore: point.secondaryScore ?? point.score ?? point.supportNeed ?? '',
+        truth: point.truth ?? 1,
+        secondaryRow,
+    };
+}
+
+export function buildEmotionGraphPoints(points = emotionGraphColumns) {
+    const source = Array.isArray(points) ? points : emotionGraphColumns;
+
+    return source.map((rawColumn, index) => {
+        const column = normalizeGraphColumn(rawColumn);
+        const truth = Number(column.truth);
+        const secondaryTruth = Number.isFinite(truth) ? 1 - truth : 0;
+
+        const activeRow = Number.isFinite(Number(column.supportNeedLevel))
+            ? getRowBySupportNeedLevel(Number(column.supportNeedLevel))
+            : getRowBySupportNeedScore(column.supportNeed ?? column.score);
+        const secondaryRow = column.secondaryRow;
 
         return {
             ...column,

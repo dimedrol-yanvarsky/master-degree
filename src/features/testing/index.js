@@ -1,5 +1,4 @@
 export { getRemainingCooldownDays } from './model/cooldown';
-export { CUSTOM_TESTS_STORAGE_KEY, getCustomTests, makeCustomTest, saveCustomTests } from './model/customTests';
 export { TEST_MANAGER_ROLES } from './model/permissions';
 export { pluralizeDays, pluralizeQuestions } from './model/pluralize';
 export { resolveScale } from './model/scale';

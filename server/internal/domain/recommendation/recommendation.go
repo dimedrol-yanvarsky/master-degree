@@ -11,10 +11,11 @@ type Block struct {
 	ID            string
 	ParentID      *string
 	SectionTitle  *string
-	SectionNumber *int
+	SectionNumber *string
 	Text          *string
 	AuthorID      string
 	Status        string
+	SortOrder     int
 }
 
 // IsSection сообщает, что блок группирует другие блоки, а не содержит текст
@@ -28,6 +29,9 @@ type Assignment struct {
 	ID              string
 	BlockID         string
 	CollaborationID string
+	SpecialistID    string
+	ClientID        string
+	Text            string
 	AssignedAt      time.Time
 	Status          string
 }

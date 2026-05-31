@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"net/url"
 	"strconv"
 	"strings"
 	"testing"
@@ -46,8 +47,24 @@ func (f *fakeUsers) FindByEmail(_ context.Context, email string) (user.User, err
 	}
 	return f.byID[id], nil
 }
+func (f *fakeUsers) List(_ context.Context) ([]user.User, error) {
+	items := make([]user.User, 0, len(f.byID))
+	for _, u := range f.byID {
+		items = append(items, u)
+	}
+	return items, nil
+}
 func (f *fakeUsers) Update(_ context.Context, u user.User) error {
+	current, ok := f.byID[u.ID]
+	if !ok {
+		return shared.ErrNotFound
+	}
+	if ownerID, ok := f.byEmail[u.Email]; ok && ownerID != u.ID {
+		return shared.ErrConflict
+	}
+	delete(f.byEmail, current.Email)
 	f.byID[u.ID] = u
+	f.byEmail[u.Email] = u.ID
 	return nil
 }
 
@@ -73,7 +90,16 @@ func (f *fakeSessions) Revoke(_ context.Context, id string) error {
 	f.m[id] = s
 	return nil
 }
-func (f *fakeSessions) RevokeAllForUser(context.Context, string) error { return nil }
+func (f *fakeSessions) RevokeAllForUser(_ context.Context, userID string) error {
+	now := time.Now()
+	for id, session := range f.m {
+		if session.UserID == userID {
+			session.RevokedAt = &now
+			f.m[id] = session
+		}
+	}
+	return nil
+}
 
 type fakeHasher struct{}
 
@@ -107,6 +133,15 @@ func (allowAll) Allowed(string) bool { return true }
 func (allowAll) Fail(string)         {}
 func (allowAll) Reset(string)        {}
 
+type fakePasswordResetNotifier struct {
+	notification port.PasswordResetNotification
+}
+
+func (f *fakePasswordResetNotifier) SendPasswordReset(_ context.Context, notification port.PasswordResetNotification) error {
+	f.notification = notification
+	return nil
+}
+
 func newTestService() *Service {
 	return NewService(Deps{
 		Users:      newFakeUsers(),
@@ -122,6 +157,22 @@ func newTestService() *Service {
 }
 
 // --- тесты -----------------------------------------------------------------
+
+func newTestServiceWithPasswordResetNotifier(notifier port.PasswordResetNotifier) *Service {
+	return NewService(Deps{
+		Users:          newFakeUsers(),
+		Sessions:       newFakeSessions(),
+		Hasher:         fakeHasher{},
+		Tokens:         fakeTokens{},
+		IDs:            &fakeIDs{},
+		Clock:          fixedClock{t: time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)},
+		Limiter:        allowAll{},
+		PasswordResets: notifier,
+		FrontendURL:    "http://frontend.local",
+		AccessTTL:      15 * time.Minute,
+		RefreshTTL:     time.Hour,
+	})
+}
 
 func TestRegisterLoginAuthenticateFlow(t *testing.T) {
 	ctx := context.Background()
@@ -188,13 +239,192 @@ func TestRegisterValidation(t *testing.T) {
 	}
 }
 
+func TestUpdateProfilePersistsEditableFields(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService()
+
+	view, err := svc.Register(ctx, RegisterInput{
+		Email:      "profile@example.com",
+		Password:   "secret-password",
+		Name:       "Ivan",
+		Surname:    "Petrov",
+		Patronymic: "Sergeevich",
+		About:      "initial profile",
+		Experience: "5",
+		Role:       shared.RoleSpecialist,
+	})
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+
+	updated, err := svc.UpdateProfile(ctx, view.ID, UpdateProfileInput{
+		Email:      "New.Profile@example.com",
+		Name:       "Petr",
+		Surname:    "Ivanov",
+		Patronymic: "Alexeevich",
+		About:      "updated profile",
+		Experience: "8",
+	})
+	if err != nil {
+		t.Fatalf("update profile: %v", err)
+	}
+	if updated.Email != "new.profile@example.com" {
+		t.Fatalf("email = %q, want normalized email", updated.Email)
+	}
+	if updated.Name != "Petr" || updated.Surname != "Ivanov" || updated.Patronymic != "Alexeevich" {
+		t.Fatalf("unexpected profile names: %+v", updated)
+	}
+	if updated.About != "updated profile" || updated.Experience != "8" {
+		t.Fatalf("unexpected profile details: %+v", updated)
+	}
+}
+
+func TestUpdateProfileRejectsDuplicateEmail(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService()
+
+	first, err := svc.Register(ctx, RegisterInput{Email: "first@example.com", Password: "secret-password", Name: "First", Surname: "User", Role: shared.RoleClient})
+	if err != nil {
+		t.Fatalf("register first: %v", err)
+	}
+	second, err := svc.Register(ctx, RegisterInput{Email: "second@example.com", Password: "secret-password", Name: "Second", Surname: "User", Role: shared.RoleClient})
+	if err != nil {
+		t.Fatalf("register second: %v", err)
+	}
+
+	err = nil
+	_, err = svc.UpdateProfile(ctx, second.ID, UpdateProfileInput{
+		Email:      first.Email,
+		Name:       "Second",
+		Surname:    "User",
+		Patronymic: "",
+		About:      "",
+	})
+	if !errors.Is(err, shared.ErrConflict) {
+		t.Fatalf("duplicate email update: got %v, want ErrConflict", err)
+	}
+}
+
+func TestChangePasswordUpdatesLoginCredentials(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService()
+
+	view, err := svc.Register(ctx, RegisterInput{Email: "change@example.com", Password: "old-password", Name: "Change", Surname: "User", Role: shared.RoleClient})
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+
+	if err := svc.ChangePassword(ctx, view.ID, ChangePasswordInput{CurrentPassword: "old-password", NewPassword: "new-password"}); err != nil {
+		t.Fatalf("change password: %v", err)
+	}
+	if _, err := svc.Login(ctx, LoginInput{Email: "change@example.com", Password: "old-password"}); !errors.Is(err, shared.ErrUnauthorized) {
+		t.Fatalf("login with old password: got %v, want ErrUnauthorized", err)
+	}
+	if _, err := svc.Login(ctx, LoginInput{Email: "change@example.com", Password: "new-password"}); err != nil {
+		t.Fatalf("login with new password: %v", err)
+	}
+}
+
+func TestChangePasswordRejectsWrongCurrentPassword(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService()
+
+	view, err := svc.Register(ctx, RegisterInput{Email: "wrong-current@example.com", Password: "old-password", Name: "Change", Surname: "User", Role: shared.RoleClient})
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+
+	err = svc.ChangePassword(ctx, view.ID, ChangePasswordInput{CurrentPassword: "bad-password", NewPassword: "new-password"})
+	if !errors.Is(err, shared.ErrUnauthorized) {
+		t.Fatalf("change password with wrong current password: got %v, want ErrUnauthorized", err)
+	}
+}
+
+func TestPasswordResetUpdatesLoginCredentials(t *testing.T) {
+	ctx := context.Background()
+	notifier := &fakePasswordResetNotifier{}
+	svc := newTestServiceWithPasswordResetNotifier(notifier)
+
+	if _, err := svc.Register(ctx, RegisterInput{Email: "reset@example.com", Password: "old-password", Name: "Reset", Surname: "User", Role: shared.RoleClient}); err != nil {
+		t.Fatalf("register: %v", err)
+	}
+	if _, err := svc.Login(ctx, LoginInput{Email: "reset@example.com", Password: "old-password"}); err != nil {
+		t.Fatalf("login before reset: %v", err)
+	}
+
+	if err := svc.RequestPasswordReset(ctx, RequestPasswordResetInput{Email: "reset@example.com"}); err != nil {
+		t.Fatalf("request reset: %v", err)
+	}
+	if notifier.notification.ResetURL == "" {
+		t.Fatal("expected reset link to be sent")
+	}
+
+	link, err := url.Parse(notifier.notification.ResetURL)
+	if err != nil {
+		t.Fatalf("parse reset link: %v", err)
+	}
+	token := link.Query().Get("reset_token")
+	if token == "" {
+		t.Fatal("expected reset_token in reset link")
+	}
+
+	if err := svc.ConfirmPasswordReset(ctx, ConfirmPasswordResetInput{Token: token, NewPassword: "new-password"}); err != nil {
+		t.Fatalf("confirm reset: %v", err)
+	}
+	if _, err := svc.Login(ctx, LoginInput{Email: "reset@example.com", Password: "old-password"}); !errors.Is(err, shared.ErrUnauthorized) {
+		t.Fatalf("login with old password: got %v, want ErrUnauthorized", err)
+	}
+	if _, err := svc.Login(ctx, LoginInput{Email: "reset@example.com", Password: "new-password"}); err != nil {
+		t.Fatalf("login with new password: %v", err)
+	}
+	if err := svc.ConfirmPasswordReset(ctx, ConfirmPasswordResetInput{Token: token, NewPassword: "another-password"}); !errors.Is(err, shared.ErrUnauthorized) {
+		t.Fatalf("reuse reset token: got %v, want ErrUnauthorized", err)
+	}
+}
+
+func TestPasswordResetDoesNotRevealMissingEmail(t *testing.T) {
+	ctx := context.Background()
+	notifier := &fakePasswordResetNotifier{}
+	svc := newTestServiceWithPasswordResetNotifier(notifier)
+
+	if err := svc.RequestPasswordReset(ctx, RequestPasswordResetInput{Email: "missing@example.com"}); err != nil {
+		t.Fatalf("request reset for missing email: %v", err)
+	}
+	if notifier.notification.ResetURL != "" {
+		t.Fatal("did not expect reset link for missing email")
+	}
+}
+
+func TestDeleteAccountRevokesSessions(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService()
+
+	_, err := svc.Register(ctx, RegisterInput{Email: "delete@example.com", Password: "secret-password", Name: "Delete", Surname: "User", Role: shared.RoleClient})
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+	result, err := svc.Login(ctx, LoginInput{Email: "delete@example.com", Password: "secret-password"})
+	if err != nil {
+		t.Fatalf("login: %v", err)
+	}
+
+	if err := svc.DeleteAccount(ctx, result.User.ID); err != nil {
+		t.Fatalf("delete account: %v", err)
+	}
+	if _, err := svc.Authenticate(ctx, result.AccessToken); !errors.Is(err, shared.ErrUnauthorized) {
+		t.Fatalf("authenticate after delete: got %v, want ErrUnauthorized", err)
+	}
+}
+
 type fakeOAuth struct {
 	configured bool
 	identity   port.OAuthIdentity
 }
 
-func (f fakeOAuth) Configured() bool                { return f.configured }
-func (f fakeOAuth) AuthCodeURL(state string) string { return "https://provider/authorize?state=" + state }
+func (f fakeOAuth) Configured() bool { return f.configured }
+func (f fakeOAuth) AuthCodeURL(state string) string {
+	return "https://provider/authorize?state=" + state
+}
 func (f fakeOAuth) Exchange(context.Context, string) (port.OAuthIdentity, error) {
 	return f.identity, nil
 }
@@ -246,6 +476,65 @@ func TestOAuthCallbackCreatesAndLinksClient(t *testing.T) {
 	// Повторный вход тем же провайдером находит того же пользователя (без конфликта).
 	if _, err := svc.OAuthCallback(ctx, "auth-code", "agent", "127.0.0.1"); err != nil {
 		t.Errorf("second oauth callback: %v", err)
+	}
+}
+
+func TestOAuthLinkCallbackLinksExistingUser(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestServiceWithOAuth(fakeOAuth{
+		configured: true,
+		identity:   port.OAuthIdentity{Email: "link@example.com"},
+	})
+
+	view, err := svc.Register(ctx, RegisterInput{Email: "link@example.com", Password: "secret-password", Name: "Link", Surname: "User", Role: shared.RoleClient})
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+
+	linked, err := svc.OAuthLinkCallback(ctx, view.ID, "auth-code")
+	if err != nil {
+		t.Fatalf("oauth link: %v", err)
+	}
+	if !linked.YandexLinked {
+		t.Fatal("expected YandexLinked to be true")
+	}
+}
+
+func TestOAuthLinkCallbackRejectsDifferentEmail(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestServiceWithOAuth(fakeOAuth{
+		configured: true,
+		identity:   port.OAuthIdentity{Email: "other@example.com"},
+	})
+
+	view, err := svc.Register(ctx, RegisterInput{Email: "link@example.com", Password: "secret-password", Name: "Link", Surname: "User", Role: shared.RoleClient})
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+
+	if _, err := svc.OAuthLinkCallback(ctx, view.ID, "auth-code"); !errors.Is(err, shared.ErrValidation) {
+		t.Fatalf("oauth link with different email: got %v, want ErrValidation", err)
+	}
+}
+
+func TestUnlinkYandexPersists(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestServiceWithOAuth(fakeOAuth{
+		configured: true,
+		identity:   port.OAuthIdentity{Email: "unlink@example.com"},
+	})
+
+	result, err := svc.OAuthCallback(ctx, "auth-code", "", "")
+	if err != nil {
+		t.Fatalf("oauth callback: %v", err)
+	}
+
+	view, err := svc.UnlinkYandex(ctx, result.User.ID)
+	if err != nil {
+		t.Fatalf("unlink yandex: %v", err)
+	}
+	if view.YandexLinked {
+		t.Fatal("expected YandexLinked to be false")
 	}
 }
 

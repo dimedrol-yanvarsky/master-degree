@@ -1,5 +1,4 @@
 import {
-    COMPLETED_TEST_USER_STATUS,
     DEFAULT_USER_STATUS,
     hasCompletedTest,
     markTestCompleted,
@@ -26,12 +25,12 @@ test('returns default user status before tests are completed', () => {
     expect(hasCompletedTest(readUserStatus(user), 'bfi-2')).toBe(false);
 });
 
-test('returns preset completed status for completed tests account', () => {
+test('does not inject completed test presets for known demo accounts', () => {
     const status = readUserStatus(completedUser);
 
-    expect(status).toMatchObject(COMPLETED_TEST_USER_STATUS);
-    expect(hasCompletedTest(status, 'bfi-2')).toBe(true);
-    expect(hasCompletedTest(status, 'bds')).toBe(true);
+    expect(status).toEqual(DEFAULT_USER_STATUS);
+    expect(hasCompletedTest(status, 'bfi-2')).toBe(false);
+    expect(hasCompletedTest(status, 'bds')).toBe(false);
 });
 
 test('marks known tests as completed and stores answers', () => {

@@ -43,10 +43,6 @@ export const COMPLETED_TEST_USER_STATUS = {
     },
 };
 
-const PRESET_USER_STATUSES = {
-    'completed@demo.local': COMPLETED_TEST_USER_STATUS,
-};
-
 function getUserStatusKey(user) {
     const userKey = String(user?.email || user?.id || 'guest').trim().toLowerCase();
     return `${USER_STATUS_PREFIX}:${userKey}`;
@@ -63,8 +59,7 @@ export function readUserStatus(user) {
         const rawStatus = window.localStorage.getItem(getUserStatusKey(user));
         if (rawStatus) return { ...DEFAULT_USER_STATUS, ...JSON.parse(rawStatus) };
 
-        const presetStatus = PRESET_USER_STATUSES[String(user?.email || '').trim().toLowerCase()];
-        return presetStatus ? { ...DEFAULT_USER_STATUS, ...presetStatus } : DEFAULT_USER_STATUS;
+        return DEFAULT_USER_STATUS;
     } catch {
         return DEFAULT_USER_STATUS;
     }

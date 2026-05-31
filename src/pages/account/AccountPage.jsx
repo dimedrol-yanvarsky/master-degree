@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthAccess } from '../../features/auth';
 import { AccountToast, ProfileAccount } from '../../widgets/account-profile';
 import authLoginImage from './assets/auth-login.png';
@@ -24,10 +25,15 @@ export default function AccountPage({
     onLogout,
     onUserUpdate,
     onAccountDelete,
+    onPasswordChange,
+    onYandexLinkStart,
+    onYandexUnlink,
 }) {
     const [notification, setNotification] = useState(null);
+    const location = useLocation();
+    const navigate = useNavigate();
 
-    const notify = (nextNotification) => {
+    const notify = useCallback((nextNotification) => {
         setNotification({
             id: Date.now(),
             tone: 'success',
@@ -35,7 +41,7 @@ export default function AccountPage({
             description: '',
             ...nextNotification,
         });
-    };
+    }, []);
 
     useEffect(() => {
         if (!notification) return undefined;
@@ -46,6 +52,37 @@ export default function AccountPage({
 
         return () => window.clearTimeout(timerId);
     }, [notification]);
+
+    useEffect(() => {
+        if (mode !== 'profile' || !location.search) return;
+
+        const params = new URLSearchParams(location.search);
+        const linkStatus = params.get('oauth_link');
+        const linkError = params.get('oauth_link_error');
+        if (!linkStatus && !linkError) return;
+
+        if (linkStatus === 'success') {
+            notify({
+                tone: 'success',
+                title: 'Yandex привязан',
+                description: 'Внешний вход сохранён для текущей учётной записи.',
+            });
+        } else if (linkError === 'email') {
+            notify({
+                tone: 'danger',
+                title: 'Не удалось привязать Yandex',
+                description: 'Почта Yandex должна совпадать с почтой текущего профиля.',
+            });
+        } else {
+            notify({
+                tone: 'danger',
+                title: 'Не удалось привязать Yandex',
+                description: 'OAuth-провайдер не завершил привязку. Попробуйте ещё раз.',
+            });
+        }
+
+        navigate(location.pathname, { replace: true });
+    }, [location.pathname, location.search, mode, navigate, notify]);
 
     if (mode === 'profile') {
         return (
@@ -58,6 +95,9 @@ export default function AccountPage({
                     onLogout={onLogout}
                     onUserUpdate={onUserUpdate}
                     onAccountDelete={onAccountDelete}
+                    onPasswordChange={onPasswordChange}
+                    onYandexLinkStart={onYandexLinkStart}
+                    onYandexUnlink={onYandexUnlink}
                     notify={notify}
                     styles={styles}
                 />

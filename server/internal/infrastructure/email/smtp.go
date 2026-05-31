@@ -18,6 +18,7 @@ import (
 
 // Проверка на этапе компиляции: нотификатор удовлетворяет порту приложения.
 var _ port.SpecialistNotifier = (*SMTPNotifier)(nil)
+var _ port.PasswordResetNotifier = (*SMTPNotifier)(nil)
 
 // SMTPNotifier отправляет письма специалистам через SMTP.
 type SMTPNotifier struct {
@@ -65,6 +66,28 @@ func (n *SMTPNotifier) NotifyNewGraphPoint(_ context.Context, notification port.
 	return smtp.SendMail(address, auth, n.from, notification.Recipients, message)
 }
 
+func (n *SMTPNotifier) SendPasswordReset(_ context.Context, notification port.PasswordResetNotification) error {
+	recipient := strings.TrimSpace(notification.Recipient)
+	if recipient == "" {
+		return nil
+	}
+
+	subject := "Восстановление пароля"
+	body := composePasswordResetBody(notification)
+	recipients := []string{recipient}
+
+	if !n.configured() {
+		log.Printf("[email:fallback] кому=%s | тема=%q\n%s", recipient, subject, body)
+		return nil
+	}
+
+	message := buildMessage(n.from, recipients, subject, body)
+	address := fmt.Sprintf("%s:%d", n.host, n.port)
+	auth := smtp.PlainAuth("", n.username, n.password, n.host)
+
+	return smtp.SendMail(address, auth, n.from, recipients, message)
+}
+
 func composeBody(n port.SpecialistNotification) string {
 	name := strings.TrimSpace(n.ClientName)
 	if name == "" {
@@ -87,6 +110,26 @@ func composeBody(n port.SpecialistNotification) string {
 
 // buildMessage собирает письмо RFC 5322 с заголовками в UTF-8 (RFC 2047), чтобы
 // корректно передавать кириллицу.
+func composePasswordResetBody(n port.PasswordResetNotification) string {
+	name := strings.TrimSpace(n.Name)
+	if name == "" {
+		name = strings.TrimSpace(n.Recipient)
+	}
+
+	var builder strings.Builder
+	if name != "" {
+		builder.WriteString(fmt.Sprintf("Здравствуйте, %s.\n\n", name))
+	}
+	builder.WriteString("Для восстановления пароля перейдите по ссылке:\n")
+	builder.WriteString(strings.TrimSpace(n.ResetURL))
+	builder.WriteString("\n\n")
+	if !n.ExpiresAt.IsZero() {
+		builder.WriteString(fmt.Sprintf("Ссылка действует до %s.\n", n.ExpiresAt.Format("02.01.2006 15:04")))
+	}
+	builder.WriteString("Если вы не запрашивали восстановление пароля, просто игнорируйте это письмо.\n")
+	return builder.String()
+}
+
 func buildMessage(from string, to []string, subject, body string) []byte {
 	headers := []string{
 		"From: " + from,

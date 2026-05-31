@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Checkbox, Input, KitIcon, Select, Textarea } from '../../../shared/ui/kit';
-import { validateRegistrationValues } from '../../../entities/user';
-import { apiLogin, apiMe, apiRegister, setAccessToken, yandexLoginUrl } from '../../../shared/api';
+import { apiMe, validateRegistrationValues } from '../../../entities/user';
+import { setAccessToken, yandexLoginUrl } from '../../../shared/api';
+import { apiConfirmPasswordReset, apiLogin, apiRegister, apiRequestPasswordReset } from '../api';
 import { ROUTES } from '../../../shared/routes';
 import { accountTypeOptions } from '../model/accountTypeOptions';
 import { navigateWithTransition, shouldUseDefaultNavigation } from '../model/navigateWithTransition';
@@ -28,10 +29,21 @@ export function AuthAccess({ mode, onAuthSuccess, notify, styles, authImages }) 
         remember: true,
     });
     const [formErrors, setFormErrors] = useState({});
+    const [resetMode, setResetMode] = useState(false);
+    const [resetPending, setResetPending] = useState(false);
+    const [resetValues, setResetValues] = useState({
+        email: '',
+        token: '',
+        newPassword: '',
+        confirmPassword: '',
+    });
+    const [resetErrors, setResetErrors] = useState({});
     const cardClassName = [
         styles.card,
         isRegister ? styles.register : styles.login,
     ].join(' ');
+    const isPasswordReset = !isRegister && resetMode;
+    const hasResetToken = Boolean(resetValues.token);
     const isSpecialistAccount = formValues.accountType === 'specialist';
     const aboutPlaceholder = isSpecialistAccount ? 'Опишите свой опыт' : 'Расскажите о своей проблеме';
 
@@ -50,6 +62,15 @@ export function AuthAccess({ mode, onAuthSuccess, notify, styles, authImages }) 
             remember: true,
         });
         setFormErrors({});
+        setResetMode(false);
+        setResetPending(false);
+        setResetValues({
+            email: '',
+            token: '',
+            newPassword: '',
+            confirmPassword: '',
+        });
+        setResetErrors({});
     }, [mode]);
 
     // Возврат из серверного OAuth-потока: токен приходит во фрагменте URL
@@ -98,6 +119,21 @@ export function AuthAccess({ mode, onAuthSuccess, notify, styles, authImages }) 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    useEffect(() => {
+        if (isRegister) return;
+
+        const query = new URLSearchParams(window.location.search);
+        const token = query.get('reset_token');
+        if (!token) return;
+
+        setResetMode(true);
+        setResetValues((currentValues) => ({
+            ...currentValues,
+            token,
+        }));
+        setResetErrors({});
+    }, [isRegister]);
+
     const handleFieldChange = (field) => (event) => {
         const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
         setFormValues((currentValues) => ({
@@ -121,6 +157,41 @@ export function AuthAccess({ mode, onAuthSuccess, notify, styles, authImages }) 
             [field]: '',
             ...(field === 'accountType' ? { about: '', experience: '' } : {}),
         }));
+    };
+
+    const handleResetFieldChange = (field) => (event) => {
+        setResetValues((currentValues) => ({
+            ...currentValues,
+            [field]: event.target.value,
+        }));
+        setResetErrors((currentErrors) => ({
+            ...currentErrors,
+            [field]: '',
+        }));
+    };
+
+    const handleStartPasswordReset = () => {
+        setResetMode(true);
+        setResetValues((currentValues) => ({
+            ...currentValues,
+            email: formValues.email,
+        }));
+        setResetErrors({});
+    };
+
+    const handleCancelPasswordReset = () => {
+        setResetMode(false);
+        setResetPending(false);
+        setResetValues({
+            email: '',
+            token: '',
+            newPassword: '',
+            confirmPassword: '',
+        });
+        setResetErrors({});
+        if (new URLSearchParams(window.location.search).has('reset_token')) {
+            window.history.replaceState(null, '', window.location.pathname);
+        }
     };
 
     const handleGeneratePassword = () => {
@@ -167,6 +238,69 @@ export function AuthAccess({ mode, onAuthSuccess, notify, styles, authImages }) 
         }
     };
 
+    const handleResetSubmit = async (event) => {
+        event.preventDefault();
+
+        if (!hasResetToken) {
+            const email = resetValues.email.trim();
+            if (!email) {
+                setResetErrors({ email: 'Укажите почту аккаунта.' });
+                return;
+            }
+
+            setResetPending(true);
+            try {
+                await apiRequestPasswordReset(email);
+                notify?.({
+                    tone: 'success',
+                    title: 'Инструкция подготовлена',
+                    description: 'Если аккаунт существует, ссылка отправлена на почту. Без SMTP она появится в логе сервера.',
+                });
+                handleCancelPasswordReset();
+            } catch (error) {
+                notify?.({
+                    tone: 'danger',
+                    title: 'Восстановление не выполнено',
+                    description: error.message,
+                });
+            } finally {
+                setResetPending(false);
+            }
+            return;
+        }
+
+        const newPassword = resetValues.newPassword;
+        const confirmPassword = resetValues.confirmPassword;
+        const errors = {};
+        if (newPassword.length < 8) {
+            errors.newPassword = 'Пароль должен быть не короче 8 символов.';
+        }
+        if (newPassword !== confirmPassword) {
+            errors.confirmPassword = 'Пароли не совпадают.';
+        }
+        setResetErrors(errors);
+        if (Object.keys(errors).length > 0) return;
+
+        setResetPending(true);
+        try {
+            await apiConfirmPasswordReset({ token: resetValues.token, newPassword });
+            notify?.({
+                tone: 'success',
+                title: 'Пароль обновлён',
+                description: 'Теперь можно войти с новым паролем.',
+            });
+            handleCancelPasswordReset();
+        } catch (error) {
+            notify?.({
+                tone: 'danger',
+                title: 'Пароль не обновлён',
+                description: error.message,
+            });
+        } finally {
+            setResetPending(false);
+        }
+    };
+
     const handleModeLinkClick = (event) => {
         if (shouldUseDefaultNavigation(event)) return;
 
@@ -192,19 +326,69 @@ export function AuthAccess({ mode, onAuthSuccess, notify, styles, authImages }) 
 
     return (
         <section className={styles.root}>
-            <form className={cardClassName} onSubmit={handleSubmit} noValidate>
+            <form className={cardClassName} onSubmit={isPasswordReset ? handleResetSubmit : handleSubmit} noValidate>
                 {!isRegister && <AccountIllustration mode={mode} styles={styles} authImages={authImages} />}
                 <div className={styles.formPanel}>
                     <div className={styles.header}>
-                        <h1>{isRegister ? 'Создать аккаунт' : 'Войти в аккаунт'}</h1>
+                        <h1>
+                            {isPasswordReset
+                                ? (hasResetToken ? 'Новый пароль' : 'Восстановить пароль')
+                                : (isRegister ? 'Создать аккаунт' : 'Войти в аккаунт')}
+                        </h1>
                         <p>
-                            {isRegister
+                            {isPasswordReset
+                                ? (hasResetToken
+                                    ? 'Введите новый пароль для своей учётной записи.'
+                                    : 'Укажите почту аккаунта, и система подготовит ссылку для сброса пароля.')
+                                : isRegister
                                 ? 'Создайте профиль, чтобы сохранять эмоциональные записи и получать персональные рекомендации.'
                                 : 'Авторизуйтесь, чтобы перейти к личным рекомендациям и графу эмоций.'}
                         </p>
                     </div>
 
                     <div className={styles.fields}>
+                        {isPasswordReset ? (
+                            hasResetToken ? (
+                                <>
+                                    <PasswordInput
+                                        label="Новый пароль"
+                                        placeholder="Введите новый пароль"
+                                        autoComplete="new-password"
+                                        value={resetValues.newPassword}
+                                        onChange={handleResetFieldChange('newPassword')}
+                                        error={resetErrors.newPassword}
+                                        required
+                                        size="lg"
+                                        iconLeft={<KitIcon name="lock" />}
+                                    />
+                                    <PasswordInput
+                                        label="Повторите пароль"
+                                        placeholder="Повторите новый пароль"
+                                        autoComplete="new-password"
+                                        value={resetValues.confirmPassword}
+                                        onChange={handleResetFieldChange('confirmPassword')}
+                                        error={resetErrors.confirmPassword}
+                                        required
+                                        size="lg"
+                                        iconLeft={<KitIcon name="lock" />}
+                                    />
+                                </>
+                            ) : (
+                                <Input
+                                    label="Почта"
+                                    type="email"
+                                    placeholder="name@example.com"
+                                    autoComplete="email"
+                                    value={resetValues.email}
+                                    onChange={handleResetFieldChange('email')}
+                                    error={resetErrors.email}
+                                    required
+                                    size="lg"
+                                    iconLeft={<KitIcon name="mail" />}
+                                />
+                            )
+                        ) : (
+                            <>
                         {isRegister && (
                             <>
                                 <Input
@@ -326,16 +510,20 @@ export function AuthAccess({ mode, onAuthSuccess, notify, styles, authImages }) 
                                 />
                             )}
                         </div>
+                            </>
+                        )}
                     </div>
 
-                    {!isRegister && (
+                    {!isRegister && !isPasswordReset && (
                         <div className={styles.options}>
                             <Checkbox
                                 label="Запомнить меня"
                                 checked={formValues.remember}
                                 onChange={handleFieldChange('remember')}
                             />
-                            <a href="#restore">Забыли пароль?</a>
+                            <button className={styles.textButton} type="button" onClick={handleStartPasswordReset}>
+                                Забыли пароль?
+                            </button>
                         </div>
                     )}
 
@@ -378,18 +566,29 @@ export function AuthAccess({ mode, onAuthSuccess, notify, styles, authImages }) 
                         gradient="radial"
                         size="lg"
                         fullWidth
+                        disabled={resetPending}
                         iconRight={<KitIcon name="arrowRight" />}>
-                        {isRegister ? 'Зарегистрироваться' : 'Войти'}
+                        {isPasswordReset
+                            ? (hasResetToken
+                                ? (resetPending ? 'Сохраняем...' : 'Сохранить пароль')
+                                : (resetPending ? 'Отправляем...' : 'Получить ссылку'))
+                            : (isRegister ? 'Зарегистрироваться' : 'Войти')}
                     </Button>
 
                     <p className={styles.footer}>
-                        {isRegister ? 'Уже есть аккаунт?' : 'Нет аккаунта?'}{' '}
-                        <Link to={targetPath} onClick={handleModeLinkClick}>
-                            {isRegister ? 'Войти' : 'Зарегистрироваться'}
-                        </Link>
+                        {isPasswordReset ? 'Вспомнили пароль?' : (isRegister ? 'Уже есть аккаунт?' : 'Нет аккаунта?')}{' '}
+                        {isPasswordReset ? (
+                            <button className={styles.textButton} type="button" onClick={handleCancelPasswordReset}>
+                                Войти
+                            </button>
+                        ) : (
+                            <Link to={targetPath} onClick={handleModeLinkClick}>
+                                {isRegister ? 'Войти' : 'Зарегистрироваться'}
+                            </Link>
+                        )}
                     </p>
 
-                    {!isRegister && (
+                    {!isRegister && !isPasswordReset && (
                         <div className={styles.authProviderGroup}>
                             <div className={styles.authDivider} aria-hidden="true">
                                 <span>или</span>

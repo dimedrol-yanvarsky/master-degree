@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ErrorState } from '../../shared/ui/kit';
 import { hasCompletedTest } from '../../entities/user';
-import { getCustomTests, getRemainingCooldownDays, getStoredResult, makeCustomTest, saveCustomTests, TEST_MANAGER_ROLES, QuestionnairePage } from '../../features/testing';
-import { apiTests } from '../../shared/api';
+import { getRemainingCooldownDays, getStoredResult, TEST_MANAGER_ROLES, QuestionnairePage } from '../../features/testing';
+import { apiCreateTest, apiDeleteTest, apiTests, apiUpdateTest } from '../../entities/test';
 import { ROUTES } from '../../shared/routes';
 import { CompletedTestPage, TestingLanding } from '../../widgets/testing-dashboard';
 import styles from './TestingPage.module.css';
@@ -23,14 +23,13 @@ function TestNotFound() {
     );
 }
 
-export default function TestingPage({ isAuth = false, userRole = null, status = null, testStatus = null, onTestComplete }) {
+export default function TestingPage({ isAuth = false, user = null, userRole = null, status = null, testStatus = null, onTestComplete }) {
     const { testId } = useParams();
     const navigate = useNavigate();
     const [systemTests, setSystemTests] = useState([]);
     const [testsLoading, setTestsLoading] = useState(true);
     const [testsError, setTestsError] = useState('');
-    const [customTests, setCustomTests] = useState(getCustomTests);
-    const availableTests = useMemo(() => [...systemTests, ...customTests], [systemTests, customTests]);
+    const availableTests = useMemo(() => systemTests, [systemTests]);
     const canManageTests = isAuth && TEST_MANAGER_ROLES.includes(userRole);
     const test = availableTests.find((item) => item.id === testId) || null;
 
@@ -57,17 +56,26 @@ export default function TestingPage({ isAuth = false, userRole = null, status = 
         };
     }, []);
 
-    useEffect(() => {
-        saveCustomTests(customTests);
-    }, [customTests]);
-
-    const handleAddTest = (draft) => {
-        const customTest = makeCustomTest(draft);
-        setCustomTests((currentTests) => [
-            customTest,
-            ...currentTests.filter((item) => item.id !== customTest.id),
+    const handleAddTest = async (draft) => {
+        const createdTest = await apiCreateTest(draft);
+        if (!createdTest?.id) return null;
+        setSystemTests((currentTests) => [
+            createdTest,
+            ...currentTests.filter((item) => item.id !== createdTest.id),
         ]);
-        return customTest;
+        return createdTest;
+    };
+
+    const handleUpdateTest = async (testId, draft) => {
+        const updatedTest = await apiUpdateTest(testId, draft);
+        if (!updatedTest?.id) return null;
+        setSystemTests((currentTests) => currentTests.map((item) => (item.id === testId ? updatedTest : item)));
+        return updatedTest;
+    };
+
+    const handleDeleteTest = async (testId) => {
+        await apiDeleteTest(testId);
+        setSystemTests((currentTests) => currentTests.filter((item) => item.id !== testId));
     };
 
     if (testId && testsLoading) {
@@ -94,7 +102,7 @@ export default function TestingPage({ isAuth = false, userRole = null, status = 
         const result = getStoredResult(testStatus, test.id);
         const remainingDays = getRemainingCooldownDays(test.id, result?.completedAt);
 
-        if (remainingDays > 0) {
+        if (test.id === 'bfi-2' || remainingDays > 0) {
             return <CompletedTestPage test={test} result={result} remainingDays={remainingDays} styles={styles} />;
         }
     }
@@ -113,6 +121,10 @@ export default function TestingPage({ isAuth = false, userRole = null, status = 
             testsLoading={testsLoading}
             testsError={testsError}
             onAddTest={handleAddTest}
+            onUpdateTest={handleUpdateTest}
+            onDeleteTest={handleDeleteTest}
+            currentUserId={user?.id || ''}
+            userRole={userRole}
             styles={styles}
         />
     );

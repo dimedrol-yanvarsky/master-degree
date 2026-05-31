@@ -197,118 +197,361 @@ func OutputTermOrder() []string {
 	return ordered
 }
 
-// defaultRules инициализирует базу нечётких правил. Сюда включены все правила,
-// явно представленные в РПЗ: задокументированные примеры из таблицы 21 (правила
-// 1, 5, 27, 29) и правила разобранного примера §1.8 (таблица 26: правила 2, 10,
-// 11, 34, 49, 52, 55, 59), восстановленные по их консеквентам и степеням
-// активации. Этого набора достаточно, чтобы воспроизвести контрольный расчёт
-// §1.8 (формула 12, ≈61.82). Остальные правила полной базы из 59 штук —
-// предметные данные из психологической литературы; они подключаются сюда как
-// данные, без изменения движка.
-//
-// Примечание: там, где степень активации в таблице 26 совпадает у нескольких
-// термов (напр. Д=Низкая и Н=Высокий обе равны 0.30), точный состав антецедента
-// по РПЗ однозначно не восстанавливается; выбран психологически осмысленный
-// вариант, согласованный с обоснованиями таблицы 21.
+func cond(variable, term string) Condition {
+	return Condition{Variable: variable, Term: term}
+}
+
+func is(variable, term string) Clause {
+	return Clause{cond(variable, term)}
+}
+
+func anyOf(conditions ...Condition) Clause {
+	return Clause(conditions)
+}
+
+func rule(consequent string, antecedent ...Clause) Rule {
+	return Rule{Antecedent: antecedent, Consequent: consequent}
+}
+
+// defaultRules инициализирует полную активную базу нечётких правил из таблицы
+// final_rules_status_table.docx. Правило 60 из таблицы исключено, потому что в
+// документе оно помечено как удалённое и поглощённое правилом 55.
 func defaultRules() []Rule {
 	return []Rule{
-		// --- Задокументированные примеры (РПЗ таблица 21) ---
-		{ // 1: Н=Высокий ∧ Э=Низкая ∧ ЭС=Очень плохое → Очень высокая
-			Antecedent: []Clause{
-				{{VarNeuroticism, TermHigh}},
-				{{VarExtraversion, TermLow}},
-				{{VarEmotionalState, TermVeryBad}},
-			},
-			Consequent: TermVeryHigh,
-		},
-		{ // 5: Н=Высокий ∧ ДС=Низкая ∧ ЭС=Плохое → Очень высокая
-			Antecedent: []Clause{
-				{{VarNeuroticism, TermHigh}},
-				{{VarConscientiousness, TermLow}},
-				{{VarEmotionalState, TermBad}},
-			},
-			Consequent: TermVeryHigh,
-		},
-		{ // 27: ДС=Низкая ∧ ЭС=Очень плохое → Очень высокая
-			Antecedent: []Clause{
-				{{VarConscientiousness, TermLow}},
-				{{VarEmotionalState, TermVeryBad}},
-			},
-			Consequent: TermVeryHigh,
-		},
-		{ // 29: ДС=Высокая ∧ (Н=Низкий ∨ Н=Средний) ∧ ЭС=Плохое → Средняя
-			Antecedent: []Clause{
-				{{VarConscientiousness, TermHigh}},
-				{{VarNeuroticism, TermLow}, {VarNeuroticism, TermMid}},
-				{{VarEmotionalState, TermBad}},
-			},
-			Consequent: TermSupMid,
-		},
-		// --- Правила разобранного примера §1.8 (РПЗ таблица 26) ---
-		{ // 2: Н=Высокий ∧ Д=Низкая ∧ ЭС=Плохое → Очень высокая
-			Antecedent: []Clause{
-				{{VarNeuroticism, TermHigh}},
-				{{VarAgreeableness, TermLow}},
-				{{VarEmotionalState, TermBad}},
-			},
-			Consequent: TermVeryHigh,
-		},
-		{ // 10: Н=Высокий ∧ Э=Высокий ∧ ЭС=Плохое → Высокая
-			Antecedent: []Clause{
-				{{VarNeuroticism, TermHigh}},
-				{{VarExtraversion, TermHigh}},
-				{{VarEmotionalState, TermBad}},
-			},
-			Consequent: TermSupHigh,
-		},
-		{ // 11: Н=Высокий ∧ О=Высокая ∧ ЭС=Плохое → Высокая
-			Antecedent: []Clause{
-				{{VarNeuroticism, TermHigh}},
-				{{VarOpenness, TermHigh}},
-				{{VarEmotionalState, TermBad}},
-			},
-			Consequent: TermSupHigh,
-		},
-		{ // 34: Н=Высокий ∧ ЭС=Плохое → Высокая
-			Antecedent: []Clause{
-				{{VarNeuroticism, TermHigh}},
-				{{VarEmotionalState, TermBad}},
-			},
-			Consequent: TermSupHigh,
-		},
-		{ // 49: Д=Низкая ∧ ЭС=Плохое → Высокая
-			Antecedent: []Clause{
-				{{VarAgreeableness, TermLow}},
-				{{VarEmotionalState, TermBad}},
-			},
-			Consequent: TermSupHigh,
-		},
-		{ // 52: Н=Высокий ∧ (Э=Низкий ∨ ДС=Высокая) ∧ ЭС=Плохое → Высокая
-			Antecedent: []Clause{
-				{{VarNeuroticism, TermHigh}},
-				{{VarExtraversion, TermLow}, {VarConscientiousness, TermHigh}},
-				{{VarEmotionalState, TermBad}},
-			},
-			Consequent: TermSupHigh,
-		},
-		{ // 55: Н=Средний ∧ ЭС=Плохое → Средняя
-			Antecedent: []Clause{
-				{{VarNeuroticism, TermMid}},
-				{{VarEmotionalState, TermBad}},
-			},
-			Consequent: TermSupMid,
-		},
-		{ // 59: Э=Высокий ∧ Д=Средняя ∧ ДС=Высокая ∧ Н=Средний ∧ О=Средняя ∧ ЭС=Плохое → Средняя
-			Antecedent: []Clause{
-				{{VarExtraversion, TermHigh}},
-				{{VarAgreeableness, TermMid}},
-				{{VarConscientiousness, TermHigh}},
-				{{VarNeuroticism, TermMid}},
-				{{VarOpenness, TermMid}},
-				{{VarEmotionalState, TermBad}},
-			},
-			Consequent: TermSupMid,
-		},
+		// 1. ЕСЛИ Нейротизм = Высокий И Экстраверсия = Низкая И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Очень высокая
+		rule(TermVeryHigh,
+			is(VarNeuroticism, TermHigh),
+			is(VarExtraversion, TermLow),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 2. ЕСЛИ Нейротизм = Высокий И Доброжелательность = Низкая И Эмоциональное состояние = Плохое, ТО Степень поддержки = Очень высокая
+		rule(TermVeryHigh,
+			is(VarNeuroticism, TermHigh),
+			is(VarAgreeableness, TermLow),
+			is(VarEmotionalState, TermBad),
+		),
+		// 3. ЕСЛИ Нейротизм = Высокий И Открытость к опыту = Низкая И Эмоциональное состояние = Плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarNeuroticism, TermHigh),
+			is(VarOpenness, TermLow),
+			is(VarEmotionalState, TermBad),
+		),
+		// 4. ЕСЛИ Нейротизм = Высокий И Экстраверсия = Низкая И Доброжелательность = Низкая И Эмоциональное состояние = Нормальное, ТО Степень поддержки = Средняя
+		rule(TermSupMid,
+			is(VarNeuroticism, TermHigh),
+			is(VarExtraversion, TermLow),
+			is(VarAgreeableness, TermLow),
+			is(VarEmotionalState, TermNormal),
+		),
+		// 5. ЕСЛИ Нейротизм = Высокий И Добросовестность = Низкая И Эмоциональное состояние = Плохое, ТО Степень поддержки = Очень высокая
+		rule(TermVeryHigh,
+			is(VarNeuroticism, TermHigh),
+			is(VarConscientiousness, TermLow),
+			is(VarEmotionalState, TermBad),
+		),
+		// 6. ЕСЛИ Нейротизм = Высокий И Эмоциональное состояние = Нормальное, ТО Степень поддержки = Средняя
+		rule(TermSupMid,
+			is(VarNeuroticism, TermHigh),
+			is(VarEmotionalState, TermNormal),
+		),
+		// 7. ЕСЛИ Нейротизм = Высокий И Эмоциональное состояние = Хорошее, ТО Степень поддержки = Малая
+		rule(TermSupLow,
+			is(VarNeuroticism, TermHigh),
+			is(VarEmotionalState, TermGood),
+		),
+		// 8. ЕСЛИ Нейротизм = Высокий И Эмоциональное состояние = Отличное, ТО Степень поддержки = Малая
+		rule(TermSupLow,
+			is(VarNeuroticism, TermHigh),
+			is(VarEmotionalState, TermExcellent),
+		),
+		// 9. ЕСЛИ Нейротизм = Высокий И Доброжелательность = Высокая И Эмоциональное состояние = Плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarNeuroticism, TermHigh),
+			is(VarAgreeableness, TermHigh),
+			is(VarEmotionalState, TermBad),
+		),
+		// 10. ЕСЛИ Нейротизм = Высокий И Экстраверсия = Высокая И Эмоциональное состояние = Плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarNeuroticism, TermHigh),
+			is(VarExtraversion, TermHigh),
+			is(VarEmotionalState, TermBad),
+		),
+		// 11. ЕСЛИ Нейротизм = Высокий И Открытость к опыту = Высокая И Эмоциональное состояние = Плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarNeuroticism, TermHigh),
+			is(VarOpenness, TermHigh),
+			is(VarEmotionalState, TermBad),
+		),
+		// 12. ЕСЛИ Нейротизм = Высокий И Экстраверсия = Средняя И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Очень высокая
+		rule(TermVeryHigh,
+			is(VarNeuroticism, TermHigh),
+			is(VarExtraversion, TermMid),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 13. ЕСЛИ Нейротизм = Низкий И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarNeuroticism, TermLow),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 14. ЕСЛИ Нейротизм = Низкий И Экстраверсия = Высокая И Эмоциональное состояние = Отличное, ТО Степень поддержки = Очень малая
+		rule(TermVeryLow,
+			is(VarNeuroticism, TermLow),
+			is(VarExtraversion, TermHigh),
+			is(VarEmotionalState, TermExcellent),
+		),
+		// 15. ЕСЛИ Нейротизм = Низкий И Эмоциональное состояние = Плохое, ТО Степень поддержки = Средняя
+		rule(TermSupMid,
+			is(VarNeuroticism, TermLow),
+			is(VarEmotionalState, TermBad),
+		),
+		// 16. ЕСЛИ Нейротизм = Низкий И Добросовестность = Высокая И Эмоциональное состояние = Нормальное, ТО Степень поддержки = Очень малая
+		rule(TermVeryLow,
+			is(VarNeuroticism, TermLow),
+			is(VarConscientiousness, TermHigh),
+			is(VarEmotionalState, TermNormal),
+		),
+		// 17. ЕСЛИ Нейротизм = Низкий И Экстраверсия = Низкая И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarNeuroticism, TermLow),
+			is(VarExtraversion, TermLow),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 18. ЕСЛИ Нейротизм = Низкий И Эмоциональное состояние = Нормальное, ТО Степень поддержки = Малая
+		rule(TermSupLow,
+			is(VarNeuroticism, TermLow),
+			is(VarEmotionalState, TermNormal),
+		),
+		// 19. ЕСЛИ Нейротизм = Низкий И (Эмоциональное состояние = Хорошее ИЛИ Эмоциональное состояние = Отличное), ТО Степень поддержки = Очень малая
+		rule(TermVeryLow,
+			is(VarNeuroticism, TermLow),
+			anyOf(cond(VarEmotionalState, TermGood), cond(VarEmotionalState, TermExcellent)),
+		),
+		// 20. ЕСЛИ Экстраверсия = Низкая И Эмоциональное состояние = Плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarExtraversion, TermLow),
+			is(VarEmotionalState, TermBad),
+		),
+		// 21. ЕСЛИ Экстраверсия = Низкая И Эмоциональное состояние = Нормальное, ТО Степень поддержки = Малая
+		rule(TermSupLow,
+			is(VarExtraversion, TermLow),
+			is(VarEmotionalState, TermNormal),
+		),
+		// 22. ЕСЛИ Экстраверсия = Низкая И Добросовестность = Низкая И Эмоциональное состояние = Плохое, ТО Степень поддержки = Очень высокая
+		rule(TermVeryHigh,
+			is(VarExtraversion, TermLow),
+			is(VarConscientiousness, TermLow),
+			is(VarEmotionalState, TermBad),
+		),
+		// 23. ЕСЛИ Экстраверсия = Высокая И (Нейротизм = Низкий ИЛИ Нейротизм = Средний) И Эмоциональное состояние = Нормальное, ТО Степень поддержки = Малая
+		rule(TermSupLow,
+			is(VarExtraversion, TermHigh),
+			anyOf(cond(VarNeuroticism, TermLow), cond(VarNeuroticism, TermMid)),
+			is(VarEmotionalState, TermNormal),
+		),
+		// 24. ЕСЛИ Экстраверсия = Высокая И (Нейротизм = Низкий ИЛИ Нейротизм = Средний) И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarExtraversion, TermHigh),
+			anyOf(cond(VarNeuroticism, TermLow), cond(VarNeuroticism, TermMid)),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 25. ЕСЛИ Экстраверсия = Средняя И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarExtraversion, TermMid),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 26. ЕСЛИ Экстраверсия = Высокая И (Нейротизм = Низкий ИЛИ Нейротизм = Средний) И Эмоциональное состояние = Хорошее, ТО Степень поддержки = Очень малая
+		rule(TermVeryLow,
+			is(VarExtraversion, TermHigh),
+			anyOf(cond(VarNeuroticism, TermLow), cond(VarNeuroticism, TermMid)),
+			is(VarEmotionalState, TermGood),
+		),
+		// 27. ЕСЛИ Добросовестность = Низкая И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Очень высокая
+		rule(TermVeryHigh,
+			is(VarConscientiousness, TermLow),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 28. ЕСЛИ Добросовестность = Низкая И Эмоциональное состояние = Плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarConscientiousness, TermLow),
+			is(VarEmotionalState, TermBad),
+		),
+		// 29. ЕСЛИ Добросовестность = Высокая И (Нейротизм = Низкий ИЛИ Нейротизм = Средний) И Эмоциональное состояние = Плохое, ТО Степень поддержки = Средняя
+		rule(TermSupMid,
+			is(VarConscientiousness, TermHigh),
+			anyOf(cond(VarNeuroticism, TermLow), cond(VarNeuroticism, TermMid)),
+			is(VarEmotionalState, TermBad),
+		),
+		// 30. ЕСЛИ Добросовестность = Высокая И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarConscientiousness, TermHigh),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 31. ЕСЛИ Добросовестность = Средняя И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarConscientiousness, TermMid),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 32. ЕСЛИ Добросовестность = Высокая И (Нейротизм = Низкий ИЛИ Нейротизм = Средний) И Эмоциональное состояние = Нормальное, ТО Степень поддержки = Малая
+		rule(TermSupLow,
+			is(VarConscientiousness, TermHigh),
+			anyOf(cond(VarNeuroticism, TermLow), cond(VarNeuroticism, TermMid)),
+			is(VarEmotionalState, TermNormal),
+		),
+		// 33. ЕСЛИ Доброжелательность = Низкая И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Очень высокая
+		rule(TermVeryHigh,
+			is(VarAgreeableness, TermLow),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 34. ЕСЛИ Доброжелательность = Низкая И Эмоциональное состояние = Плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarAgreeableness, TermLow),
+			is(VarEmotionalState, TermBad),
+		),
+		// 35. ЕСЛИ Доброжелательность = Высокая И (Нейротизм = Низкий ИЛИ Нейротизм = Средний) И Эмоциональное состояние = Плохое, ТО Степень поддержки = Средняя
+		rule(TermSupMid,
+			is(VarAgreeableness, TermHigh),
+			anyOf(cond(VarNeuroticism, TermLow), cond(VarNeuroticism, TermMid)),
+			is(VarEmotionalState, TermBad),
+		),
+		// 36. ЕСЛИ Доброжелательность = Высокая И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarAgreeableness, TermHigh),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 37. ЕСЛИ Доброжелательность = Высокая И Добросовестность = Высокая И Экстраверсия = Высокая И (Нейротизм = Низкий ИЛИ Нейротизм = Средний) И (Открытость к опыту = Средняя ИЛИ Открытость к опыту = Высокая) И Эмоциональное состояние = Нормальное, ТО Степень поддержки = Очень малая
+		rule(TermVeryLow,
+			is(VarAgreeableness, TermHigh),
+			is(VarConscientiousness, TermHigh),
+			is(VarExtraversion, TermHigh),
+			anyOf(cond(VarNeuroticism, TermLow), cond(VarNeuroticism, TermMid)),
+			anyOf(cond(VarOpenness, TermMid), cond(VarOpenness, TermHigh)),
+			is(VarEmotionalState, TermNormal),
+		),
+		// 38. ЕСЛИ Доброжелательность = Низкая И Добросовестность = Низкая И Эмоциональное состояние = Плохое, ТО Степень поддержки = Очень высокая
+		rule(TermVeryHigh,
+			is(VarAgreeableness, TermLow),
+			is(VarConscientiousness, TermLow),
+			is(VarEmotionalState, TermBad),
+		),
+		// 39. ЕСЛИ Доброжелательность = Средняя И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarAgreeableness, TermMid),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 40. ЕСЛИ Открытость к опыту = Высокая И Нейротизм = Средний И Эмоциональное состояние = Нормальное, ТО Степень поддержки = Малая
+		rule(TermSupLow,
+			is(VarOpenness, TermHigh),
+			is(VarNeuroticism, TermMid),
+			is(VarEmotionalState, TermNormal),
+		),
+		// 41. ЕСЛИ Открытость к опыту = Низкая И Экстраверсия = Низкая И Эмоциональное состояние = Плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarOpenness, TermLow),
+			is(VarExtraversion, TermLow),
+			is(VarEmotionalState, TermBad),
+		),
+		// 42. ЕСЛИ Открытость к опыту = Низкая И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarOpenness, TermLow),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 43. ЕСЛИ Открытость к опыту = Высокая И (Нейротизм = Низкий ИЛИ Нейротизм = Средний) И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarOpenness, TermHigh),
+			anyOf(cond(VarNeuroticism, TermLow), cond(VarNeuroticism, TermMid)),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 44. ЕСЛИ Нейротизм = Высокий И Открытость к опыту = Низкая И Эмоциональное состояние = Нормальное, ТО Степень поддержки = Средняя
+		rule(TermSupMid,
+			is(VarNeuroticism, TermHigh),
+			is(VarOpenness, TermLow),
+			is(VarEmotionalState, TermNormal),
+		),
+		// 45. ЕСЛИ Нейротизм = Высокий И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Очень высокая
+		rule(TermVeryHigh,
+			is(VarNeuroticism, TermHigh),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 46. ЕСЛИ Нейротизм = Высокий И (Добросовестность = Низкая ИЛИ Доброжелательность = Низкая) И Эмоциональное состояние = Нормальное, ТО Степень поддержки = Средняя
+		rule(TermSupMid,
+			is(VarNeuroticism, TermHigh),
+			anyOf(cond(VarConscientiousness, TermLow), cond(VarAgreeableness, TermLow)),
+			is(VarEmotionalState, TermNormal),
+		),
+		// 47. ЕСЛИ Экстраверсия = Низкая И (Нейротизм = Высокий ИЛИ Добросовестность = Низкая) И Эмоциональное состояние = Плохое, ТО Степень поддержки = Очень высокая
+		rule(TermVeryHigh,
+			is(VarExtraversion, TermLow),
+			anyOf(cond(VarNeuroticism, TermHigh), cond(VarConscientiousness, TermLow)),
+			is(VarEmotionalState, TermBad),
+		),
+		// 48. ЕСЛИ Экстраверсия = Низкая И Доброжелательность = Низкая И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Очень высокая
+		rule(TermVeryHigh,
+			is(VarExtraversion, TermLow),
+			is(VarAgreeableness, TermLow),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 49. ЕСЛИ Нейротизм = Высокий И Эмоциональное состояние = Плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarNeuroticism, TermHigh),
+			is(VarEmotionalState, TermBad),
+		),
+		// 50. ЕСЛИ (Добросовестность = Низкая ИЛИ Доброжелательность = Низкая) И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Очень высокая
+		rule(TermVeryHigh,
+			anyOf(cond(VarConscientiousness, TermLow), cond(VarAgreeableness, TermLow)),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 51. ЕСЛИ Нейротизм = Высокий И Добросовестность = Низкая И Эмоциональное состояние = Нормальное, ТО Степень поддержки = Средняя
+		rule(TermSupMid,
+			is(VarNeuroticism, TermHigh),
+			is(VarConscientiousness, TermLow),
+			is(VarEmotionalState, TermNormal),
+		),
+		// 52. ЕСЛИ Нейротизм = Высокий И (Доброжелательность = Высокая ИЛИ Добросовестность = Высокая) И Эмоциональное состояние = Плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarNeuroticism, TermHigh),
+			anyOf(cond(VarAgreeableness, TermHigh), cond(VarConscientiousness, TermHigh)),
+			is(VarEmotionalState, TermBad),
+		),
+		// 53. ЕСЛИ (Доброжелательность = Высокая ИЛИ Экстраверсия = Высокая) И (Нейротизм = Низкий ИЛИ Нейротизм = Средний) И Эмоциональное состояние = Нормальное, ТО Степень поддержки = Малая
+		rule(TermSupLow,
+			anyOf(cond(VarAgreeableness, TermHigh), cond(VarExtraversion, TermHigh)),
+			anyOf(cond(VarNeuroticism, TermLow), cond(VarNeuroticism, TermMid)),
+			is(VarEmotionalState, TermNormal),
+		),
+		// 54. ЕСЛИ Нейротизм = Средний И Эмоциональное состояние = Нормальное, ТО Степень поддержки = Средняя
+		rule(TermSupMid,
+			is(VarNeuroticism, TermMid),
+			is(VarEmotionalState, TermNormal),
+		),
+		// 55. ЕСЛИ Нейротизм = Средний И Эмоциональное состояние = Плохое, ТО Степень поддержки = Средняя
+		rule(TermSupMid,
+			is(VarNeuroticism, TermMid),
+			is(VarEmotionalState, TermBad),
+		),
+		// 56. ЕСЛИ Нейротизм = Средний И Эмоциональное состояние = Очень плохое, ТО Степень поддержки = Высокая
+		rule(TermSupHigh,
+			is(VarNeuroticism, TermMid),
+			is(VarEmotionalState, TermVeryBad),
+		),
+		// 57. ЕСЛИ Нейротизм = Средний И Эмоциональное состояние = Хорошее, ТО Степень поддержки = Малая
+		rule(TermSupLow,
+			is(VarNeuroticism, TermMid),
+			is(VarEmotionalState, TermGood),
+		),
+		// 58. ЕСЛИ Нейротизм = Средний И Эмоциональное состояние = Отличное, ТО Степень поддержки = Очень малая
+		rule(TermVeryLow,
+			is(VarNeuroticism, TermMid),
+			is(VarEmotionalState, TermExcellent),
+		),
+		// 59. ЕСЛИ Нейротизм = Средний И Добросовестность = Высокая И Экстраверсия = Высокая И (Доброжелательность = Средняя ИЛИ Доброжелательность = Высокая) И (Открытость к опыту = Средняя ИЛИ Открытость к опыту = Высокая) И Эмоциональное состояние = Плохое, ТО Степень поддержки = Средняя
+		rule(TermSupMid,
+			is(VarNeuroticism, TermMid),
+			is(VarConscientiousness, TermHigh),
+			is(VarExtraversion, TermHigh),
+			anyOf(cond(VarAgreeableness, TermMid), cond(VarAgreeableness, TermHigh)),
+			anyOf(cond(VarOpenness, TermMid), cond(VarOpenness, TermHigh)),
+			is(VarEmotionalState, TermBad),
+		),
 	}
 }
 

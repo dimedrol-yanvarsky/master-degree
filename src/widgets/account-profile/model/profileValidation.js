@@ -1,5 +1,5 @@
 export function validateProfileField(key, label, rawValue) {
-    const value = rawValue.trim();
+    const value = String(rawValue || '').trim();
 
     if (key === 'surname' || key === 'name' || key === 'patronymic') {
         if (!value) return `${label} должна быть заполнена.`;

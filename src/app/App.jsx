@@ -16,6 +16,9 @@ function AppView() {
             onLogout={session.handleLogout}
             onUserUpdate={session.handleUserUpdate}
             onAccountDelete={session.handleAccountDelete}
+            onPasswordChange={session.handlePasswordChange}
+            onYandexLinkStart={session.handleYandexLinkStart}
+            onYandexUnlink={session.handleYandexUnlink}
             onTestComplete={session.handleTestComplete}
         />
     );

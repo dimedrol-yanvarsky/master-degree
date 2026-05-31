@@ -77,6 +77,18 @@
     text-transform: uppercase;
 }
 
+.statusMessage {
+    margin: 0;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-frame);
+    background: var(--bg);
+    color: var(--fg-3);
+    font-size: 14px;
+    line-height: 1.5;
+    box-shadow: var(--shadow-1);
+}
+
 .section {
     display: grid;
     gap: 16px;

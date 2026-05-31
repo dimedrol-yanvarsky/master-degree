@@ -11,17 +11,20 @@ import (
 // User — учётная запись системы: клиент, специалист или администратор.
 // Пароль в открытом виде не хранится — только его bcrypt-хеш.
 type User struct {
-	ID           string
-	Email        string
-	Name         string
-	Surname      string
-	Patronymic   string
-	About        string
-	PasswordHash string
-	Role         shared.Role
-	Status       shared.AccountStatus
-	YandexLinked bool
-	CreatedAt    time.Time
+	ID                     string
+	Email                  string
+	Name                   string
+	Surname                string
+	Patronymic             string
+	About                  string
+	Experience             string
+	PasswordHash           string
+	PasswordResetTokenHash string
+	PasswordResetExpiresAt *time.Time
+	Role                   shared.Role
+	Status                 shared.AccountStatus
+	YandexLinked           bool
+	CreatedAt              time.Time
 }
 
 // Session — запись об аутентифицированном входе. Хранится только хеш выданного

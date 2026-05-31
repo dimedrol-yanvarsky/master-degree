@@ -198,6 +198,10 @@
     min-width: 0;
 }
 
+.manualPanel > .manualForm:last-child {
+    grid-column: 1 / -1;
+}
+
 .formNotice {
     margin: -2px 0 0;
     color: var(--accent);

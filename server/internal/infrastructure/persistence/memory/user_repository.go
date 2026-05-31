@@ -5,6 +5,7 @@ package memory
 
 import (
 	"context"
+	"sort"
 	"strings"
 	"sync"
 
@@ -72,14 +73,37 @@ func (r *UserRepository) FindByEmail(_ context.Context, email string) (user.User
 	return r.byID[id], nil
 }
 
+func (r *UserRepository) List(_ context.Context) ([]user.User, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	items := make([]user.User, 0, len(r.byID))
+	for _, u := range r.byID {
+		items = append(items, u)
+	}
+	sort.SliceStable(items, func(i, j int) bool {
+		if items[i].CreatedAt.Equal(items[j].CreatedAt) {
+			return items[i].Email < items[j].Email
+		}
+		return items[i].CreatedAt.After(items[j].CreatedAt)
+	})
+	return items, nil
+}
+
 func (r *UserRepository) Update(_ context.Context, u user.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if _, ok := r.byID[u.ID]; !ok {
+	current, ok := r.byID[u.ID]
+	if !ok {
 		return shared.ErrNotFound
 	}
+	email := strings.ToLower(strings.TrimSpace(u.Email))
+	if ownerID, exists := r.byEmail[email]; exists && ownerID != u.ID {
+		return shared.ErrConflict
+	}
+	delete(r.byEmail, strings.ToLower(strings.TrimSpace(current.Email)))
 	r.byID[u.ID] = u
-	r.byEmail[strings.ToLower(u.Email)] = u.ID
+	r.byEmail[email] = u.ID
 	return nil
 }

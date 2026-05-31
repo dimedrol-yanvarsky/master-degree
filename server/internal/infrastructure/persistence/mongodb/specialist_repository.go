@@ -142,7 +142,11 @@ func experienceString(value any) string {
 			return formatYears(int(experience))
 		}
 	case string:
-		return strings.TrimSpace(experience)
+		trimmed := strings.TrimSpace(experience)
+		if years, ok := leadingExperienceYears(trimmed); ok {
+			return formatYears(years)
+		}
+		return trimmed
 	}
 	return ""
 }

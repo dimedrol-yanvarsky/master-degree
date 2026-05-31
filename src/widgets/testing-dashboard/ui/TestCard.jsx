@@ -1,9 +1,7 @@
 import { Badge, Button, KitIcon } from '../../../shared/ui/kit';
 import { pluralizeDays } from '../../../features/testing';
 
-export function TestCard({ test, onStart, isCompleted = false, remainingDays = 0, styles }) {
-    const isLocked = isCompleted && remainingDays > 0;
-
+export function TestCard({ test, onStart, isCompleted = false, isLocked = false, lockLabel = '', remainingDays = 0, styles }) {
     return (
         <article className={[styles.testCard, isCompleted ? styles.completedTestCard : ''].filter(Boolean).join(' ')}>
             <div className={styles.testTopline}>
@@ -15,7 +13,7 @@ export function TestCard({ test, onStart, isCompleted = false, remainingDays = 0
             {isLocked ? (
                 <p className={styles.lockNote}>
                     <KitIcon name="lock" size={15} />
-                    Будет доступен через {remainingDays} {pluralizeDays(remainingDays)}
+                    {lockLabel || `Будет доступен через ${remainingDays} ${pluralizeDays(remainingDays)}`}
                 </p>
             ) : (
                 <Button

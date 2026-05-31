@@ -6,7 +6,7 @@ import { testRoute } from '../../../shared/routes';
 import { canViewCompletedTests, getTestAvailability } from '../model/testAvailability';
 import { TestCard } from './TestCard';
 
-export function TestingLanding({ isAuth, status, testStatus, canManageTests, initialPrompt, availableTests, testsLoading, testsError, onAddTest, styles }) {
+export function TestingLanding({ isAuth, status, testStatus, canManageTests, initialPrompt, availableTests, testsLoading, testsError, onAddTest, onUpdateTest, onDeleteTest, currentUserId, userRole, styles }) {
     const navigate = useNavigate();
     const [authPrompt, setAuthPrompt] = useState(initialPrompt || null);
     const [resultsOpen, setResultsOpen] = useState(false);
@@ -50,13 +50,15 @@ export function TestingLanding({ isAuth, status, testStatus, canManageTests, ini
             {availableTests.length > 0 && (
                 <div className={styles.testingGrid}>
                     {availableTests.map((test) => {
-                        const { isCompleted, remainingDays } = getTestAvailability(test, testStatus);
+                        const { isCompleted, isLocked, lockLabel, remainingDays } = getTestAvailability(test, testStatus);
 
                         return (
                             <TestCard
                                 key={test.id}
                                 test={test}
                                 isCompleted={isCompleted}
+                                isLocked={isLocked}
+                                lockLabel={lockLabel}
                                 remainingDays={remainingDays}
                                 onStart={handleStart}
                                 styles={styles}
@@ -66,7 +68,17 @@ export function TestingLanding({ isAuth, status, testStatus, canManageTests, ini
                 </div>
             )}
 
-            {canManageTests && <ManualTestPanel onAddTest={onAddTest} styles={styles} />}
+            {canManageTests && (
+                <ManualTestPanel
+                    tests={availableTests}
+                    currentUserId={currentUserId}
+                    userRole={userRole}
+                    onAddTest={onAddTest}
+                    onUpdateTest={onUpdateTest}
+                    onDeleteTest={onDeleteTest}
+                    styles={styles}
+                />
+            )}
             <AuthModal test={authPrompt} onClose={() => setAuthPrompt(null)} styles={styles} />
             {resultsOpen && (
                 <ResultsModal

@@ -117,6 +117,28 @@
     box-shadow: var(--shadow-1);
 }
 
+.emptyPanel {
+    justify-items: start;
+    max-width: 760px;
+}
+
+.emptyIcon {
+    display: grid;
+    width: 58px;
+    aspect-ratio: 1;
+    place-items: center;
+    border-radius: var(--r-lg);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.panelActions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
 .panelHead {
     display: flex;
     align-items: center;

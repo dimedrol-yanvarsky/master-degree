@@ -8,12 +8,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/application/port"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/domain/emotion"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/domain/shared"
+	domainsupport "github.com/dimedrol-yanvarsky/master-degree/server/internal/domain/support"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/domain/test"
 )
 
@@ -30,9 +32,14 @@ type Deps struct {
 	Graphs         port.EmotionGraphRepository
 	Collaborations port.CollaborationRepository
 	Users          port.UserRepository
+	Support        SupportEngine
 	Notifier       port.SpecialistNotifier
 	IDs            port.IDGenerator
 	Clock          port.Clock
+}
+
+type SupportEngine interface {
+	Infer(inputs map[string]float64) domainsupport.Result
 }
 
 // Service реализует приём результатов тестов и сопутствующую логику графа.
@@ -42,6 +49,9 @@ type Service struct {
 
 // NewService собирает use case тестирования.
 func NewService(deps Deps) *Service {
+	if deps.Support == nil {
+		deps.Support = domainsupport.NewEngine()
+	}
 	return &Service{deps: deps}
 }
 
@@ -57,6 +67,24 @@ type SubmitInput struct {
 	Domains    []test.DomainScore
 }
 
+// CreateTestInput — данные ручного теста, создаваемого специалистом или администратором.
+type CreateTestInput struct {
+	AuthorID    string
+	Title       string
+	Code        string
+	Description string
+	Questions   []string
+}
+
+type UpdateTestInput struct {
+	ActorID     string
+	ID          string
+	Title       string
+	Code        string
+	Description string
+	Questions   []string
+}
+
 // SubmitResult — итог приёма результата: добавлена ли вершина и кого оповестили.
 type SubmitResult struct {
 	Result         test.TestResult
@@ -68,11 +96,38 @@ type SubmitResult struct {
 // Submit сохраняет результат теста и при необходимости добавляет вершину графа.
 func (s *Service) Submit(ctx context.Context, in SubmitInput) (SubmitResult, error) {
 	code := strings.ToLower(strings.TrimSpace(in.TestCode))
-	if code != CodePsychotype && code != CodeEmotional {
-		return SubmitResult{}, fmt.Errorf("%w: unknown test code %q", shared.ErrValidation, in.TestCode)
+	if code == "" {
+		return SubmitResult{}, fmt.Errorf("%w: test code is required", shared.ErrValidation)
 	}
 	if strings.TrimSpace(in.UserID) == "" {
 		return SubmitResult{}, fmt.Errorf("%w: user is required", shared.ErrValidation)
+	}
+	if code != CodePsychotype && code != CodeEmotional {
+		if s.deps.Tests == nil {
+			return SubmitResult{}, fmt.Errorf("%w: unknown test code %q", shared.ErrValidation, in.TestCode)
+		}
+		if _, err := s.deps.Tests.FindByID(ctx, code); err != nil {
+			if errors.Is(err, shared.ErrNotFound) {
+				return SubmitResult{}, fmt.Errorf("%w: unknown test code %q", shared.ErrValidation, in.TestCode)
+			}
+			return SubmitResult{}, err
+		}
+	}
+
+	normalizedScore := in.Score
+	normalizedScoreLabel := strings.TrimSpace(in.ScoreLabel)
+	normalizedLevel := strings.TrimSpace(in.Level)
+	normalizedDomains := in.Domains
+	if code == CodePsychotype {
+		if domains, ok := bfi2DomainsFromAnswers(in.Answers); ok {
+			normalizedDomains = domains
+		}
+	}
+	if code == CodeEmotional {
+		normalizedScore = bdsScore(in.Score, in.Answers)
+		if normalizedScoreLabel == "" && normalizedScore > 0 {
+			normalizedScoreLabel = fmt.Sprintf("%.0f из 64", normalizedScore)
+		}
 	}
 
 	result := test.TestResult{
@@ -81,11 +136,11 @@ func (s *Service) Submit(ctx context.Context, in SubmitInput) (SubmitResult, err
 		TestID:      code,
 		TestCode:    code,
 		Answers:     in.Answers,
-		Score:       in.Score,
-		ScoreLabel:  in.ScoreLabel,
-		Level:       in.Level,
+		Score:       normalizedScore,
+		ScoreLabel:  normalizedScoreLabel,
+		Level:       normalizedLevel,
 		Summary:     in.Summary,
-		Domains:     in.Domains,
+		Domains:     normalizedDomains,
 		CompletedAt: s.deps.Clock.Now(),
 	}
 	if err := s.deps.Results.Create(ctx, result); err != nil {
@@ -93,62 +148,36 @@ func (s *Service) Submit(ctx context.Context, in SubmitInput) (SubmitResult, err
 	}
 
 	out := SubmitResult{Result: result}
+	if code != CodeEmotional {
+		return out, nil
+	}
 
 	history, err := s.ListResults(ctx, in.UserID)
 	if err != nil {
 		return SubmitResult{}, err
 	}
 
-	psychoCount, emoCount := 0, 0
-	var latestEmotional test.TestResult
-	hasEmotional := false
-	for _, r := range history {
-		switch r.TestID {
-		case CodePsychotype:
-			psychoCount++
-		case CodeEmotional:
-			emoCount++
-			if !hasEmotional || r.CompletedAt.After(latestEmotional.CompletedAt) {
-				latestEmotional = r
-				hasEmotional = true
-			}
-		}
+	latestBFI, ok := latestResultByCode(history, CodePsychotype)
+	if !ok {
+		return out, nil
 	}
 
-	// Завершённых пар столько, сколько меньшего из тестов. Каждая новая пара —
-	// одна вершина.
-	pairs := psychoCount
-	if emoCount < pairs {
-		pairs = emoCount
-	}
-
-	graph, err := s.deps.Graphs.FindByUser(ctx, in.UserID)
-	if err != nil && !errors.Is(err, shared.ErrNotFound) {
+	point, err := s.supportPoint(latestBFI, result)
+	if err != nil {
 		return SubmitResult{}, err
 	}
-	existingVertices := len(graph.Points)
-
-	if pairs > existingVertices && hasEmotional {
-		// Значение вершины берём из последнего теста эмоционального состояния
-		// (динамическая часть потребности в поддержке); психотип обязателен как
-		// условие появления вершины.
-		point := emotion.Point{
-			Date:        s.deps.Clock.Now(),
-			SupportNeed: latestEmotional.Score,
-			Level:       latestEmotional.Level,
-		}
-		if err := s.deps.Graphs.AppendPoint(ctx, in.UserID, point); err != nil {
-			return SubmitResult{}, err
-		}
-		out.VertexAdded = true
-		out.Point = point
-
-		emails, err := s.notifySpecialists(ctx, in.UserID, point)
-		if err != nil {
-			return SubmitResult{}, err
-		}
-		out.NotifiedEmails = emails
+	point.Date = s.deps.Clock.Now()
+	if err := s.deps.Graphs.AppendPoint(ctx, in.UserID, point); err != nil {
+		return SubmitResult{}, err
 	}
+	out.VertexAdded = true
+	out.Point = point
+
+	emails, err := s.notifySpecialists(ctx, in.UserID, point)
+	if err != nil {
+		return SubmitResult{}, err
+	}
+	out.NotifiedEmails = emails
 
 	return out, nil
 }
@@ -162,6 +191,113 @@ func (s *Service) ListTests(ctx context.Context) ([]test.Test, error) {
 		return []test.Test{}, nil
 	}
 	return s.deps.Tests.List(ctx)
+}
+
+// CreateTest сохраняет новый ручной тест в системной базе тестов.
+func (s *Service) CreateTest(ctx context.Context, in CreateTestInput) (test.Test, error) {
+	if s.deps.Tests == nil {
+		return test.Test{}, fmt.Errorf("%w: test repository is not configured", shared.ErrValidation)
+	}
+
+	questions := cleanQuestions(in.Questions)
+	if strings.TrimSpace(in.Title) == "" {
+		return test.Test{}, fmt.Errorf("%w: title is required", shared.ErrValidation)
+	}
+	if len(questions) == 0 {
+		return test.Test{}, fmt.Errorf("%w: questions are required", shared.ErrValidation)
+	}
+
+	code := normalizeTestCode(in.Code)
+	if code == "" {
+		code = normalizeTestCode(in.Title)
+	}
+
+	now := s.deps.Clock.Now()
+	item := test.Test{
+		ID:             s.deps.IDs.NewID(),
+		Code:           code,
+		Title:          strings.TrimSpace(in.Title),
+		Description:    firstNonEmpty(strings.TrimSpace(in.Description), "Пользовательский опросник, добавленный специалистом или администратором."),
+		AuthorID:       strings.TrimSpace(in.AuthorID),
+		QuestionCount:  len(questions),
+		PassingMinutes: estimatedPassingMinutes(len(questions)),
+		SourceNote:     "Тест добавлен вручную специалистом или администратором.",
+		Questions:      toQuestions(questions),
+		Scale:          defaultManualScale(),
+		Status:         "active",
+		CreatedAt:      now,
+	}
+	if err := s.deps.Tests.Create(ctx, item); err != nil {
+		return test.Test{}, err
+	}
+	return item, nil
+}
+
+func (s *Service) UpdateTest(ctx context.Context, in UpdateTestInput) (test.Test, error) {
+	if s.deps.Tests == nil {
+		return test.Test{}, fmt.Errorf("%w: test repository is not configured", shared.ErrValidation)
+	}
+	id := strings.TrimSpace(in.ID)
+	if id == "" {
+		return test.Test{}, fmt.Errorf("%w: test id is required", shared.ErrValidation)
+	}
+
+	current, err := s.deps.Tests.FindByID(ctx, id)
+	if err != nil {
+		return test.Test{}, err
+	}
+	if err := s.ensureCanManageTest(ctx, in.ActorID, current); err != nil {
+		return test.Test{}, err
+	}
+
+	questions := cleanQuestions(in.Questions)
+	if strings.TrimSpace(in.Title) == "" {
+		return test.Test{}, fmt.Errorf("%w: title is required", shared.ErrValidation)
+	}
+	if len(questions) == 0 {
+		return test.Test{}, fmt.Errorf("%w: questions are required", shared.ErrValidation)
+	}
+
+	code := normalizeTestCode(in.Code)
+	if code == "" {
+		code = normalizeTestCode(in.Title)
+	}
+
+	current.Code = code
+	current.Title = strings.TrimSpace(in.Title)
+	current.Description = firstNonEmpty(strings.TrimSpace(in.Description), current.Description)
+	current.QuestionCount = len(questions)
+	current.PassingMinutes = estimatedPassingMinutes(len(questions))
+	current.Questions = toQuestions(questions)
+	if len(current.Scale) == 0 {
+		current.Scale = defaultManualScale()
+	}
+	if strings.TrimSpace(current.Status) == "" {
+		current.Status = "active"
+	}
+	if err := s.deps.Tests.Update(ctx, current); err != nil {
+		return test.Test{}, err
+	}
+	return current, nil
+}
+
+func (s *Service) DeleteTest(ctx context.Context, actorID, id string) error {
+	if s.deps.Tests == nil {
+		return fmt.Errorf("%w: test repository is not configured", shared.ErrValidation)
+	}
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return fmt.Errorf("%w: test id is required", shared.ErrValidation)
+	}
+
+	current, err := s.deps.Tests.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if err := s.ensureCanManageTest(ctx, actorID, current); err != nil {
+		return err
+	}
+	return s.deps.Tests.Delete(ctx, current.ID)
 }
 
 func (s *Service) ListResults(ctx context.Context, userID string) ([]test.TestResult, error) {
@@ -202,6 +338,79 @@ func (s *Service) ListResults(ctx context.Context, userID string) ([]test.TestRe
 	return results, nil
 }
 
+func (s *Service) ListClientResults(ctx context.Context, specialistID, clientID string) ([]test.TestResult, error) {
+	if err := s.ensureSpecialistClientAccess(ctx, specialistID, clientID); err != nil {
+		return nil, err
+	}
+	return s.ListResults(ctx, clientID)
+}
+
+func cleanQuestions(raw []string) []string {
+	questions := make([]string, 0, len(raw))
+	for _, item := range raw {
+		question := strings.TrimSpace(item)
+		if question != "" {
+			questions = append(questions, question)
+		}
+	}
+	return questions
+}
+
+func normalizeTestCode(value string) string {
+	code := strings.ToLower(strings.TrimSpace(value))
+	code = strings.ReplaceAll(code, "_", "-")
+	code = strings.Join(strings.Fields(code), "-")
+	var builder strings.Builder
+	for _, r := range code {
+		if r >= 'a' && r <= 'z' || r >= '0' && r <= '9' || r >= 'а' && r <= 'я' || r == 'ё' || r == '-' {
+			builder.WriteRune(r)
+		}
+	}
+	code = strings.Trim(builder.String(), "-")
+	if code == "" {
+		return ""
+	}
+	return "custom-" + strings.TrimPrefix(code, "custom-")
+}
+
+func estimatedPassingMinutes(questionCount int) int {
+	minutes := questionCount / 5
+	if questionCount%5 != 0 {
+		minutes++
+	}
+	if minutes < 1 {
+		return 1
+	}
+	return minutes
+}
+
+func toQuestions(items []string) []test.Question {
+	questions := make([]test.Question, 0, len(items))
+	for index, text := range items {
+		questions = append(questions, test.Question{Index: index, Text: text})
+	}
+	return questions
+}
+
+func defaultManualScale() []test.AnswerOption {
+	return []test.AnswerOption{
+		{Value: 1, Label: "совсем нет"},
+		{Value: 2, Label: "скорее нет"},
+		{Value: 3, Label: "затрудняюсь"},
+		{Value: 4, Label: "скорее да"},
+		{Value: 5, Label: "полностью да"},
+	}
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+	return ""
+}
+
 func mergeResults(left, right []test.TestResult) []test.TestResult {
 	out := make([]test.TestResult, 0, len(left)+len(right))
 	seen := make(map[string]struct{}, len(left)+len(right))
@@ -220,6 +429,198 @@ func mergeResults(left, right []test.TestResult) []test.TestResult {
 	return out
 }
 
+var bfi2DomainDefinitions = []struct {
+	label    string
+	variable string
+	items    []int
+}{
+	{label: "Экстраверсия", variable: domainsupport.VarExtraversion, items: []int{1, 6, -11, -16, 21, -26, -31, -36, 41, 46, -51, 56}},
+	{label: "Доброжелательность", variable: domainsupport.VarAgreeableness, items: []int{2, 7, -12, -17, -22, 27, 32, -37, -42, -47, 52, 57}},
+	{label: "Добросовестность", variable: domainsupport.VarConscientiousness, items: []int{-3, -8, 13, 18, -23, -28, 33, 38, 43, -48, 53, -58}},
+	{label: "Нейротизм", variable: domainsupport.VarNeuroticism, items: []int{-4, -9, 14, 19, -24, -29, 34, 39, -44, -49, 54, 59}},
+	{label: "Открытость к опыту", variable: domainsupport.VarOpenness, items: []int{-5, 10, 15, 20, -25, -30, 35, 40, -45, -50, -55, 60}},
+}
+
+func (s *Service) supportPoint(bfiResult, bdsResult test.TestResult) (emotion.Point, error) {
+	inputs, err := supportInputs(bfiResult, bdsResult)
+	if err != nil {
+		return emotion.Point{}, err
+	}
+
+	result := s.deps.Support.Infer(inputs)
+	if len(result.Activations) == 0 {
+		return emotion.Point{}, fmt.Errorf("%w: fuzzy rule base did not activate", shared.ErrValidation)
+	}
+
+	return emotion.Point{
+		SupportNeed: result.Score,
+		Level:       domainsupport.Label(result.Term),
+	}, nil
+}
+
+func supportInputs(bfiResult, bdsResult test.TestResult) (map[string]float64, error) {
+	domainInputs, err := bfiDomainInputs(bfiResult)
+	if err != nil {
+		return nil, err
+	}
+
+	emotionalState := bdsScore(bdsResult.Score, bdsResult.Answers)
+	if !inRange(emotionalState, 16, 64) {
+		return nil, fmt.Errorf("%w: bds score must be in [16, 64]", shared.ErrValidation)
+	}
+	domainInputs[domainsupport.VarEmotionalState] = emotionalState
+
+	return domainInputs, nil
+}
+
+func bfiDomainInputs(result test.TestResult) (map[string]float64, error) {
+	values := make(map[string]float64, len(bfi2DomainDefinitions))
+	for _, domain := range result.Domains {
+		variable := bfiDomainVariable(domain.Label)
+		if variable == "" {
+			continue
+		}
+		values[variable] = domain.Score
+	}
+
+	if len(values) < len(bfi2DomainDefinitions) {
+		if domains, ok := bfi2DomainsFromAnswers(result.Answers); ok {
+			for _, domain := range domains {
+				if variable := bfiDomainVariable(domain.Label); variable != "" {
+					values[variable] = domain.Score
+				}
+			}
+		}
+	}
+
+	for _, definition := range bfi2DomainDefinitions {
+		value, ok := values[definition.variable]
+		if !ok {
+			return nil, fmt.Errorf("%w: latest bfi-2 result does not contain %s", shared.ErrValidation, definition.label)
+		}
+		if !inRange(value, 1, 5) {
+			return nil, fmt.Errorf("%w: %s must be in [1, 5]", shared.ErrValidation, definition.label)
+		}
+	}
+
+	return values, nil
+}
+
+func bfi2DomainsFromAnswers(answers []test.Answer) ([]test.DomainScore, bool) {
+	answerByIndex := make(map[int]int, len(answers))
+	for _, answer := range answers {
+		if answer.Value >= 1 && answer.Value <= 5 {
+			answerByIndex[answer.QuestionIndex] = answer.Value
+		}
+	}
+
+	domains := make([]test.DomainScore, 0, len(bfi2DomainDefinitions))
+	for _, definition := range bfi2DomainDefinitions {
+		sum := 0.0
+		for _, item := range definition.items {
+			index := item
+			reverse := false
+			if index < 0 {
+				index = -index
+				reverse = true
+			}
+
+			value, ok := answerByIndex[index-1]
+			if !ok {
+				return nil, false
+			}
+			if reverse {
+				value = 6 - value
+			}
+			sum += float64(value)
+		}
+		score := math.Round((sum/float64(len(definition.items)))*10) / 10
+		domains = append(domains, test.DomainScore{Label: definition.label, Score: score})
+	}
+
+	return domains, true
+}
+
+func bdsScore(score float64, answers []test.Answer) float64 {
+	if total, ok := bdsTotalFromAnswers(answers); ok {
+		return total
+	}
+	if inRange(score, 16, 64) {
+		return score
+	}
+	if inRange(score, 1, 4) {
+		return math.Round(score * 16)
+	}
+	return score
+}
+
+func bdsTotalFromAnswers(answers []test.Answer) (float64, bool) {
+	if len(answers) < 16 {
+		return 0, false
+	}
+
+	seen := make(map[int]struct{}, len(answers))
+	total := 0
+	for _, answer := range answers {
+		if answer.QuestionIndex < 0 || answer.Value < 1 || answer.Value > 4 {
+			return 0, false
+		}
+		if _, exists := seen[answer.QuestionIndex]; exists {
+			continue
+		}
+		seen[answer.QuestionIndex] = struct{}{}
+		total += answer.Value
+	}
+	if len(seen) != 16 {
+		return 0, false
+	}
+	return float64(total), true
+}
+
+func bfiDomainVariable(label string) string {
+	normalized := strings.ToLower(strings.TrimSpace(label))
+	normalized = strings.ReplaceAll(normalized, "ё", "е")
+
+	switch {
+	case normalized == domainsupport.VarExtraversion || strings.Contains(normalized, "экстрав") || strings.Contains(normalized, "extrav"):
+		return domainsupport.VarExtraversion
+	case normalized == domainsupport.VarConscientiousness || strings.Contains(normalized, "доброс") || strings.Contains(normalized, "conscient"):
+		return domainsupport.VarConscientiousness
+	case normalized == domainsupport.VarAgreeableness || strings.Contains(normalized, "доброж") || strings.Contains(normalized, "agree"):
+		return domainsupport.VarAgreeableness
+	case normalized == domainsupport.VarNeuroticism || strings.Contains(normalized, "нейрот") || strings.Contains(normalized, "негатив") || strings.Contains(normalized, "neuro") || strings.Contains(normalized, "negative"):
+		return domainsupport.VarNeuroticism
+	case normalized == domainsupport.VarOpenness || strings.Contains(normalized, "открыт") || strings.Contains(normalized, "open"):
+		return domainsupport.VarOpenness
+	default:
+		return ""
+	}
+}
+
+func latestResultByCode(results []test.TestResult, code string) (test.TestResult, bool) {
+	code = strings.ToLower(strings.TrimSpace(code))
+	var latest test.TestResult
+	found := false
+	for _, result := range results {
+		if resultCode(result) != code {
+			continue
+		}
+		if !found || result.CompletedAt.After(latest.CompletedAt) {
+			latest = result
+			found = true
+		}
+	}
+	return latest, found
+}
+
+func resultCode(result test.TestResult) string {
+	return strings.ToLower(strings.TrimSpace(firstNonEmpty(result.TestCode, result.TestID)))
+}
+
+func inRange(value, min, max float64) bool {
+	return !math.IsNaN(value) && !math.IsInf(value, 0) && value >= min && value <= max
+}
+
 // Graph возвращает граф эмоционального состояния пользователя (пустой, если его
 // ещё нет).
 func (s *Service) Graph(ctx context.Context, userID string) (emotion.Graph, error) {
@@ -231,6 +632,65 @@ func (s *Service) Graph(ctx context.Context, userID string) (emotion.Graph, erro
 		return emotion.Graph{}, err
 	}
 	return graph, nil
+}
+
+func (s *Service) ClientGraph(ctx context.Context, specialistID, clientID string) (emotion.Graph, error) {
+	if err := s.ensureSpecialistClientAccess(ctx, specialistID, clientID); err != nil {
+		return emotion.Graph{}, err
+	}
+	return s.Graph(ctx, clientID)
+}
+
+func (s *Service) ensureCanManageTest(ctx context.Context, actorID string, item test.Test) error {
+	if s.deps.Users == nil {
+		return shared.ErrForbidden
+	}
+	actor, err := s.deps.Users.FindByID(ctx, strings.TrimSpace(actorID))
+	if err != nil {
+		return err
+	}
+	if actor.Role == shared.RoleAdmin {
+		return nil
+	}
+	if actor.Role == shared.RoleSpecialist && strings.TrimSpace(item.AuthorID) != "" && item.AuthorID == actor.ID {
+		return nil
+	}
+	return shared.ErrForbidden
+}
+
+func (s *Service) ensureSpecialistClientAccess(ctx context.Context, specialistID, clientID string) error {
+	specialistID = strings.TrimSpace(specialistID)
+	clientID = strings.TrimSpace(clientID)
+	if specialistID == "" || clientID == "" {
+		return fmt.Errorf("%w: specialist and client are required", shared.ErrValidation)
+	}
+	if s.deps.Users == nil || s.deps.Collaborations == nil {
+		return shared.ErrForbidden
+	}
+
+	specialist, err := s.deps.Users.FindByID(ctx, specialistID)
+	if err != nil {
+		return err
+	}
+	if specialist.Role != shared.RoleSpecialist {
+		return shared.ErrForbidden
+	}
+	client, err := s.deps.Users.FindByID(ctx, clientID)
+	if err != nil {
+		return err
+	}
+	if client.Role != shared.RoleClient {
+		return shared.ErrForbidden
+	}
+
+	collaboration, err := s.deps.Collaborations.FindBetween(ctx, specialist.ID, client.ID)
+	if err != nil {
+		return err
+	}
+	if !collaboration.GrantsAccess() {
+		return shared.ErrForbidden
+	}
+	return nil
 }
 
 // notifySpecialists рассылает оповещение только специалистам с принятым

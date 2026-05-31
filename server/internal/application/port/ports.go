@@ -26,6 +26,7 @@ type UserRepository interface {
 	Create(ctx context.Context, u user.User) error
 	FindByID(ctx context.Context, id string) (user.User, error)
 	FindByEmail(ctx context.Context, email string) (user.User, error)
+	List(ctx context.Context) ([]user.User, error)
 	Update(ctx context.Context, u user.User) error
 }
 
@@ -43,6 +44,7 @@ type TestRepository interface {
 	FindByID(ctx context.Context, id string) (test.Test, error)
 	List(ctx context.Context) ([]test.Test, error)
 	Update(ctx context.Context, t test.Test) error
+	Delete(ctx context.Context, id string) error
 }
 
 // TestResultRepository хранит результаты прохождения тестов.
@@ -66,6 +68,16 @@ type RecommendationRepository interface {
 	Delete(ctx context.Context, id string) error
 }
 
+// RecommendationAssignmentRepository хранит персональные рекомендации,
+// назначенные специалистом клиенту в рамках активного сотрудничества.
+type RecommendationAssignmentRepository interface {
+	Create(ctx context.Context, a recommendation.Assignment) error
+	FindByID(ctx context.Context, id string) (recommendation.Assignment, error)
+	ListByClient(ctx context.Context, clientID string) ([]recommendation.Assignment, error)
+	ListBySpecialist(ctx context.Context, specialistID string) ([]recommendation.Assignment, error)
+	Update(ctx context.Context, a recommendation.Assignment) error
+}
+
 // FeedbackRepository хранит отзывы о сервисе.
 type FeedbackRepository interface {
 	Create(ctx context.Context, f feedback.Feedback) error
@@ -83,6 +95,7 @@ type CollaborationRepository interface {
 	// ListByClient возвращает все связи клиента (нужно, чтобы оповестить именно
 	// тех специалистов, кто с ним сотрудничает).
 	ListByClient(ctx context.Context, clientID string) ([]collaboration.Collaboration, error)
+	ListBySpecialist(ctx context.Context, specialistID string) ([]collaboration.Collaboration, error)
 	Update(ctx context.Context, c collaboration.Collaboration) error
 }
 
@@ -153,6 +166,17 @@ type OAuthProvider interface {
 // SpecialistNotification — оповещение об одной новой вершине графа клиента.
 // Получатели уже разрешены use case'ом до адресов специалистов, которые
 // сотрудничают именно с этим клиентом.
+type PasswordResetNotification struct {
+	Recipient string
+	Name      string
+	ResetURL  string
+	ExpiresAt time.Time
+}
+
+type PasswordResetNotifier interface {
+	SendPasswordReset(ctx context.Context, notification PasswordResetNotification) error
+}
+
 type SpecialistNotification struct {
 	ClientName  string
 	ClientEmail string

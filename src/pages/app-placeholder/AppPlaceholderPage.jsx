@@ -29,7 +29,7 @@ const copyByKind = {
     userAgreement: {
         eyebrow: 'Правовые условия',
         title: 'Пользовательское соглашение',
-        description: 'Здесь будет размещен текст пользовательского соглашения, правила использования сервиса и условия обработки учетной записи.',
+        description: 'Правила использования сервиса, условия работы с учетной записью и согласие на обработку данных.',
         icon: 'file',
     },
     benchmark: {
@@ -87,6 +87,33 @@ function TestingContent() {
     );
 }
 
+function UserAgreementContent() {
+    return (
+        <div className={styles.contentGrid}>
+            <article>
+                <h2>1. Назначение сервиса</h2>
+                <p>Сервис помогает пройти психологические опросники, увидеть динамику эмоционального состояния и получить рекомендации от специалиста.</p>
+            </article>
+            <article>
+                <h2>2. Учетная запись</h2>
+                <p>Пользователь отвечает за достоверность данных профиля, сохранность пароля и действия, выполненные из своей учетной записи.</p>
+            </article>
+            <article>
+                <h2>3. Персональные данные</h2>
+                <p>Данные профиля, ответы на тесты, результаты и заявки используются для работы сервиса, отображения личной динамики и взаимодействия со специалистами.</p>
+            </article>
+            <article>
+                <h2>4. Ограничение ответственности</h2>
+                <p>Результаты тестов и рекомендации не являются медицинским диагнозом и не заменяют очную консультацию профильного специалиста.</p>
+            </article>
+            <article>
+                <h2>5. Управление аккаунтом</h2>
+                <p>Пользователь может изменить профиль, сменить пароль, привязать или отвязать Yandex, выйти из системы и удалить свою учетную запись.</p>
+            </article>
+        </div>
+    );
+}
+
 export default function AppPlaceholderPage({ kind = 'recommendations' }) {
     const page = copyByKind[kind] || copyByKind.recommendations;
     const showIntroDecor = kind !== 'reviews';
@@ -106,6 +133,7 @@ export default function AppPlaceholderPage({ kind = 'recommendations' }) {
                 <p>{page.description}</p>
             </div>
             {kind === 'testing' && <TestingContent />}
+            {kind === 'userAgreement' && <UserAgreementContent />}
         </section>
     );
 }

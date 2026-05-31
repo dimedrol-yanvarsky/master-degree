@@ -7,9 +7,12 @@ export function canViewCompletedTests(isAuth, status) {
 
 export function getTestAvailability(test, testStatus) {
     const isCompleted = hasCompletedTest(testStatus, test.id);
-    const remainingDays = isCompleted
+    const isPersonalityLocked = isCompleted && test.id === 'bfi-2';
+    const remainingDays = isCompleted && !isPersonalityLocked
         ? getRemainingCooldownDays(test.id, getStoredResult(testStatus, test.id)?.completedAt)
         : 0;
+    const isLocked = isPersonalityLocked || remainingDays > 0;
+    const lockLabel = isPersonalityLocked ? 'Повторное прохождение недоступно' : '';
 
-    return { isCompleted, remainingDays };
+    return { isCompleted, isLocked, lockLabel, remainingDays };
 }

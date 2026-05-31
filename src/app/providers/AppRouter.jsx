@@ -4,6 +4,7 @@ import { AppPlaceholderPage } from '../../pages/app-placeholder';
 import { MyEmotionsPage } from '../../pages/my-emotions';
 import { NotFoundPage } from '../../pages/not-found';
 import { RecommendationsPage } from '../../pages/recommendations';
+import { ReviewsPage } from '../../pages/reviews';
 import { SpecialistsPage } from '../../pages/specialists';
 import { TestingPage } from '../../pages/testing';
 import { ROUTES, routePath } from '../../shared/routes';
@@ -35,6 +36,9 @@ export function AppRouter({
     onLogout,
     onUserUpdate,
     onAccountDelete,
+    onPasswordChange,
+    onYandexLinkStart,
+    onYandexUnlink,
     onTestComplete,
 }) {
     return (
@@ -54,6 +58,9 @@ export function AppRouter({
                                     onLogout={onLogout}
                                     onUserUpdate={onUserUpdate}
                                     onAccountDelete={onAccountDelete}
+                                    onPasswordChange={onPasswordChange}
+                                    onYandexLinkStart={onYandexLinkStart}
+                                    onYandexUnlink={onYandexUnlink}
                                 />
                             </RequireAuth>
                         }
@@ -76,15 +83,15 @@ export function AppRouter({
                     />
                     <Route path={routePath(ROUTES.recommendations)} element={<RecommendationsPage status={status} />} />
                     <Route path={routePath(ROUTES.specialists)} element={<SpecialistsPage isAuth={isAuth} status={status} />} />
-                    <Route path={routePath(ROUTES.reviews)} element={<AppPlaceholderPage kind="reviews" />} />
+                    <Route path={routePath(ROUTES.reviews)} element={<ReviewsPage isAuth={isAuth} status={status} />} />
                     <Route path={routePath(ROUTES.userAgreement)} element={<AppPlaceholderPage kind="userAgreement" />} />
                     <Route
                         path={routePath(ROUTES.testing)}
-                        element={<TestingPage isAuth={isAuth} userRole={userRole} status={status} testStatus={testStatus} onTestComplete={onTestComplete} />}
+                        element={<TestingPage isAuth={isAuth} user={user} userRole={userRole} status={status} testStatus={testStatus} onTestComplete={onTestComplete} />}
                     />
                     <Route
                         path={`${routePath(ROUTES.testing)}/:testId`}
-                        element={<TestingPage isAuth={isAuth} userRole={userRole} status={status} testStatus={testStatus} onTestComplete={onTestComplete} />}
+                        element={<TestingPage isAuth={isAuth} user={user} userRole={userRole} status={status} testStatus={testStatus} onTestComplete={onTestComplete} />}
                     />
                     <Route path={routePath(ROUTES.benchmark)} element={<AppPlaceholderPage kind="benchmark" />} />
                     <Route path={routePath(ROUTES.components)} element={<Navigate to={ROUTES.uiKit} replace />} />

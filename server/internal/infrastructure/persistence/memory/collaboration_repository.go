@@ -69,6 +69,19 @@ func (r *CollaborationRepository) ListByClient(_ context.Context, clientID strin
 	return result, nil
 }
 
+func (r *CollaborationRepository) ListBySpecialist(_ context.Context, specialistID string) ([]collaboration.Collaboration, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var result []collaboration.Collaboration
+	for _, c := range r.byID {
+		if c.SpecialistID == specialistID {
+			result = append(result, c)
+		}
+	}
+	return result, nil
+}
+
 func (r *CollaborationRepository) Update(_ context.Context, c collaboration.Collaboration) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

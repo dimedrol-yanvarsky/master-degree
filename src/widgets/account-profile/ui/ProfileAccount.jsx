@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Input, KitIcon, Textarea } from '../../../shared/ui/kit';
 import { getAccountStatus, statusInfo } from '../../../entities/user';
@@ -10,7 +10,19 @@ import { AdminAccountPanel } from './AdminAccountPanel';
 import { ClientAccountPanel } from './ClientAccountPanel';
 import { SpecialistAccountPanel } from './SpecialistAccountPanel';
 
-export function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdate, onAccountDelete, notify, styles }) {
+export function ProfileAccount({
+    user,
+    status,
+    testStatus,
+    onLogout,
+    onUserUpdate,
+    onAccountDelete,
+    onPasswordChange,
+    onYandexLinkStart,
+    onYandexUnlink,
+    notify,
+    styles,
+}) {
     const navigate = useNavigate();
     const accountStatus = getAccountStatus(user, status);
     const accountInfo = statusInfo[accountStatus] || statusInfo.client;
@@ -18,12 +30,22 @@ export function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdat
     const [yandexLinked, setYandexLinked] = useState(Boolean(user?.yandexLinked || user?.authProvider === 'yandex'));
     const [editingField, setEditingField] = useState(null);
     const [draft, setDraft] = useState('');
-    const [incomingRequest, setIncomingRequest] = useState('pending');
+    const [savingField, setSavingField] = useState(null);
+    const [securityAction, setSecurityAction] = useState(null);
+    const [passwordDraft, setPasswordDraft] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+    });
 
     const displayName = getDisplayName(user);
     const initials = getAccountInitials(user);
 
     const profileFields = getProfileFields(user, isSpecialist);
+
+    useEffect(() => {
+        setYandexLinked(Boolean(user?.yandexLinked || user?.authProvider === 'yandex'));
+    }, [user?.authProvider, user?.yandexLinked]);
 
     const handleLogout = () => {
         onLogout?.();
@@ -32,15 +54,16 @@ export function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdat
 
     const startFieldEdit = (field) => {
         setEditingField(field.key);
-        setDraft(field.value);
+        setDraft(String(field.value || ''));
     };
 
     const cancelFieldEdit = () => {
+        if (savingField) return;
         setEditingField(null);
         setDraft('');
     };
 
-    const handleFieldSave = (field) => {
+    const handleFieldSave = async (field) => {
         const error = validateProfileField(field.key, field.label, draft);
 
         if (error) {
@@ -48,29 +71,116 @@ export function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdat
             return;
         }
 
-        const nextValue = field.key === 'email' ? draft.trim().toLowerCase() : draft.trim();
-        onUserUpdate?.({ [field.key]: nextValue });
-        cancelFieldEdit();
-        notify?.({ tone: 'success', title: 'Профиль обновлён', description: `Поле «${field.label}» сохранено.` });
+        const normalizedDraft = String(draft || '').trim();
+        const nextValue = field.key === 'email' ? normalizedDraft.toLowerCase() : normalizedDraft;
+        setSavingField(field.key);
+        try {
+            await onUserUpdate?.({ [field.key]: nextValue });
+            setEditingField(null);
+            setDraft('');
+            notify?.({ tone: 'success', title: 'Профиль обновлён', description: `Поле «${field.label}» сохранено.` });
+        } catch (error) {
+            notify?.({
+                tone: 'danger',
+                title: 'Не удалось сохранить',
+                description: error.message || 'Сервер не сохранил изменения профиля.',
+            });
+        } finally {
+            setSavingField(null);
+        }
     };
 
-    const handlePasswordSubmit = (event) => {
+    const handlePasswordChange = (key) => (event) => {
+        setPasswordDraft((value) => ({
+            ...value,
+            [key]: event.target.value,
+        }));
+    };
+
+    const handlePasswordSubmit = async (event) => {
         event.preventDefault();
-        notify?.({
-            tone: 'success',
-            title: 'Пароль обновлен',
-            description: 'Изменение сохранено в клиентском прототипе.',
-        });
-        event.currentTarget.reset();
-    };
+        if (securityAction) return;
 
-    const handleAccountDelete = () => {
-        if (typeof window !== 'undefined' && !window.confirm('Удалить текущую учетную запись из клиентского прототипа?')) {
+        const currentPassword = passwordDraft.currentPassword;
+        const newPassword = passwordDraft.newPassword;
+        const confirmPassword = passwordDraft.confirmPassword;
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            notify?.({ tone: 'danger', title: 'Не удалось сохранить', description: 'Заполните текущий пароль, новый пароль и повтор.' });
+            return;
+        }
+        if (newPassword.length < 8) {
+            notify?.({ tone: 'danger', title: 'Не удалось сохранить', description: 'Новый пароль должен быть не короче 8 символов.' });
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            notify?.({ tone: 'danger', title: 'Не удалось сохранить', description: 'Новый пароль и повтор не совпадают.' });
             return;
         }
 
-        onAccountDelete?.();
-        navigate(ROUTES.register, { replace: true });
+        setSecurityAction('password');
+        try {
+            await onPasswordChange?.({ currentPassword, newPassword });
+            setPasswordDraft({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            notify?.({ tone: 'success', title: 'Пароль обновлён', description: 'Новый пароль сохранён на сервере.' });
+        } catch (error) {
+            notify?.({
+                tone: 'danger',
+                title: 'Не удалось сменить пароль',
+                description: error.message || 'Сервер не сохранил новый пароль.',
+            });
+        } finally {
+            setSecurityAction(null);
+        }
+    };
+
+    const handleYandexToggle = async () => {
+        if (securityAction) return;
+
+        setSecurityAction('yandex');
+        try {
+            if (yandexLinked) {
+                const nextUser = await onYandexUnlink?.();
+                setYandexLinked(Boolean(nextUser?.yandexLinked));
+                notify?.({ tone: 'success', title: 'Yandex отвязан', description: 'Внешний вход отключён для текущей учётной записи.' });
+                return;
+            }
+
+            const redirectUrl = await onYandexLinkStart?.();
+            if (!redirectUrl) {
+                throw new Error('Сервер не вернул ссылку для привязки Yandex.');
+            }
+            window.location.assign(redirectUrl);
+        } catch (error) {
+            notify?.({
+                tone: 'danger',
+                title: yandexLinked ? 'Не удалось отвязать Yandex' : 'Не удалось привязать Yandex',
+                description: error.message || 'Сервер не завершил действие с Yandex.',
+            });
+        } finally {
+            setSecurityAction(null);
+        }
+    };
+
+    const handleAccountDelete = async () => {
+        if (securityAction) return;
+        if (typeof window !== 'undefined' && !window.confirm('Удалить текущую учётную запись? Это действие нельзя отменить.')) {
+            return;
+        }
+
+        setSecurityAction('delete');
+        try {
+            await onAccountDelete?.();
+            navigate(ROUTES.register, { replace: true });
+        } catch (error) {
+            notify?.({
+                tone: 'danger',
+                title: 'Не удалось удалить аккаунт',
+                description: error.message || 'Сервер не удалил текущую учётную запись.',
+            });
+        } finally {
+            setSecurityAction(null);
+        }
     };
 
     return (
@@ -96,6 +206,7 @@ export function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdat
                         <div className={styles.fieldGrid}>
                             {profileFields.map((field) => {
                                 const isEditing = editingField === field.key;
+                                const isSaving = savingField === field.key;
 
                                 return (
                                     <article
@@ -113,6 +224,7 @@ export function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdat
                                                     type="button"
                                                     className={styles.fieldEditButton}
                                                     aria-label={`Изменить поле «${field.label}»`}
+                                                    disabled={Boolean(savingField)}
                                                     onClick={() => startFieldEdit(field)}>
                                                     <KitIcon name="edit" size={15} />
                                                 </button>
@@ -130,6 +242,7 @@ export function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdat
                                                         maxLength={320}
                                                         showCount
                                                         resize="vertical"
+                                                        disabled={isSaving}
                                                         autoFocus
                                                     />
                                                 ) : (
@@ -139,14 +252,15 @@ export function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdat
                                                         onChange={(event) => setDraft(event.target.value)}
                                                         placeholder={field.placeholder}
                                                         autoComplete={field.autoComplete}
+                                                        disabled={isSaving}
                                                         autoFocus
                                                     />
                                                 )}
                                                 <div className={styles.fieldEditActions}>
-                                                    <Button type="submit" size="sm" variant="gradient" gradient="radial" iconRight={<KitIcon name="check" />}>
-                                                        Сохранить
+                                                    <Button type="submit" size="sm" variant="gradient" gradient="radial" iconRight={<KitIcon name="check" />} disabled={isSaving}>
+                                                        {isSaving ? 'Сохраняем...' : 'Сохранить'}
                                                     </Button>
-                                                    <Button type="button" size="sm" variant="ghost" onClick={cancelFieldEdit}>
+                                                    <Button type="button" size="sm" variant="ghost" onClick={cancelFieldEdit} disabled={isSaving}>
                                                         Отмена
                                                     </Button>
                                                 </div>
@@ -165,20 +279,49 @@ export function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdat
                             <h2>Безопасность и доступ</h2>
                         </div>
                         <form className={styles.securityForm} onSubmit={handlePasswordSubmit}>
-                            <Input label="Новый пароль" type="password" placeholder="Введите новый пароль" iconLeft={<KitIcon name="lock" />} />
-                            <Button type="submit" variant="secondary" iconRight={<KitIcon name="lock" />}>
-                                Сменить пароль
+                            <Input
+                                label="Текущий пароль"
+                                type="password"
+                                placeholder="Введите текущий пароль"
+                                autoComplete="current-password"
+                                value={passwordDraft.currentPassword}
+                                onChange={handlePasswordChange('currentPassword')}
+                                disabled={securityAction === 'password'}
+                                iconLeft={<KitIcon name="lock" />}
+                            />
+                            <Input
+                                label="Новый пароль"
+                                type="password"
+                                placeholder="Введите новый пароль"
+                                autoComplete="new-password"
+                                value={passwordDraft.newPassword}
+                                onChange={handlePasswordChange('newPassword')}
+                                disabled={securityAction === 'password'}
+                                iconLeft={<KitIcon name="lock" />}
+                            />
+                            <Input
+                                label="Повтор пароля"
+                                type="password"
+                                placeholder="Повторите новый пароль"
+                                autoComplete="new-password"
+                                value={passwordDraft.confirmPassword}
+                                onChange={handlePasswordChange('confirmPassword')}
+                                disabled={securityAction === 'password'}
+                                iconLeft={<KitIcon name="lock" />}
+                            />
+                            <Button type="submit" variant="secondary" iconRight={<KitIcon name="lock" />} disabled={Boolean(securityAction)}>
+                                {securityAction === 'password' ? 'Сохраняем...' : 'Сменить пароль'}
                             </Button>
                         </form>
                         <div className={styles.profileActions}>
-                            <Button variant={yandexLinked ? 'secondary' : 'ghost'} iconLeft={<KitIcon name="link" />} onClick={() => setYandexLinked((value) => !value)}>
-                                {yandexLinked ? 'Отвязать Yandex' : 'Привязать Yandex'}
+                            <Button variant={yandexLinked ? 'secondary' : 'ghost'} iconLeft={<KitIcon name="link" />} onClick={handleYandexToggle} disabled={Boolean(securityAction)}>
+                                {securityAction === 'yandex' ? 'Обрабатываем...' : yandexLinked ? 'Отвязать Yandex' : 'Привязать Yandex'}
                             </Button>
                             <Button variant="ghost" iconLeft={<KitIcon name="arrowLeft" />} onClick={handleLogout}>
                                 Выйти из аккаунта
                             </Button>
-                            <Button variant="destructive" iconLeft={<KitIcon name="trash" />} onClick={handleAccountDelete}>
-                                Удалить аккаунт
+                            <Button variant="destructive" iconLeft={<KitIcon name="trash" />} onClick={handleAccountDelete} disabled={Boolean(securityAction)}>
+                                {securityAction === 'delete' ? 'Удаляем...' : 'Удалить аккаунт'}
                             </Button>
                         </div>
                     </section>
@@ -187,8 +330,6 @@ export function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdat
                 {accountStatus === 'client' && (
                     <ClientAccountPanel
                         testStatus={testStatus}
-                        incomingRequest={incomingRequest}
-                        setIncomingRequest={setIncomingRequest}
                         notify={notify}
                         styles={styles}
                     />

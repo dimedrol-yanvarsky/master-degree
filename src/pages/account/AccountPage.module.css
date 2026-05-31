@@ -236,21 +236,29 @@
 }
 
 .options a,
-.footer a {
+.footer a,
+.textButton {
+    padding: 0;
+    border: 0;
+    background: transparent;
     color: var(--accent);
+    font: inherit;
     font-weight: 600;
     text-decoration: none;
+    cursor: pointer;
     transition: color 160ms ease, text-shadow 160ms ease;
 }
 
 .options a:hover,
-.footer a:hover {
+.footer a:hover,
+.textButton:hover {
     color: var(--fg);
     text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .options a:focus-visible,
-.footer a:focus-visible {
+.footer a:focus-visible,
+.textButton:focus-visible {
     outline: 0;
     color: var(--fg);
     text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 28%, transparent);
@@ -564,7 +572,7 @@
 
 .securityForm {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
     align-items: end;
     gap: 14px;
     min-width: 0;
@@ -1255,7 +1263,8 @@
     .visualImage,
     .formPanel,
     .options a,
-    .footer a {
+    .footer a,
+    .textButton {
         transition: none;
     }
 
