@@ -5,22 +5,41 @@ export const DEFAULT_USER_STATUS = {
     bds: 'not_started',
 };
 
+// Демо-ответы для предзаполненного аккаунта: детерминированный паттерн по числу вопросов теста.
+function buildPresetAnswers(count, pattern) {
+    return Array.from({ length: count }, (_, index) => ({
+        questionIndex: index,
+        value: pattern[index % pattern.length],
+    }));
+}
+
 export const COMPLETED_TEST_USER_STATUS = {
     bfi2: 'completed',
     bds: 'completed',
     bfi2Result: {
         completedAt: '2026-05-20T10:00:00.000Z',
-        score: 4.2,
-        level: 'Высокий ресурс',
+        score: 3.6,
+        scoreLabel: '3.6 из 5',
+        maxAnswerValue: 5,
+        level: 'Сбалансированный профиль ответов',
         summary: 'Профиль показывает выраженную способность к саморегуляции и восстановлению опоры.',
-        answers: [],
+        domains: [
+            { label: 'Экстраверсия', score: 3.8 },
+            { label: 'Доброжелательность', score: 4.2 },
+            { label: 'Добросовестность', score: 3.5 },
+            { label: 'Негативная эмоциональность', score: 2.4 },
+            { label: 'Открытость опыту', score: 4.0 },
+        ],
+        answers: buildPresetAnswers(60, [4, 3, 2, 4, 5, 3, 4, 2, 4, 3]),
     },
     bdsResult: {
         completedAt: '2026-05-21T10:00:00.000Z',
         score: 1.9,
-        level: 'Умеренный дистресс',
+        scoreLabel: '30 из 64',
+        maxAnswerValue: 4,
+        level: 'Умеренная выраженность дистресса',
         summary: 'Состояние остается чувствительным, но уже достаточно стабилизированным для мягких практик восстановления.',
-        answers: [],
+        answers: buildPresetAnswers(16, [2, 1, 2, 3, 2, 1, 2, 2]),
     },
 };
 

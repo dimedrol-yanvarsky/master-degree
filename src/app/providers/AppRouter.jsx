@@ -79,11 +79,11 @@ export function AppRouter({
                     <Route path="user-agreement" element={<AppPlaceholderPage kind="userAgreement" />} />
                     <Route
                         path="testing"
-                        element={<TestingPage isAuth={isAuth} userRole={userRole} testStatus={testStatus} onTestComplete={onTestComplete} />}
+                        element={<TestingPage isAuth={isAuth} userRole={userRole} status={status} testStatus={testStatus} onTestComplete={onTestComplete} />}
                     />
                     <Route
                         path="testing/:testId"
-                        element={<TestingPage isAuth={isAuth} userRole={userRole} testStatus={testStatus} onTestComplete={onTestComplete} />}
+                        element={<TestingPage isAuth={isAuth} userRole={userRole} status={status} testStatus={testStatus} onTestComplete={onTestComplete} />}
                     />
                     <Route path="benchmark" element={<AppPlaceholderPage kind="benchmark" />} />
                     <Route path="components" element={<Navigate to="/ui-kit" replace />} />

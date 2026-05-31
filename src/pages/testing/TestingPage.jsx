@@ -1,11 +1,58 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { NotFoundPage } from '../not-found';
-import { Badge, Button, Input, KitIcon, Textarea } from '../../shared/ui/kit';
+import { Badge, Button, ErrorState, Input, KitIcon, Textarea } from '../../shared/ui/kit';
 import { getTestStatusKey, hasCompletedTest } from '../../entities/user';
 import styles from './TestingPage.module.css';
 import { answerScale, getTestById, tests } from '../../entities/test';
 import { getCustomTests, makeCustomTest, saveCustomTests, TEST_MANAGER_ROLES, buildTestResult, formatResultDate } from '../../features/testing';
+
+// Период блокировки повторного прохождения. Оставшееся время считается как разница
+// между текущей датой и датой последнего прохождения теста.
+const TEST_COOLDOWN_DAYS = {
+    'bfi-2': 7,
+    bds: 1,
+};
+
+function resolveScale(testId) {
+    if (testId === 'bds') {
+        return answerScale.slice(0, 4).map((item, index) => ({
+            ...item,
+            label: ['Совсем нет', 'Немного', 'Довольно сильно', 'Очень сильно'][index],
+        }));
+    }
+
+    return answerScale;
+}
+
+function getStoredResult(testStatus, testId) {
+    return testStatus?.[`${getTestStatusKey(testId)}Result`] || null;
+}
+
+function getRemainingCooldownDays(testId, completedAt) {
+    const cooldown = TEST_COOLDOWN_DAYS[testId] ?? 0;
+    if (!cooldown || !completedAt) return 0;
+
+    const elapsedDays = Math.floor((Date.now() - new Date(completedAt).getTime()) / 86400000);
+    return Math.max(0, cooldown - elapsedDays);
+}
+
+function pluralizeDays(count) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+
+    if (mod10 === 1 && mod100 !== 11) return 'день';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'дня';
+    return 'дней';
+}
+
+function pluralizeQuestions(count) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+
+    if (mod10 === 1 && mod100 !== 11) return 'вопрос';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'вопроса';
+    return 'вопросов';
+}
 
 function AuthModal({ test, onClose }) {
     const navigate = useNavigate();
@@ -44,31 +91,168 @@ function AuthModal({ test, onClose }) {
     );
 }
 
-function TestCard({ test, onStart, isCompleted = false }) {
+function TestCard({ test, onStart, isCompleted = false, remainingDays = 0 }) {
+    const isLocked = isCompleted && remainingDays > 0;
+
     return (
         <article className={[styles.testCard, isCompleted ? styles.completedTestCard : ''].filter(Boolean).join(' ')}>
             <div className={styles.testTopline}>
-                <span className={styles.testCode}>{test.code}</span>
-                <Badge tone={isCompleted ? 'success' : 'accent'}>{isCompleted ? 'Пройден' : test.accent}</Badge>
+                <h2>{test.title}</h2>
+                {isCompleted && <Badge tone="success">Пройден</Badge>}
             </div>
-            <h2>{test.title}</h2>
             <p className={styles.testMeta}>{test.meta}</p>
             <p>{test.description}</p>
-            <ul>
-                {test.details.map((detail) => (
-                    <li key={detail}>{detail}</li>
+            {isLocked ? (
+                <p className={styles.lockNote}>
+                    <KitIcon name="lock" size={15} />
+                    Будет доступен через {remainingDays} {pluralizeDays(remainingDays)}
+                </p>
+            ) : (
+                <Button
+                    className={styles.startButton}
+                    variant={isCompleted ? 'secondary' : 'gradient'}
+                    gradient="radial"
+                    size="lg"
+                    iconRight={<KitIcon name="arrowRight" />}
+                    onClick={() => onStart(test)}>
+                    {isCompleted ? 'Пройти снова' : 'Пройти'}
+                </Button>
+            )}
+        </article>
+    );
+}
+
+function AttemptResultSummary({ test, result }) {
+    if (result?.domains?.length > 0) {
+        return (
+            <div className={styles.attemptTraits}>
+                {result.domains.map((domain) => (
+                    <div className={styles.attemptTrait} key={domain.label}>
+                        <span>{domain.label}</span>
+                        <strong>{domain.score} из 5</strong>
+                    </div>
                 ))}
-            </ul>
+            </div>
+        );
+    }
+
+    return (
+        <div className={styles.attemptLevel}>
+            <div>
+                <span>{test.id === 'bds' ? 'Суммарный балл' : 'Средний балл'}</span>
+                <strong>{result?.scoreLabel || result?.score || 'Не рассчитан'}</strong>
+            </div>
+            <div>
+                <span>Уровень состояния</span>
+                <strong>{result?.level || 'Сохранён'}</strong>
+            </div>
+        </div>
+    );
+}
+
+function CompletedAttemptCard({ test, result, onView }) {
+    return (
+        <article className={styles.attemptCard}>
+            <div className={styles.attemptHead}>
+                <div>
+                    <span className={styles.attemptCode}>{test.code}</span>
+                    <h3>{test.title}</h3>
+                </div>
+                <Badge tone="success">Пройден</Badge>
+            </div>
+            <p className={styles.attemptDate}>Дата прохождения: {formatResultDate(result?.completedAt)}</p>
+            <AttemptResultSummary test={test} result={result} />
             <Button
-                className={styles.startButton}
-                variant={isCompleted ? 'secondary' : 'gradient'}
-                gradient="radial"
-                size="lg"
+                className={styles.attemptViewButton}
+                variant="secondary"
+                size="sm"
                 iconRight={<KitIcon name="arrowRight" />}
-                onClick={() => onStart(test)}>
-                {isCompleted ? 'Посмотреть результат' : 'Пройти'}
+                onClick={() => onView(test)}>
+                Просмотреть результаты
             </Button>
         </article>
+    );
+}
+
+function AttemptDetail({ test, result, onBack }) {
+    const scale = resolveScale(test.id);
+    const answerByIndex = new Map((result?.answers || []).map((answer) => [answer.questionIndex, answer.value]));
+
+    return (
+        <div className={styles.attemptDetail}>
+            <button type="button" className={styles.backLink} onClick={onBack}>
+                <KitIcon name="arrowLeft" size={16} />
+                К списку тестов
+            </button>
+            <h2>{test.title}</h2>
+            <p className={styles.attemptDate}>Дата прохождения: {formatResultDate(result?.completedAt)}</p>
+            <AttemptResultSummary test={test} result={result} />
+            <ol className={styles.answerReview}>
+                {test.questions.map((question, index) => {
+                    const value = answerByIndex.get(index);
+                    const optionLabel = scale.find((option) => option.value === value)?.label;
+
+                    return (
+                        <li className={styles.answerReviewItem} key={`${test.id}-${index}`}>
+                            <span className={styles.answerReviewQuestion}>{String(index + 1).padStart(2, '0')}. {question}</span>
+                            <span className={styles.answerReviewValue}>
+                                {value != null ? `${value} — ${optionLabel}` : 'Нет ответа'}
+                            </span>
+                        </li>
+                    );
+                })}
+            </ol>
+        </div>
+    );
+}
+
+function ResultsModal({ availableTests, testStatus, onClose }) {
+    const [activeTestId, setActiveTestId] = useState(null);
+    const completedTests = availableTests.filter((test) => hasCompletedTest(testStatus, test.id));
+    const activeTest = completedTests.find((test) => test.id === activeTestId) || null;
+
+    return (
+        <div className={styles.modalLayer} role="presentation" onMouseDown={onClose}>
+            <section
+                className={[styles.modal, styles.resultsModal].join(' ')}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Пройденные тесты"
+                onMouseDown={(event) => event.stopPropagation()}>
+                <button className={styles.closeButton} type="button" aria-label="Закрыть" onClick={onClose}>
+                    <KitIcon name="close" />
+                </button>
+
+                {activeTest ? (
+                    <AttemptDetail
+                        test={activeTest}
+                        result={getStoredResult(testStatus, activeTest.id)}
+                        onBack={() => setActiveTestId(null)}
+                    />
+                ) : (
+                    <>
+                        <Badge tone="accent">История прохождений</Badge>
+                        <h2>Пройденные тесты</h2>
+                        {completedTests.length > 0 ? (
+                            <div className={styles.attemptList}>
+                                {completedTests.map((test) => (
+                                    <CompletedAttemptCard
+                                        key={test.id}
+                                        test={test}
+                                        result={getStoredResult(testStatus, test.id)}
+                                        onView={(target) => setActiveTestId(target.id)}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <p className={styles.attemptEmpty}>
+                                Пока нет пройденных тестов. Завершите тест — и он появится здесь вместе с ответами.
+                            </p>
+                        )}
+                    </>
+                )}
+            </section>
+        </div>
     );
 }
 
@@ -121,9 +305,11 @@ function ManualTestPanel({ onAddTest }) {
     );
 }
 
-function TestingLanding({ isAuth, testStatus, canManageTests, initialPrompt, availableTests, onAddTest }) {
+function TestingLanding({ isAuth, status, testStatus, canManageTests, initialPrompt, availableTests, onAddTest }) {
     const navigate = useNavigate();
     const [authPrompt, setAuthPrompt] = useState(initialPrompt || null);
+    const [resultsOpen, setResultsOpen] = useState(false);
+    const canViewResults = isAuth && (status === 'client' || status === 'specialist');
 
     useEffect(() => {
         setAuthPrompt(initialPrompt || null);
@@ -141,34 +327,53 @@ function TestingLanding({ isAuth, testStatus, canManageTests, initialPrompt, ava
     return (
         <section className={styles.root}>
             <div className={styles.hero}>
-                <div className={styles.icon} aria-hidden="true">
-                    <KitIcon name="check" size={26} />
-                </div>
-                <Badge tone="accent">Тесты</Badge>
                 <h1>Тестирования</h1>
                 <p>
                     Выберите опросник, чтобы получить структурированную картину состояния. Результаты будут полезны для личной динамики и работы со специалистом.
                 </p>
             </div>
 
+            {canViewResults && (
+                <div className={styles.landingToolbar}>
+                    <Button variant="secondary" iconLeft={<KitIcon name="file" />} onClick={() => setResultsOpen(true)}>
+                        Пройденные тесты
+                    </Button>
+                </div>
+            )}
+
             <div className={styles.testingGrid}>
-                {availableTests.map((test) => (
-                    <TestCard
-                        key={test.id}
-                        test={test}
-                        isCompleted={hasCompletedTest(testStatus, test.id)}
-                        onStart={handleStart}
-                    />
-                ))}
+                {availableTests.map((test) => {
+                    const isCompleted = hasCompletedTest(testStatus, test.id);
+                    const remainingDays = isCompleted
+                        ? getRemainingCooldownDays(test.id, getStoredResult(testStatus, test.id)?.completedAt)
+                        : 0;
+
+                    return (
+                        <TestCard
+                            key={test.id}
+                            test={test}
+                            isCompleted={isCompleted}
+                            remainingDays={remainingDays}
+                            onStart={handleStart}
+                        />
+                    );
+                })}
             </div>
 
             {canManageTests && <ManualTestPanel onAddTest={onAddTest} />}
             <AuthModal test={authPrompt} onClose={() => setAuthPrompt(null)} />
+            {resultsOpen && (
+                <ResultsModal
+                    availableTests={availableTests}
+                    testStatus={testStatus}
+                    onClose={() => setResultsOpen(false)}
+                />
+            )}
         </section>
     );
 }
 
-function CompletedTestPage({ test, result }) {
+function CompletedTestPage({ test, result, remainingDays = 0 }) {
     const answersCount = result?.answeredCount || result?.answers?.length || 0;
 
     return (
@@ -220,6 +425,12 @@ function CompletedTestPage({ test, result }) {
                         ))}
                     </div>
                 )}
+                {remainingDays > 0 && (
+                    <p className={styles.lockNote}>
+                        <KitIcon name="lock" size={15} />
+                        Повторное прохождение будет доступно через {remainingDays} {pluralizeDays(remainingDays)}
+                    </p>
+                )}
                 <p className={styles.resultNote}>
                     Результат не является диагнозом и нужен для самонаблюдения и обсуждения со специалистом.
                 </p>
@@ -241,16 +452,7 @@ function CompletedTestPage({ test, result }) {
 function QuestionnairePage({ test, onComplete }) {
     const [answers, setAnswers] = useState({});
     const [formError, setFormError] = useState('');
-    const scale = useMemo(() => {
-        if (test.id === 'bds') {
-            return answerScale.slice(0, 4).map((item, index) => ({
-                ...item,
-                label: ['Совсем нет', 'Немного', 'Довольно сильно', 'Очень сильно'][index],
-            }));
-        }
-
-        return answerScale;
-    }, [test.id]);
+    const scale = useMemo(() => resolveScale(test.id), [test.id]);
     const answeredCount = Object.keys(answers).length;
     const progress = Math.round((answeredCount / test.questions.length) * 100);
 
@@ -273,11 +475,6 @@ function QuestionnairePage({ test, onComplete }) {
         onComplete?.(test.id, answers, buildTestResult(test, answers));
     };
 
-    const buildQuestionTitle = (question, index) => {
-        const prefix = test.itemPrefix ? `${test.itemPrefix.replace(/\s*\.\.\.$/, '')} ` : '';
-        return `${String(index + 1).padStart(2, '0')}. ${prefix}${question}`;
-    };
-
     return (
         <section className={styles.questionnaire}>
             <div className={styles.questionnaireHead}>
@@ -285,40 +482,58 @@ function QuestionnairePage({ test, onComplete }) {
                     <KitIcon name="arrowLeft" size={16} />
                     Все тесты
                 </Link>
-                <Badge tone="accent">{test.code}</Badge>
+                <div className={styles.headTop}>
+                    <span className={styles.headMeta}>{test.questions.length} {pluralizeQuestions(test.questions.length)}</span>
+                </div>
                 <h1>{test.title}</h1>
                 <p>{test.description}</p>
-                {test.instruction && <p>{test.instruction}</p>}
-                <span>{test.scale}</span>
-                <small>{test.sourceNote}</small>
-                <div className={styles.progress} aria-label={`Отвечено ${answeredCount} из ${test.questions.length}`}>
-                    <span style={{ width: `${progress}%` }} />
+                <div className={styles.progressDock}>
+                    <div className={styles.progressInfo}>
+                        <span className={styles.progressLabel}>Прогресс</span>
+                        <strong className={styles.progressText}>{answeredCount} / {test.questions.length}</strong>
+                    </div>
+                    <div className={styles.progress} aria-label={`Отвечено ${answeredCount} из ${test.questions.length}`}>
+                        <span style={{ width: `${progress}%` }} />
+                    </div>
+                    {test.scale && <span className={styles.scaleHint}>{test.scale}</span>}
                 </div>
-                <strong className={styles.progressText}>{answeredCount} / {test.questions.length}</strong>
             </div>
 
             <form className={styles.questions} onSubmit={handleSubmit}>
-                {test.questions.map((question, index) => (
-                    <fieldset className={styles.questionCard} key={`${test.id}-${index}`}>
-                        <legend>
-                            <strong>{buildQuestionTitle(question, index)}</strong>
-                        </legend>
-                        <div className={styles.scale} style={{ '--scale-columns': scale.length }}>
-                            {scale.map((option) => (
-                                <label key={option.value}>
-                                    <input
-                                        type="radio"
-                                        name={`${test.id}-${index}`}
-                                        value={option.value}
-                                        checked={answers[index] === option.value}
-                                        onChange={() => handleAnswerChange(index, option.value)}
-                                    />
-                                    <span>{option.label}</span>
-                                </label>
-                            ))}
-                        </div>
-                    </fieldset>
-                ))}
+                {test.questions.map((question, index) => {
+                    const isAnswered = answers[index] !== undefined;
+
+                    return (
+                        <fieldset
+                            className={[styles.questionCard, isAnswered ? styles.questionAnswered : ''].filter(Boolean).join(' ')}
+                            key={`${test.id}-${index}`}>
+                            <legend className={styles.questionLegend}>
+                                <span className={styles.questionRow}>
+                                    <span className={styles.questionNum} aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                                    <span className={styles.questionText}>{question}</span>
+                                </span>
+                            </legend>
+                            <div className={styles.scaleField}>
+                                <div className={styles.scale}>
+                                    {scale.map((option) => (
+                                        <label className={styles.scaleOption} key={option.value} title={option.label}>
+                                            <input
+                                                className={styles.scaleInput}
+                                                type="radio"
+                                                name={`${test.id}-${index}`}
+                                                value={option.value}
+                                                checked={answers[index] === option.value}
+                                                onChange={() => handleAnswerChange(index, option.value)}
+                                            />
+                                            <span className={styles.scaleMark} aria-hidden="true">{option.value}</span>
+                                            <span className={styles.scaleSr}>{option.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        </fieldset>
+                    );
+                })}
                 {formError && (
                     <p className={styles.formError} role="alert">
                         {formError}
@@ -334,7 +549,22 @@ function QuestionnairePage({ test, onComplete }) {
     );
 }
 
-export default function TestingPage({ isAuth = false, userRole = null, testStatus = null, onTestComplete }) {
+function TestNotFound() {
+    const navigate = useNavigate();
+
+    return (
+        <section className={styles.questionnaire}>
+            <ErrorState
+                title="Страница не найдена"
+                description="Такого раздела пока нет. Проверьте адрес или вернитесь к дневнику эмоций."
+                actionLabel="Вернуться к эмоциям"
+                onAction={() => navigate('/')}
+            />
+        </section>
+    );
+}
+
+export default function TestingPage({ isAuth = false, userRole = null, status = null, testStatus = null, onTestComplete }) {
     const { testId } = useParams();
     const [customTests, setCustomTests] = useState(getCustomTests);
     const availableTests = useMemo(() => [...tests, ...customTests], [customTests]);
@@ -354,9 +584,15 @@ export default function TestingPage({ isAuth = false, userRole = null, testStatu
         return customTest;
     };
 
-    if (testId && !test) return <NotFoundPage />;
+    if (testId && !test) return <TestNotFound />;
     if (testId && isAuth && test && hasCompletedTest(testStatus, test.id)) {
-        return <CompletedTestPage test={test} result={testStatus?.[`${getTestStatusKey(test.id)}Result`]} />;
+        const result = getStoredResult(testStatus, test.id);
+        const remainingDays = getRemainingCooldownDays(test.id, result?.completedAt);
+
+        // Пока действует период блокировки — показываем результат; после него тест можно пройти снова.
+        if (remainingDays > 0) {
+            return <CompletedTestPage test={test} result={result} remainingDays={remainingDays} />;
+        }
     }
     if (testId && isAuth && test) {
         return <QuestionnairePage test={test} onComplete={onTestComplete} />;
@@ -365,6 +601,7 @@ export default function TestingPage({ isAuth = false, userRole = null, testStatu
     return (
         <TestingLanding
             isAuth={isAuth}
+            status={status}
             testStatus={testStatus}
             canManageTests={canManageTests}
             initialPrompt={testId && !isAuth ? test : null}

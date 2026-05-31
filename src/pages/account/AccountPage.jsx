@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Badge, Button, Checkbox, Input, KitIcon, Select, Textarea, Toast } from '../../shared/ui/kit';
-import { registerClientUser, signInClient, signInWithYandex, TEST_AUTH_USER, adminAccounts, availableSpecialists, clientRecommendations, formatAccountDate, getAccountStatus, getProfileStats, selectedSpecialists, specialistClients, statusInfo, validateRegistrationValues } from '../../entities/user';
+import { adminAccounts, getAccountStatus, specialistClients, statusInfo, validateRegistrationValues } from '../../entities/user';
 import { accountTypeOptions, generateStrongPassword, PasswordInput } from '../../features/auth';
+import { apiLogin, apiMe, apiRegister, setAccessToken, yandexLoginUrl } from '../../shared/api';
 import authLoginImage from './assets/auth-login.png';
 import styles from './AccountPage.module.css';
 
@@ -76,75 +77,84 @@ function AccountToast({ notification }) {
     );
 }
 
-function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdate, onAccountDelete, notify }) {
+function ProfileAccount({ user, status, onLogout, onUserUpdate, onAccountDelete, notify }) {
     const navigate = useNavigate();
     const accountStatus = getAccountStatus(user, status);
     const accountInfo = statusInfo[accountStatus] || statusInfo.client;
-    const userName = user?.name || 'Пользователь';
-    const userPatronymic = user?.patronymic || '';
-    const userEmail = user?.email || TEST_AUTH_USER.email;
-    const fullName = [userName, userPatronymic].filter(Boolean).join(' ');
-    const [editValues, setEditValues] = useState({
-        name: userName,
-        patronymic: userPatronymic,
-        email: userEmail,
-    });
-    const [isEditing, setIsEditing] = useState(false);
+    const isSpecialist = accountStatus === 'specialist';
     const [yandexLinked, setYandexLinked] = useState(Boolean(user?.yandexLinked || user?.authProvider === 'yandex'));
-    const [avatarPreview, setAvatarPreview] = useState('');
-    const [requestState, setRequestState] = useState('idle');
+    const [editingField, setEditingField] = useState(null);
+    const [draft, setDraft] = useState('');
     const [incomingRequest, setIncomingRequest] = useState('pending');
-    const bfiResult = testStatus?.bfi2Result;
-    const bfiCompleted = testStatus?.bfi2 === 'completed';
-    const profileStats = getProfileStats(accountStatus, bfiCompleted);
 
-    useEffect(() => {
-        setEditValues({
-            name: userName,
-            patronymic: userPatronymic,
-            email: userEmail,
-        });
-    }, [userName, userPatronymic, userEmail]);
+    const displayName = [user?.surname, user?.name, user?.patronymic].filter(Boolean).join(' ');
+    const initials = ([user?.name, user?.surname]
+        .map((part) => (part || '').trim().charAt(0))
+        .filter(Boolean)
+        .join('') || (user?.email || '?').charAt(0)).toUpperCase();
+
+    // Поля, которые пользователь заполняет при регистрации — их можно отредактировать поштучно.
+    const profileFields = [
+        { key: 'surname', label: 'Фамилия', value: user?.surname || '', type: 'text', icon: 'user', placeholder: 'Иванова', autoComplete: 'family-name' },
+        { key: 'name', label: 'Имя', value: user?.name || '', type: 'text', icon: 'user', placeholder: 'Анна', autoComplete: 'given-name' },
+        { key: 'patronymic', label: 'Отчество', value: user?.patronymic || '', type: 'text', icon: 'user', placeholder: 'Сергеевна', autoComplete: 'additional-name' },
+        { key: 'email', label: 'Электронная почта', value: user?.email || '', type: 'email', icon: 'mail', placeholder: 'name@example.com', autoComplete: 'email' },
+        ...(isSpecialist ? [{ key: 'experience', label: 'Стаж', value: user?.experience || '', type: 'number', icon: 'clock', placeholder: 'Например, 5' }] : []),
+        { key: 'about', label: 'Обо мне', value: user?.about || '', type: 'textarea', icon: 'info', placeholder: isSpecialist ? 'Опишите свой опыт' : 'Расскажите о себе' },
+    ];
 
     const handleLogout = () => {
         onLogout?.();
         navigate('/login', { replace: true });
     };
 
-    const handleProfileSave = (event) => {
-        event.preventDefault();
+    const validateField = (key, label, rawValue) => {
+        const value = rawValue.trim();
 
-        const nextEmail = String(editValues.email || '').trim().toLowerCase();
+        if (key === 'surname' || key === 'name' || key === 'patronymic') {
+            if (!value) return `${label} должна быть заполнена.`;
+            if (value.length < 2 || value.length > 40) return `${label} должна быть от 2 до 40 символов.`;
+            if (!/^[A-Za-zА-ЯЁа-яё]+(?:[- ][A-Za-zА-ЯЁа-яё]+)?$/.test(value)) return `${label}: только буквы, пробел или дефис.`;
+        }
 
-        if (!editValues.name.trim() || !editValues.patronymic.trim() || !nextEmail) {
-            notify?.({
-                tone: 'danger',
-                title: 'Не удалось сохранить профиль',
-                description: 'Имя, отчество и почта должны быть заполнены.',
-            });
+        if (key === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            return 'Введите корректную электронную почту.';
+        }
+
+        if (key === 'experience') {
+            const years = Number(value);
+            if (!value || !Number.isInteger(years) || years < 1 || years > 80) return 'Укажите стаж целым числом от 1 до 80.';
+        }
+
+        if (key === 'about' && value.length > 320) {
+            return 'Описание должно быть не длиннее 320 символов.';
+        }
+
+        return '';
+    };
+
+    const startFieldEdit = (field) => {
+        setEditingField(field.key);
+        setDraft(field.value);
+    };
+
+    const cancelFieldEdit = () => {
+        setEditingField(null);
+        setDraft('');
+    };
+
+    const handleFieldSave = (field) => {
+        const error = validateField(field.key, field.label, draft);
+
+        if (error) {
+            notify?.({ tone: 'danger', title: 'Не удалось сохранить', description: error });
             return;
         }
 
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail)) {
-            notify?.({
-                tone: 'danger',
-                title: 'Не удалось сохранить профиль',
-                description: 'Введите корректную электронную почту.',
-            });
-            return;
-        }
-
-        onUserUpdate?.({
-            name: editValues.name.trim(),
-            patronymic: editValues.patronymic.trim(),
-            email: nextEmail,
-        });
-        setIsEditing(false);
-        notify?.({
-            tone: 'success',
-            title: 'Профиль обновлен',
-            description: 'Имя, отчество и почта сохранены.',
-        });
+        const nextValue = field.key === 'email' ? draft.trim().toLowerCase() : draft.trim();
+        onUserUpdate?.({ [field.key]: nextValue });
+        cancelFieldEdit();
+        notify?.({ tone: 'success', title: 'Профиль обновлён', description: `Поле «${field.label}» сохранено.` });
     };
 
     const handlePasswordSubmit = (event) => {
@@ -155,15 +165,6 @@ function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdate, onAc
             description: 'Изменение сохранено в клиентском прототипе.',
         });
         event.currentTarget.reset();
-    };
-
-    const handleAvatarChange = (event) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = () => setAvatarPreview(String(reader.result || ''));
-        reader.readAsDataURL(file);
     };
 
     const handleAccountDelete = () => {
@@ -180,93 +181,94 @@ function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdate, onAc
             <div className={styles.accountDashboard}>
                 <div className={styles.profileCard}>
                     <div className={styles.profileHeader}>
-                        <div className={styles.profileHero}>
-                            <label className={styles.avatarControl}>
-                                <span className={styles.avatarImage} aria-hidden="true">
-                                    {avatarPreview
-                                        ? <img src={avatarPreview} alt="" />
-                                        : <KitIcon name="user" size={30} />}
-                                </span>
-                                <input type="file" accept="image/*" onChange={handleAvatarChange} />
-                                <span><KitIcon name="upload" size={15} /> Сменить фото</span>
-                            </label>
-                            <div>
-                                <Badge tone={accountInfo.badgeTone}>{accountInfo.label}</Badge>
-                                <h1>Личный кабинет</h1>
-                                <p>{accountInfo.description}</p>
-                            </div>
+                        <div className={styles.profileAvatar} aria-hidden="true">{initials}</div>
+                        <div className={styles.profileHeading}>
+                            <span className={styles.profileEyebrow}>Личный кабинет</span>
+                            <h1>{displayName || 'Профиль'}</h1>
+                            <p>{accountInfo.description}</p>
                         </div>
-                    </div>
-
-                    <div className={styles.identityGrid}>
-                        <article>
-                            <span>Электронная почта</span>
-                            <strong>{userEmail}</strong>
-                        </article>
-                        <article>
-                            <span>Имя</span>
-                            <strong>{userName}</strong>
-                        </article>
-                        <article>
-                            <span>Отчество</span>
-                            <strong>{userPatronymic || 'Не указано'}</strong>
-                        </article>
-                        <article>
-                            <span>Статус</span>
-                            <strong>{accountInfo.label}</strong>
-                        </article>
-                    </div>
-
-                    <div className={styles.profileGrid}>
-                        {profileStats.map((item) => (
-                            <article className={styles.profileStat} key={item.label}>
-                                <span>{item.label}</span>
-                                <strong>{item.value}</strong>
-                                <p>{item.meta}</p>
-                            </article>
-                        ))}
                     </div>
 
                     <section className={styles.accountSection}>
                         <div className={styles.sectionHead}>
-                            <h2>Персональные данные</h2>
-                            <Button variant="secondary" size="sm" onClick={() => setIsEditing((value) => !value)}>
-                                {isEditing ? 'Отменить' : 'Изменить'}
-                            </Button>
+                            <div>
+                                <h2>Профиль</h2>
+                                <p>Данные из анкеты регистрации. Нажмите на карандаш рядом с полем, чтобы изменить его.</p>
+                            </div>
                         </div>
-                        {isEditing ? (
-                            <form className={styles.inlineForm} onSubmit={handleProfileSave}>
-                                <Input
-                                    label="Имя"
-                                    value={editValues.name}
-                                    onChange={(event) => setEditValues((current) => ({ ...current, name: event.target.value }))}
-                                />
-                                <Input
-                                    label="Отчество"
-                                    value={editValues.patronymic}
-                                    onChange={(event) => setEditValues((current) => ({ ...current, patronymic: event.target.value }))}
-                                />
-                                <Input
-                                    label="Почта"
-                                    type="email"
-                                    value={editValues.email}
-                                    onChange={(event) => setEditValues((current) => ({ ...current, email: event.target.value }))}
-                                />
-                                <Button type="submit" variant="gradient" gradient="radial" iconRight={<KitIcon name="check" />}>
-                                    Сохранить
-                                </Button>
-                            </form>
-                        ) : (
-                            <p className={styles.sectionText}>В профиле указаны данные, введенные при регистрации: {fullName || userEmail}.</p>
-                        )}
+                        <div className={styles.fieldGrid}>
+                            {profileFields.map((field) => {
+                                const isEditing = editingField === field.key;
+
+                                return (
+                                    <article
+                                        key={field.key}
+                                        className={[styles.fieldRow, field.type === 'textarea' ? styles.fieldRowWide : ''].filter(Boolean).join(' ')}>
+                                        <div className={styles.fieldRowTop}>
+                                            <span className={styles.fieldLabelGroup}>
+                                                <span className={styles.fieldIcon} aria-hidden="true">
+                                                    <KitIcon name={field.icon} size={15} />
+                                                </span>
+                                                <span className={styles.fieldLabel}>{field.label}</span>
+                                            </span>
+                                            {!isEditing && (
+                                                <button
+                                                    type="button"
+                                                    className={styles.fieldEditButton}
+                                                    aria-label={`Изменить поле «${field.label}»`}
+                                                    onClick={() => startFieldEdit(field)}>
+                                                    <KitIcon name="edit" size={15} />
+                                                </button>
+                                            )}
+                                        </div>
+                                        {isEditing ? (
+                                            <form
+                                                className={styles.fieldEditForm}
+                                                onSubmit={(event) => { event.preventDefault(); handleFieldSave(field); }}>
+                                                {field.type === 'textarea' ? (
+                                                    <Textarea
+                                                        value={draft}
+                                                        onChange={(event) => setDraft(event.target.value)}
+                                                        placeholder={field.placeholder}
+                                                        maxLength={320}
+                                                        showCount
+                                                        resize="vertical"
+                                                        autoFocus
+                                                    />
+                                                ) : (
+                                                    <Input
+                                                        type={field.type}
+                                                        value={draft}
+                                                        onChange={(event) => setDraft(event.target.value)}
+                                                        placeholder={field.placeholder}
+                                                        autoComplete={field.autoComplete}
+                                                        autoFocus
+                                                    />
+                                                )}
+                                                <div className={styles.fieldEditActions}>
+                                                    <Button type="submit" size="sm" variant="gradient" gradient="radial" iconRight={<KitIcon name="check" />}>
+                                                        Сохранить
+                                                    </Button>
+                                                    <Button type="button" size="sm" variant="ghost" onClick={cancelFieldEdit}>
+                                                        Отмена
+                                                    </Button>
+                                                </div>
+                                            </form>
+                                        ) : (
+                                            <strong className={styles.fieldValue}>{field.value || 'Не указано'}</strong>
+                                        )}
+                                    </article>
+                                );
+                            })}
+                        </div>
                     </section>
 
                     <section className={styles.accountSection}>
                         <div className={styles.sectionHead}>
                             <h2>Безопасность и доступ</h2>
                         </div>
-                        <form className={styles.inlineForm} onSubmit={handlePasswordSubmit}>
-                            <Input label="Новый пароль" type="password" placeholder="Введите новый пароль" />
+                        <form className={styles.securityForm} onSubmit={handlePasswordSubmit}>
+                            <Input label="Новый пароль" type="password" placeholder="Введите новый пароль" iconLeft={<KitIcon name="lock" />} />
                             <Button type="submit" variant="secondary" iconRight={<KitIcon name="lock" />}>
                                 Сменить пароль
                             </Button>
@@ -287,10 +289,6 @@ function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdate, onAc
 
                 {accountStatus === 'client' && (
                     <ClientAccountPanel
-                        bfiCompleted={bfiCompleted}
-                        bfiResult={bfiResult}
-                        requestState={requestState}
-                        setRequestState={setRequestState}
                         incomingRequest={incomingRequest}
                         setIncomingRequest={setIncomingRequest}
                         notify={notify}
@@ -304,139 +302,12 @@ function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdate, onAc
 }
 
 function ClientAccountPanel({
-    bfiCompleted,
-    bfiResult,
-    requestState,
-    setRequestState,
     incomingRequest,
     setIncomingRequest,
     notify,
 }) {
-    const navigate = useNavigate();
-    const answersCount = bfiResult?.answers?.length || 0;
-    const specialistRequestLabel = requestState === 'sent' ? 'Запрос отправлен' : 'Отправить запрос';
-
     return (
         <div className={styles.rolePanel}>
-            <section className={styles.accountSection}>
-                <div className={styles.sectionHead}>
-                    <div>
-                        <h2>Пройденные тесты</h2>
-                        <p>История прохождений, результат и выбранные ответы.</p>
-                    </div>
-                    {bfiCompleted ? (
-                        <Badge tone="success">BFI-2 пройден</Badge>
-                    ) : (
-                        <Badge tone="warning">Тест не пройден</Badge>
-                    )}
-                </div>
-                {bfiCompleted ? (
-                    <div className={styles.roleCard}>
-                        <div>
-                            <strong>Большая пятерка BFI-2</strong>
-                            <p>Дата: {formatAccountDate(bfiResult?.completedAt)}</p>
-                            <p>Средний балл: {bfiResult?.score ?? 'не рассчитан'}; ответов сохранено: {answersCount}</p>
-                            {answersCount > 0 && (
-                                <details className={styles.answerDetails}>
-                                    <summary>Выбранные ответы</summary>
-                                    <ol>
-                                        {bfiResult.answers.map((answer) => (
-                                            <li key={answer.questionIndex}>
-                                                Вопрос {answer.questionIndex + 1}: вариант {answer.value}
-                                            </li>
-                                        ))}
-                                    </ol>
-                                </details>
-                            )}
-                        </div>
-                        <Badge tone="accent">Черты личности доступны</Badge>
-                    </div>
-                ) : (
-                    <div className={styles.emptyState}>
-                        <p>После прохождения BFI-2 здесь появятся дата, результат и выбранные варианты ответа.</p>
-                        <Button variant="gradient" gradient="radial" iconRight={<KitIcon name="arrowRight" />} onClick={() => navigate('/testing/bfi-2')}>
-                            Пройти BFI-2
-                        </Button>
-                    </div>
-                )}
-            </section>
-
-            {bfiCompleted && (
-                <section className={styles.accountSection}>
-                    <div className={styles.sectionHead}>
-                        <div>
-                            <h2>Личностные черты</h2>
-                            <p>Краткая интерпретация по сохраненному результату тестирования.</p>
-                        </div>
-                    </div>
-                    <div className={styles.traitGrid}>
-                        <article>
-                            <span>Открытость</span>
-                            <strong>Средняя</strong>
-                        </article>
-                        <article>
-                            <span>Добросовестность</span>
-                            <strong>Выше средней</strong>
-                        </article>
-                        <article>
-                            <span>Эмоциональная стабильность</span>
-                            <strong>Требует внимания</strong>
-                        </article>
-                    </div>
-                </section>
-            )}
-
-            <section className={styles.accountSection}>
-                <div className={styles.sectionHead}>
-                    <div>
-                        <h2>Рекомендации</h2>
-                        <p>Персональные шаги для самостоятельной поддержки.</p>
-                    </div>
-                </div>
-                <ul className={styles.roleList}>
-                    {clientRecommendations.map((recommendation) => (
-                        <li key={recommendation}>
-                            <KitIcon name="check" size={16} />
-                            <span>{recommendation}</span>
-                        </li>
-                    ))}
-                </ul>
-            </section>
-
-            <section className={styles.accountSection}>
-                <div className={styles.sectionHead}>
-                    <div>
-                        <h2>Специалисты</h2>
-                        <p>Просмотр доступных специалистов и отправка заявки.</p>
-                    </div>
-                </div>
-                <div className={styles.roleGrid}>
-                    {availableSpecialists.map((specialist) => (
-                        <article className={styles.roleCard} key={specialist.name}>
-                            <div>
-                                <strong>{specialist.name}</strong>
-                                <p>{specialist.focus}</p>
-                                <Badge tone="success">{specialist.status}</Badge>
-                            </div>
-                            <Button
-                                variant={requestState === 'sent' ? 'secondary' : 'primary'}
-                                iconRight={<KitIcon name="mail" />}
-                                disabled={requestState === 'sent'}
-                                onClick={() => {
-                                    setRequestState('sent');
-                                    notify?.({
-                                        tone: 'success',
-                                        title: 'Запрос отправлен',
-                                        description: `Заявка специалисту ${specialist.name} сохранена.`,
-                                    });
-                                }}>
-                                {specialistRequestLabel}
-                            </Button>
-                        </article>
-                    ))}
-                </div>
-            </section>
-
             <section className={styles.accountSection}>
                 <div className={styles.sectionHead}>
                     <div>
@@ -481,24 +352,6 @@ function ClientAccountPanel({
                         </Button>
                     </div>
                 </div>
-            </section>
-
-            <section className={styles.accountSection}>
-                <div className={styles.sectionHead}>
-                    <div>
-                        <h2>История специалистов</h2>
-                        <p>Выбранные специалисты и статус работы.</p>
-                    </div>
-                </div>
-                <ul className={styles.timelineList}>
-                    {selectedSpecialists.map((specialist) => (
-                        <li key={`${specialist.name}-${specialist.period}`}>
-                            <strong>{specialist.name}</strong>
-                            <span>{specialist.period}</span>
-                            <p>{specialist.result}</p>
-                        </li>
-                    ))}
-                </ul>
             </section>
         </div>
     );
@@ -753,6 +606,52 @@ function AuthAccess({ mode, onAuthSuccess, notify }) {
         setFormErrors({});
     }, [mode]);
 
+    // Возврат из серверного OAuth-потока: токен приходит во фрагменте URL
+    // (#access_token=...), ошибка — в query (?oauth_error=...).
+    useEffect(() => {
+        if (isRegister) return undefined;
+
+        const query = new URLSearchParams(window.location.search);
+        if (query.get('oauth_error')) {
+            window.history.replaceState(null, '', window.location.pathname);
+            notify?.({
+                tone: 'danger',
+                title: 'Вход через Яндекс не выполнен',
+                description: 'Не удалось завершить авторизацию. Попробуйте ещё раз.',
+            });
+            return undefined;
+        }
+
+        const hash = window.location.hash || '';
+        if (!hash.includes('access_token=')) return undefined;
+
+        const params = new URLSearchParams(hash.replace(/^#/, ''));
+        const token = params.get('access_token');
+        if (!token) return undefined;
+
+        setAccessToken(token);
+        window.history.replaceState(null, '', window.location.pathname);
+
+        let active = true;
+        (async () => {
+            try {
+                const user = await apiMe();
+                if (!active) return;
+                onAuthSuccess?.(user, { persist: true });
+                navigateWithTransition(navigate, '/account', { replace: true });
+            } catch (error) {
+                if (active) {
+                    notify?.({ tone: 'danger', title: 'Вход через Яндекс не выполнен', description: error.message });
+                }
+            }
+        })();
+
+        return () => {
+            active = false;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const handleFieldChange = (field) => (event) => {
         const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
         setFormValues((currentValues) => ({
@@ -789,7 +688,7 @@ function AuthAccess({ mode, onAuthSuccess, notify }) {
         }));
     };
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
 
         if (isRegister) {
@@ -806,24 +705,20 @@ function AuthAccess({ mode, onAuthSuccess, notify }) {
             }
         }
 
-        const result = isRegister
-            ? registerClientUser(formValues)
-            : signInClient(formValues);
+        try {
+            const result = isRegister
+                ? await apiRegister(formValues)
+                : await apiLogin(formValues);
 
-        if (!result.ok) {
-            if (isRegister && result.errors) {
-                setFormErrors(result.errors);
-            }
+            onAuthSuccess?.(result.user, { persist: true });
+            navigateWithTransition(navigate, '/account', { replace: true });
+        } catch (error) {
             notify?.({
                 tone: 'danger',
                 title: isRegister ? 'Регистрация не выполнена' : 'Вход не выполнен',
-                description: result.message,
+                description: error.message,
             });
-            return;
         }
-
-        onAuthSuccess?.(result.user, { persist: isRegister || formValues.remember });
-        navigateWithTransition(navigate, '/account', { replace: true });
     };
 
     const handleModeLinkClick = (event) => {
@@ -835,22 +730,18 @@ function AuthAccess({ mode, onAuthSuccess, notify }) {
     };
 
     const handleYandexSignIn = () => {
-        const result = signInWithYandex({
-            acceptedTerms: !isRegister || formValues.acceptedTerms,
-            acceptedPersonalData: !isRegister || formValues.acceptedPersonalData,
-        });
-
-        if (!result.ok) {
+        if (isRegister && (!formValues.acceptedTerms || !formValues.acceptedPersonalData)) {
             notify?.({
                 tone: 'danger',
-                title: isRegister ? 'Регистрация не выполнена' : 'Вход не выполнен',
-                description: result.message,
+                title: 'Регистрация не выполнена',
+                description: 'Подтвердите пользовательское соглашение и обработку персональных данных.',
             });
             return;
         }
 
-        onAuthSuccess?.(result.user, { persist: true });
-        navigateWithTransition(navigate, '/account', { replace: true });
+        // Полноценный серверный OAuth-поток: уходим на бэкенд, тот — к Яндексу,
+        // а затем возвращает нас на /login с токеном во фрагменте URL.
+        window.location.assign(yandexLoginUrl());
     };
 
     return (

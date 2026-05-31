@@ -300,26 +300,61 @@
 }
 
 .profileHeader {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    min-width: 0;
+}
+
+.profileAvatar {
+    flex: 0 0 auto;
     display: grid;
-    justify-items: start;
-    gap: 14px;
-    max-width: 720px;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+    background:
+        radial-gradient(circle at 32% 26%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 62%),
+        var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 760;
+    letter-spacing: 0;
+    box-shadow: 0 14px 30px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.profileHeading {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+}
+
+.profileEyebrow {
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
 }
 
 .profileHeader h1 {
-    margin: 2px 0 0;
+    margin: 0;
     color: var(--fg);
     font-family: var(--font-display);
-    font-size: clamp(38px, 3vw, 52px);
-    line-height: 1.04;
+    font-size: clamp(28px, 2.6vw, 40px);
+    line-height: 1.05;
     letter-spacing: 0;
+    overflow-wrap: anywhere;
 }
 
 .profileHeader p {
     margin: 0;
     color: var(--fg-3);
-    font-size: 16px;
-    line-height: 1.62;
+    font-size: 15.5px;
+    line-height: 1.6;
 }
 
 .avatarControl {
@@ -402,6 +437,136 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
     width: 100%;
+    min-width: 0;
+}
+
+/* Поля профиля из анкеты регистрации с поштучным редактированием. */
+.fieldGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+}
+
+.fieldRow {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-frame);
+    background:
+        radial-gradient(circle at 16% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%),
+        color-mix(in srgb, var(--bg) 80%, var(--bg-2));
+    box-shadow: var(--shadow-1);
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.fieldRow:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 26%, var(--border));
+    box-shadow: var(--shadow-2);
+}
+
+.fieldRow:focus-within {
+    transform: none;
+    border-color: color-mix(in srgb, var(--accent) 36%, var(--border));
+    box-shadow: var(--shadow-2);
+}
+
+.fieldRowWide {
+    grid-column: 1 / -1;
+}
+
+.fieldRowTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+}
+
+.fieldLabelGroup {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.fieldIcon {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
+    border-radius: var(--r-md);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.fieldLabel {
+    min-width: 0;
+    color: var(--fg-2);
+    font-size: 12.5px;
+    font-weight: 750;
+    letter-spacing: .01em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fieldEditButton {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--bg);
+    color: var(--fg-3);
+    cursor: pointer;
+    transition: color 150ms ease, border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.fieldEditButton:hover,
+.fieldEditButton:focus-visible {
+    outline: 0;
+    border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+    background: var(--accent-soft);
+    color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.fieldValue {
+    min-width: 0;
+    color: var(--fg);
+    font-size: 16.5px;
+    font-weight: 600;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.fieldEditForm {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+}
+
+.fieldEditActions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.securityForm {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 14px;
     min-width: 0;
 }
 
@@ -572,6 +737,20 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+    margin-top: 4px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--border);
+}
+
+/* Деструктивное действие отделяем от нейтральных и прижимаем вправо. */
+.profileActions > :last-child {
+    margin-left: auto;
+}
+
+@media (max-width: 760px) {
+    .profileActions > :last-child {
+        margin-left: 0;
+    }
 }
 
 .rolePanel {
@@ -605,6 +784,12 @@
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
     background: color-mix(in srgb, var(--bg) 82%, var(--bg-2));
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.roleCard:hover {
+    border-color: color-mix(in srgb, var(--accent) 22%, var(--border));
+    box-shadow: var(--shadow-1);
 }
 
 .roleCard > div:first-child {
@@ -850,6 +1035,7 @@
     }
 
     .identityGrid,
+    .fieldGrid,
     .roleGrid,
     .traitGrid {
         grid-template-columns: 1fr;
@@ -860,8 +1046,20 @@
     }
 
     .compactForm,
-    .inlineForm {
+    .inlineForm,
+    .securityForm {
         grid-template-columns: 1fr;
+    }
+
+    .profileHeader {
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .profileAvatar {
+        width: 68px;
+        height: 68px;
+        font-size: 25px;
     }
 }
 

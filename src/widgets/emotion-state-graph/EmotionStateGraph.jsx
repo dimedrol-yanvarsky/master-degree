@@ -29,7 +29,7 @@ const SMILEY_SIZE = 52;
 const LABEL_X = 90;
 
 // Фиксированный шаг на колонку — при росте числа колонок график расширяется и прокручивается.
-const COLUMN_GAP = 144;
+const COLUMN_GAP = 184;
 const PLOT_PAD = 124;
 
 const WEEKDAYS_BY_DATE = {
@@ -131,6 +131,9 @@ export function EmotionStateGraph({ points }) {
         <section className={styles.root}>
             <header className={styles.head}>
                 <h2 className={styles.title}>Степень необходимости в&nbsp;поддержке</h2>
+                <p className={styles.subtitle}>
+                    Граф эмоционального состояния пополняется по мере прохождения теста на текущее эмоциональное состояние.
+                </p>
             </header>
 
             <div className={styles.chartArea}>
@@ -249,7 +252,7 @@ export function EmotionStateGraph({ points }) {
                 tone="accent"
                 icon="info"
                 title="Как читать график"
-                description="Чем ниже точка на графике, тем больше поддержка может быть полезна вам в данный момент."
+                description="Чем ниже точка на графике, тем большая поддержка специалиста требуется в данный момент."
             />
         </section>
     );
