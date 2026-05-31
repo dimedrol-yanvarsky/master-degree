@@ -1,1 +1,1 @@
-export * from '../../entities/test/model/testingData';
+export { answerScale, getTestById, tests } from '../../entities/test';

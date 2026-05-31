@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Button, KitIcon, Navbar } from '../../shared/ui/kit';
 import brandLogo from '../../shared/assets/brand-logo.png';
+import { ROUTES } from '../../shared/routes';
 import { getAccountInitials } from './model/accountInitials';
 import { getPeopleNavLabel, navItems } from './model/navigation';
 import styles from './AppShell.module.css';
@@ -8,8 +9,8 @@ import styles from './AppShell.module.css';
 export function AppShell({ isAuth = false, status = null, user = null }) {
     const location = useLocation();
     const navigate = useNavigate();
-    const isUIKitPage = location.pathname.startsWith('/ui-kit');
-    const isAccountActionActive = ['/account', '/login', '/register'].includes(location.pathname);
+    const isUIKitPage = location.pathname.startsWith(ROUTES.uiKit);
+    const isAccountActionActive = [ROUTES.account, ROUTES.login, ROUTES.register].includes(location.pathname);
     const accountInitials = isAuth ? getAccountInitials(user) : '';
 
     const links = navItems.map((item) => (
@@ -39,7 +40,7 @@ export function AppShell({ isAuth = false, status = null, user = null }) {
             aria-label={isAuth ? `Личный кабинет: ${accountInitials}` : 'Войти'}
             aria-current={isAccountActionActive ? 'page' : undefined}
             title={isAuth ? 'Личный кабинет' : 'Войти'}
-            onClick={() => navigate(isAuth ? '/account' : '/login')}
+            onClick={() => navigate(isAuth ? ROUTES.account : ROUTES.login)}
         />
     );
 

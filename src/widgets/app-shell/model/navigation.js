@@ -1,9 +1,11 @@
+import { ROUTES } from '../../../shared/routes';
+
 export const navItems = [
-    { label: 'Мои эмоции', to: '/', end: true },
-    { label: 'Рекомендации', to: '/recommendations' },
-    { id: 'people', label: 'Специалисты', to: '/specialists' },
-    { label: 'Отзывы', to: '/reviews' },
-    { label: 'Тестирования', to: '/testing' },
+    { label: 'Мои эмоции', to: ROUTES.home, end: true },
+    { label: 'Рекомендации', to: ROUTES.recommendations },
+    { id: 'people', label: 'Специалисты', to: ROUTES.specialists },
+    { label: 'Отзывы', to: ROUTES.reviews },
+    { label: 'Тестирования', to: ROUTES.testing },
 ];
 
 export function getPeopleNavLabel(status, isAuth) {

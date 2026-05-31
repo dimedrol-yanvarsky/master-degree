@@ -1,1 +1,1 @@
-export * from './model/testingData';
+export { answerScale, getTestById, tests } from './model/testingData';

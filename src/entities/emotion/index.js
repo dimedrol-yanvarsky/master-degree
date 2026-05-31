@@ -1,2 +1,2 @@
-export * from './model/emotionMarks';
-export * from './model/emotionGraph';
+export { emotionGraphColumns, emotionGraphLevels, buildEmotionGraphPoints } from './model/emotionGraph';
+export { emotionMarks } from './model/emotionMarks';

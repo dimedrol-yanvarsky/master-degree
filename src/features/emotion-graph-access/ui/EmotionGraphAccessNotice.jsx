@@ -1,4 +1,5 @@
 import { Badge, Button, KitIcon } from '../../../shared/ui/kit';
+import { testRoute } from '../../../shared/routes';
 import styles from './EmotionGraphAccessNotice.module.css';
 
 export function EmotionGraphAccessNotice({ missingTests }) {
@@ -21,7 +22,7 @@ export function EmotionGraphAccessNotice({ missingTests }) {
                         variant="gradient"
                         gradient="radial"
                         iconRight={<KitIcon name="arrowRight" size={16} />}
-                        onClick={() => window.location.assign('/testing/bfi-2')}>
+                        onClick={() => window.location.assign(testRoute('bfi-2'))}>
                         Пройти BFI-2
                     </Button>
                 )}
@@ -29,7 +30,7 @@ export function EmotionGraphAccessNotice({ missingTests }) {
                     <Button
                         variant="secondary"
                         iconRight={<KitIcon name="arrowRight" size={16} />}
-                        onClick={() => window.location.assign('/testing/bds')}>
+                        onClick={() => window.location.assign(testRoute('bds'))}>
                         Пройти BDS
                     </Button>
                 )}

@@ -1,6 +1,7 @@
 import { Badge, Button, KitIcon } from '../../shared/ui/kit';
 import { buildEmotionGraphPoints } from '../../entities/emotion';
 import { EmotionGraphAccessNotice, getMissingEmotionGraphTests } from '../../features/emotion-graph-access';
+import { ROUTES } from '../../shared/routes';
 import { EmotionStateGraph } from '../../widgets/emotion-state-graph';
 import styles from './MyEmotionsPage.module.css';
 
@@ -28,14 +29,14 @@ function GuestPlaceholder() {
                         variant="gradient"
                         gradient="radial"
                         iconRight={<KitIcon name="arrowRight" size={18} />}
-                        onClick={() => navigateTo('/login')}>
+                        onClick={() => navigateTo(ROUTES.login)}>
                         Войти в аккаунт
                     </Button>
                     <Button
                         size="lg"
                         variant="secondary"
                         iconRight={<KitIcon name="plus" size={18} />}
-                        onClick={() => navigateTo('/register')}>
+                        onClick={() => navigateTo(ROUTES.register)}>
                         Создать аккаунт
                     </Button>
                 </div>

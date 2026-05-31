@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, KitIcon } from '../../../shared/ui/kit';
+import { ROUTES } from '../../../shared/routes';
 import { getSpecialistWorkRequestState } from '../model/permissions';
 import styles from './SpecialistWorkButton.module.css';
 
@@ -61,7 +62,7 @@ export function SpecialistWorkButton({ isAuth = false, status = null }) {
             {isPromptOpen && (
                 <AuthPromptModal
                     onClose={() => setIsPromptOpen(false)}
-                    onLogin={() => navigate('/login')}
+                    onLogin={() => navigate(ROUTES.login)}
                 />
             )}
         </>
