@@ -812,6 +812,128 @@
     line-height: 1.45;
 }
 
+.testResultList {
+    display: grid;
+    gap: 12px;
+}
+
+.testResultCard {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    padding: 17px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: color-mix(in srgb, var(--bg) 82%, var(--bg-2));
+}
+
+.testResultHead {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    min-width: 0;
+}
+
+.testResultHead > div {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.testResultHead strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--fg);
+    font-size: 15px;
+}
+
+.testResultHead p {
+    margin: 0;
+    color: var(--fg-3);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.testResultCode {
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.testResultStats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+}
+
+.testResultStats span {
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--accent) 14%, var(--border));
+    border-radius: var(--r-md);
+    background: color-mix(in srgb, var(--accent-soft) 22%, var(--bg));
+    color: var(--fg-2);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.collaborationList {
+    display: grid;
+    gap: 12px;
+}
+
+.collaborationCard {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 0;
+    padding: 17px;
+    border: 1px solid color-mix(in srgb, var(--success-500) 18%, var(--border));
+    border-radius: var(--r-lg);
+    background: color-mix(in srgb, var(--success-500) 8%, var(--bg));
+}
+
+.collaborationCard > div:first-child {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+}
+
+.collaborationCard strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--fg);
+    font-size: 15px;
+}
+
+.collaborationCard p {
+    margin: 0;
+    color: var(--fg-3);
+    font-size: 13.5px;
+    line-height: 1.45;
+}
+
+.collaborationMeta {
+    color: var(--fg-4);
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.collaborationSide {
+    display: grid;
+    justify-items: end;
+    gap: 8px;
+    flex: 0 0 auto;
+    color: var(--fg-3);
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
 .answerDetails {
     display: grid;
     gap: 8px;
@@ -884,6 +1006,21 @@
     color: var(--fg-3);
     font-size: 14px;
     line-height: 1.5;
+}
+
+.emptyState a {
+    flex: 0 0 auto;
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.emptyState a:hover,
+.emptyState a:focus-visible {
+    color: var(--fg);
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 .traitGrid {
@@ -1029,9 +1166,14 @@
     .profileHero,
     .sectionHead,
     .roleCard,
+    .collaborationCard,
     .emptyState {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .collaborationSide {
+        justify-items: start;
     }
 
     .identityGrid,

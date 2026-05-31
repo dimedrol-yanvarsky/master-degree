@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/application/port"
@@ -24,6 +25,7 @@ const (
 
 // Deps группирует порты, от которых зависит use case.
 type Deps struct {
+	Tests          port.TestRepository
 	Results        port.TestResultRepository
 	Graphs         port.EmotionGraphRepository
 	Collaborations port.CollaborationRepository
@@ -45,11 +47,14 @@ func NewService(deps Deps) *Service {
 
 // SubmitInput — данные о завершённом прохождении одного теста.
 type SubmitInput struct {
-	UserID   string
-	TestCode string
-	Answers  []test.Answer
-	Score    float64
-	Level    string
+	UserID     string
+	TestCode   string
+	Answers    []test.Answer
+	Score      float64
+	ScoreLabel string
+	Level      string
+	Summary    string
+	Domains    []test.DomainScore
 }
 
 // SubmitResult — итог приёма результата: добавлена ли вершина и кого оповестили.
@@ -74,9 +79,13 @@ func (s *Service) Submit(ctx context.Context, in SubmitInput) (SubmitResult, err
 		ID:          s.deps.IDs.NewID(),
 		UserID:      in.UserID,
 		TestID:      code,
+		TestCode:    code,
 		Answers:     in.Answers,
 		Score:       in.Score,
+		ScoreLabel:  in.ScoreLabel,
 		Level:       in.Level,
+		Summary:     in.Summary,
+		Domains:     in.Domains,
 		CompletedAt: s.deps.Clock.Now(),
 	}
 	if err := s.deps.Results.Create(ctx, result); err != nil {
@@ -85,7 +94,7 @@ func (s *Service) Submit(ctx context.Context, in SubmitInput) (SubmitResult, err
 
 	out := SubmitResult{Result: result}
 
-	history, err := s.deps.Results.ListByUser(ctx, in.UserID)
+	history, err := s.ListResults(ctx, in.UserID)
 	if err != nil {
 		return SubmitResult{}, err
 	}
@@ -142,6 +151,73 @@ func (s *Service) Submit(ctx context.Context, in SubmitInput) (SubmitResult, err
 	}
 
 	return out, nil
+}
+
+type testResultRepositoryByEmail interface {
+	ListByUserEmail(ctx context.Context, email string) ([]test.TestResult, error)
+}
+
+func (s *Service) ListTests(ctx context.Context) ([]test.Test, error) {
+	if s.deps.Tests == nil {
+		return []test.Test{}, nil
+	}
+	return s.deps.Tests.List(ctx)
+}
+
+func (s *Service) ListResults(ctx context.Context, userID string) ([]test.TestResult, error) {
+	if strings.TrimSpace(userID) == "" {
+		return nil, fmt.Errorf("%w: user is required", shared.ErrValidation)
+	}
+	if s.deps.Results == nil {
+		return []test.TestResult{}, nil
+	}
+
+	results, err := s.deps.Results.ListByUser(ctx, userID)
+	if err != nil && !errors.Is(err, shared.ErrNotFound) {
+		return nil, err
+	}
+	if err != nil {
+		results = nil
+	}
+
+	if byEmail, ok := s.deps.Results.(testResultRepositoryByEmail); ok && s.deps.Users != nil {
+		currentUser, err := s.deps.Users.FindByID(ctx, userID)
+		if err != nil && !errors.Is(err, shared.ErrNotFound) {
+			return nil, err
+		}
+		if strings.TrimSpace(currentUser.Email) != "" {
+			emailResults, err := byEmail.ListByUserEmail(ctx, currentUser.Email)
+			if err != nil && !errors.Is(err, shared.ErrNotFound) {
+				return nil, err
+			}
+			if err == nil {
+				results = mergeResults(results, emailResults)
+			}
+		}
+	}
+
+	sort.SliceStable(results, func(i, j int) bool {
+		return results[i].CompletedAt.After(results[j].CompletedAt)
+	})
+	return results, nil
+}
+
+func mergeResults(left, right []test.TestResult) []test.TestResult {
+	out := make([]test.TestResult, 0, len(left)+len(right))
+	seen := make(map[string]struct{}, len(left)+len(right))
+
+	for _, result := range append(left, right...) {
+		key := result.ID
+		if strings.TrimSpace(key) == "" {
+			key = result.TestID + "|" + result.TestCode + "|" + result.CompletedAt.Format("2006-01-02T15:04:05.999999999Z07:00")
+		}
+		if _, exists := seen[key]; exists {
+			continue
+		}
+		seen[key] = struct{}{}
+		out = append(out, result)
+	}
+	return out
 }
 
 // Graph возвращает граф эмоционального состояния пользователя (пустой, если его

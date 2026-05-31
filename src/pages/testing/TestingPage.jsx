@@ -3,8 +3,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Badge, Button, ErrorState, Input, KitIcon, Textarea } from '../../shared/ui/kit';
 import { getTestStatusKey, hasCompletedTest } from '../../entities/user';
 import styles from './TestingPage.module.css';
-import { answerScale, getTestById, tests } from '../../entities/test';
+import { answerScale } from '../../entities/test';
 import { getCustomTests, makeCustomTest, saveCustomTests, TEST_MANAGER_ROLES, buildTestResult, formatResultDate } from '../../features/testing';
+import { apiTests } from '../../shared/api';
 
 // Период блокировки повторного прохождения. Оставшееся время считается как разница
 // между текущей датой и датой последнего прохождения теста.
@@ -13,7 +14,12 @@ const TEST_COOLDOWN_DAYS = {
     bds: 1,
 };
 
-function resolveScale(testId) {
+function resolveScale(testOrId) {
+    const testId = typeof testOrId === 'string' ? testOrId : testOrId?.id;
+    if (Array.isArray(testOrId?.scaleOptions) && testOrId.scaleOptions.length > 0) {
+        return testOrId.scaleOptions;
+    }
+
     if (testId === 'bds') {
         return answerScale.slice(0, 4).map((item, index) => ({
             ...item,
@@ -175,7 +181,7 @@ function CompletedAttemptCard({ test, result, onView }) {
 }
 
 function AttemptDetail({ test, result, onBack }) {
-    const scale = resolveScale(test.id);
+    const scale = resolveScale(test);
     const answerByIndex = new Map((result?.answers || []).map((answer) => [answer.questionIndex, answer.value]));
 
     return (
@@ -305,7 +311,7 @@ function ManualTestPanel({ onAddTest }) {
     );
 }
 
-function TestingLanding({ isAuth, status, testStatus, canManageTests, initialPrompt, availableTests, onAddTest }) {
+function TestingLanding({ isAuth, status, testStatus, canManageTests, initialPrompt, availableTests, testsLoading, testsError, onAddTest }) {
     const navigate = useNavigate();
     const [authPrompt, setAuthPrompt] = useState(initialPrompt || null);
     const [resultsOpen, setResultsOpen] = useState(false);
@@ -341,24 +347,31 @@ function TestingLanding({ isAuth, status, testStatus, canManageTests, initialPro
                 </div>
             )}
 
-            <div className={styles.testingGrid}>
-                {availableTests.map((test) => {
-                    const isCompleted = hasCompletedTest(testStatus, test.id);
-                    const remainingDays = isCompleted
-                        ? getRemainingCooldownDays(test.id, getStoredResult(testStatus, test.id)?.completedAt)
-                        : 0;
+            {testsLoading && <p className={styles.attemptEmpty}>Загружаем тесты...</p>}
+            {testsError && !testsLoading && <p className={styles.attemptEmpty}>{testsError}</p>}
+            {!testsLoading && !testsError && availableTests.length === 0 && (
+                <p className={styles.attemptEmpty}>В системе пока нет активных тестов.</p>
+            )}
+            {availableTests.length > 0 && (
+                <div className={styles.testingGrid}>
+                    {availableTests.map((test) => {
+                        const isCompleted = hasCompletedTest(testStatus, test.id);
+                        const remainingDays = isCompleted
+                            ? getRemainingCooldownDays(test.id, getStoredResult(testStatus, test.id)?.completedAt)
+                            : 0;
 
-                    return (
-                        <TestCard
-                            key={test.id}
-                            test={test}
-                            isCompleted={isCompleted}
-                            remainingDays={remainingDays}
-                            onStart={handleStart}
-                        />
-                    );
-                })}
-            </div>
+                        return (
+                            <TestCard
+                                key={test.id}
+                                test={test}
+                                isCompleted={isCompleted}
+                                remainingDays={remainingDays}
+                                onStart={handleStart}
+                            />
+                        );
+                    })}
+                </div>
+            )}
 
             {canManageTests && <ManualTestPanel onAddTest={onAddTest} />}
             <AuthModal test={authPrompt} onClose={() => setAuthPrompt(null)} />
@@ -452,7 +465,7 @@ function CompletedTestPage({ test, result, remainingDays = 0 }) {
 function QuestionnairePage({ test, onComplete }) {
     const [answers, setAnswers] = useState({});
     const [formError, setFormError] = useState('');
-    const scale = useMemo(() => resolveScale(test.id), [test.id]);
+    const scale = useMemo(() => resolveScale(test), [test]);
     const answeredCount = Object.keys(answers).length;
     const progress = Math.round((answeredCount / test.questions.length) * 100);
 
@@ -566,10 +579,37 @@ function TestNotFound() {
 
 export default function TestingPage({ isAuth = false, userRole = null, status = null, testStatus = null, onTestComplete }) {
     const { testId } = useParams();
+    const navigate = useNavigate();
+    const [systemTests, setSystemTests] = useState([]);
+    const [testsLoading, setTestsLoading] = useState(true);
+    const [testsError, setTestsError] = useState('');
     const [customTests, setCustomTests] = useState(getCustomTests);
-    const availableTests = useMemo(() => [...tests, ...customTests], [customTests]);
+    const availableTests = useMemo(() => [...systemTests, ...customTests], [systemTests, customTests]);
     const canManageTests = isAuth && TEST_MANAGER_ROLES.includes(userRole);
-    const test = availableTests.find((item) => item.id === testId) || getTestById(testId);
+    const test = availableTests.find((item) => item.id === testId) || null;
+
+    useEffect(() => {
+        let active = true;
+        setTestsLoading(true);
+        apiTests()
+            .then((items) => {
+                if (!active) return;
+                setSystemTests(items);
+                setTestsError('');
+            })
+            .catch((error) => {
+                if (!active) return;
+                setSystemTests([]);
+                setTestsError(error.message || 'Не удалось загрузить тесты из системы.');
+            })
+            .finally(() => {
+                if (active) setTestsLoading(false);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, []);
 
     useEffect(() => {
         saveCustomTests(customTests);
@@ -584,6 +624,25 @@ export default function TestingPage({ isAuth = false, userRole = null, status = 
         return customTest;
     };
 
+    if (testId && testsLoading) {
+        return (
+            <section className={styles.questionnaire}>
+                <p className={styles.attemptEmpty}>Загружаем тесты...</p>
+            </section>
+        );
+    }
+    if (testId && testsError && !test) {
+        return (
+            <section className={styles.questionnaire}>
+                <ErrorState
+                    title="Тесты не загрузились"
+                    description={testsError}
+                    actionLabel="Вернуться к тестам"
+                    onAction={() => navigate('/testing')}
+                />
+            </section>
+        );
+    }
     if (testId && !test) return <TestNotFound />;
     if (testId && isAuth && test && hasCompletedTest(testStatus, test.id)) {
         const result = getStoredResult(testStatus, test.id);
@@ -606,6 +665,8 @@ export default function TestingPage({ isAuth = false, userRole = null, status = 
             canManageTests={canManageTests}
             initialPrompt={testId && !isAuth ? test : null}
             availableTests={availableTests}
+            testsLoading={testsLoading}
+            testsError={testsError}
             onAddTest={handleAddTest}
         />
     );

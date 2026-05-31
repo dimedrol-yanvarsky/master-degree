@@ -89,14 +89,19 @@ function TestingContent() {
 
 export default function AppPlaceholderPage({ kind = 'recommendations' }) {
     const page = copyByKind[kind] || copyByKind.recommendations;
+    const showIntroDecor = kind !== 'reviews';
 
     return (
         <section className={styles.root}>
             <div className={styles.intro}>
-                <div className={styles.icon}>
-                    <KitIcon name={page.icon} size={26} />
-                </div>
-                <Badge tone="accent">{page.eyebrow}</Badge>
+                {showIntroDecor && (
+                    <>
+                        <div className={styles.icon}>
+                            <KitIcon name={page.icon} size={26} />
+                        </div>
+                        <Badge tone="accent">{page.eyebrow}</Badge>
+                    </>
+                )}
                 <h1>{page.title}</h1>
                 <p>{page.description}</p>
             </div>

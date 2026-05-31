@@ -19,15 +19,18 @@ type Question struct {
 // Test — карточка опросника. Вопросы встроены, т.к. вне своего теста не имеют
 // смысла (документоориентированная модель, РПЗ §2.2.1).
 type Test struct {
-	ID          string
-	Code        string
-	Title       string
-	Description string
-	AuthorID    string
-	Questions   []Question
-	Scale       []AnswerOption
-	Status      string
-	CreatedAt   time.Time
+	ID             string
+	Code           string
+	Title          string
+	Description    string
+	AuthorID       string
+	QuestionCount  int
+	PassingMinutes int
+	SourceNote     string
+	Questions      []Question
+	Scale          []AnswerOption
+	Status         string
+	CreatedAt      time.Time
 }
 
 // Answer — вариант, выбранный пользователем для конкретного вопроса.
@@ -36,14 +39,23 @@ type Answer struct {
 	Value         int
 }
 
+type DomainScore struct {
+	Label string
+	Score float64
+}
+
 // TestResult — сохранённое прохождение теста пользователем: выбранные ответы и
 // вычисленные балл/интерпретация.
 type TestResult struct {
 	ID          string
 	UserID      string
 	TestID      string
+	TestCode    string
 	Answers     []Answer
 	Score       float64
+	ScoreLabel  string
 	Level       string
+	Summary     string
+	Domains     []DomainScore
 	CompletedAt time.Time
 }

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Badge, Button, Checkbox, Input, KitIcon, Select, Textarea, Toast } from '../../shared/ui/kit';
-import { adminAccounts, getAccountStatus, specialistClients, statusInfo, validateRegistrationValues } from '../../entities/user';
+import { adminAccounts, getAccountStatus, getTestStatusKey, hasCompletedTest, specialistClients, statusInfo, validateRegistrationValues } from '../../entities/user';
 import { accountTypeOptions, generateStrongPassword, PasswordInput } from '../../features/auth';
-import { apiLogin, apiMe, apiRegister, setAccessToken, yandexLoginUrl } from '../../shared/api';
+import { formatResultDate } from '../../features/testing';
+import { apiCollaboratingSpecialists, apiLogin, apiMe, apiRegister, apiTests, setAccessToken, yandexLoginUrl } from '../../shared/api';
 import authLoginImage from './assets/auth-login.png';
 import styles from './AccountPage.module.css';
 
@@ -77,7 +78,7 @@ function AccountToast({ notification }) {
     );
 }
 
-function ProfileAccount({ user, status, onLogout, onUserUpdate, onAccountDelete, notify }) {
+function ProfileAccount({ user, status, testStatus, onLogout, onUserUpdate, onAccountDelete, notify }) {
     const navigate = useNavigate();
     const accountStatus = getAccountStatus(user, status);
     const accountInfo = statusInfo[accountStatus] || statusInfo.client;
@@ -289,6 +290,7 @@ function ProfileAccount({ user, status, onLogout, onUserUpdate, onAccountDelete,
 
                 {accountStatus === 'client' && (
                     <ClientAccountPanel
+                        testStatus={testStatus}
                         incomingRequest={incomingRequest}
                         setIncomingRequest={setIncomingRequest}
                         notify={notify}
@@ -301,13 +303,157 @@ function ProfileAccount({ user, status, onLogout, onUserUpdate, onAccountDelete,
     );
 }
 
+function getStoredTestResult(testStatus, testId) {
+    return testStatus?.[`${getTestStatusKey(testId)}Result`] || null;
+}
+
+function CompletedTestMiniCard({ test, result }) {
+    return (
+        <article className={styles.testResultCard}>
+            <div className={styles.testResultHead}>
+                <div>
+                    <span className={styles.testResultCode}>{test.code}</span>
+                    <strong>{test.title}</strong>
+                    <p>Дата прохождения: {formatResultDate(result?.completedAt)}</p>
+                </div>
+                <Badge tone="success">Пройден</Badge>
+            </div>
+            <div className={styles.testResultStats}>
+                <span>{result?.scoreLabel || result?.score || 'Результат сохранён'}</span>
+                <span>{result?.level || 'Интерпретация сохранена'}</span>
+            </div>
+        </article>
+    );
+}
+
+function CollaborationMiniCard({ specialist }) {
+    return (
+        <article className={styles.collaborationCard}>
+            <div>
+                <strong>{specialist.name}</strong>
+                <p>{specialist.description || 'Специалист сопровождает текущую работу клиента.'}</p>
+                {specialist.startedAt && (
+                    <span className={styles.collaborationMeta}>
+                        Сотрудничество с {formatResultDate(specialist.startedAt)}
+                    </span>
+                )}
+            </div>
+            <div className={styles.collaborationSide}>
+                <Badge tone="success">Сотрудничаете</Badge>
+                {specialist.experience && <span>стаж: {specialist.experience}</span>}
+            </div>
+        </article>
+    );
+}
+
 function ClientAccountPanel({
+    testStatus,
     incomingRequest,
     setIncomingRequest,
     notify,
 }) {
+    const [systemTests, setSystemTests] = useState([]);
+    const [testsError, setTestsError] = useState('');
+    const [collaboratingSpecialists, setCollaboratingSpecialists] = useState([]);
+    const [collaborationsError, setCollaborationsError] = useState('');
+    const completedTests = systemTests
+        .filter((test) => hasCompletedTest(testStatus, test.id))
+        .map((test) => ({ test, result: getStoredTestResult(testStatus, test.id) }));
+
+    useEffect(() => {
+        let active = true;
+        apiTests()
+            .then((items) => {
+                if (!active) return;
+                setSystemTests(items);
+                setTestsError('');
+            })
+            .catch((error) => {
+                if (!active) return;
+                setSystemTests([]);
+                setTestsError(error.message || 'Не удалось загрузить тесты.');
+            });
+
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        let active = true;
+        apiCollaboratingSpecialists()
+            .then((items) => {
+                if (!active) return;
+                setCollaboratingSpecialists(items);
+                setCollaborationsError('');
+            })
+            .catch((error) => {
+                if (!active) return;
+                setCollaboratingSpecialists([]);
+                setCollaborationsError(error.message || 'Не удалось загрузить специалистов.');
+            });
+
+        return () => {
+            active = false;
+        };
+    }, []);
+
     return (
         <div className={styles.rolePanel}>
+            <section className={styles.accountSection}>
+                <div className={styles.sectionHead}>
+                    <div>
+                        <h2>Пройденные тесты</h2>
+                        <p>Результаты текущего пользователя, загруженные из системы.</p>
+                    </div>
+                    <Badge tone={completedTests.length > 0 ? 'success' : 'accent'}>
+                        {completedTests.length > 0 ? `${completedTests.length} пройдено` : 'Нет результатов'}
+                    </Badge>
+                </div>
+                {testsError ? (
+                    <div className={styles.emptyState}>
+                        <p>{testsError}</p>
+                    </div>
+                ) : completedTests.length > 0 ? (
+                    <div className={styles.testResultList}>
+                        {completedTests.map(({ test, result }) => (
+                            <CompletedTestMiniCard key={test.id} test={test} result={result} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className={styles.emptyState}>
+                        <p>Пока для текущего пользователя нет пройденных тестов.</p>
+                        <Link to="/testing">Перейти к тестам</Link>
+                    </div>
+                )}
+            </section>
+            <section className={styles.accountSection}>
+                <div className={styles.sectionHead}>
+                    <div>
+                        <h2>Специалисты в работе</h2>
+                        <p>Перечень специалистов, с которыми клиент уже сотрудничает.</p>
+                    </div>
+                    <Badge tone={collaboratingSpecialists.length > 0 ? 'success' : 'accent'}>
+                        {collaboratingSpecialists.length > 0 ? `${collaboratingSpecialists.length} в работе` : 'Нет сотрудничества'}
+                    </Badge>
+                </div>
+                {collaborationsError ? (
+                    <div className={styles.emptyState}>
+                        <p>{collaborationsError}</p>
+                    </div>
+                ) : collaboratingSpecialists.length > 0 ? (
+                    <div className={styles.collaborationList}>
+                        {collaboratingSpecialists.map((specialist) => (
+                            <CollaborationMiniCard key={specialist.id || specialist.name} specialist={specialist} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className={styles.emptyState}>
+                        <p>Пока нет специалистов, с которыми клиент уже сотрудничает.</p>
+                        <Link to="/specialists">Перейти к специалистам</Link>
+                    </div>
+                )}
+            </section>
             <section className={styles.accountSection}>
                 <div className={styles.sectionHead}>
                     <div>

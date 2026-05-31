@@ -1,11 +1,37 @@
 import { useEffect, useState } from 'react';
 import './app/styles/kit.css';
 import { AppRouter } from './app/providers/AppRouter';
-import { clearAuthUser, readAuthUser, saveAuthUser, markTestCompleted, readUserStatus, saveUserStatus } from './entities/user';
-import { apiLogout, apiMe, apiSubmitTestResult, clearAccessToken, getAccessToken } from './shared/api';
+import { clearAuthUser, DEFAULT_USER_STATUS, getTestStatusKey, readAuthUser, saveAuthUser, markTestCompleted, readUserStatus, saveUserStatus } from './entities/user';
+import { apiLogout, apiMe, apiMyTestResults, apiSubmitTestResult, clearAccessToken, getAccessToken } from './shared/api';
 
 // Тесты, формирующие вершину графа на сервере (психотип + текущее состояние).
 const SERVER_TEST_CODES = ['bfi-2', 'bds'];
+
+function testStatusFromServerResults(results) {
+    const nextStatus = { ...DEFAULT_USER_STATUS };
+    const seenTests = new Set();
+
+    for (const result of results || []) {
+        const testCode = result.testCode || result.testId;
+        const statusKey = getTestStatusKey(testCode);
+        if (!statusKey || seenTests.has(statusKey)) continue;
+
+        seenTests.add(statusKey);
+        nextStatus[statusKey] = 'completed';
+        nextStatus[`${statusKey}Result`] = {
+            completedAt: result.completedAt,
+            score: result.score,
+            scoreLabel: result.scoreLabel,
+            level: result.level,
+            summary: result.summary,
+            domains: result.domains || [],
+            answers: result.answers || [],
+            answeredCount: result.answeredCount || result.answers?.length || 0,
+        };
+    }
+
+    return nextStatus;
+}
 
 function App() {
     const [authUser, setAuthUser] = useState(readAuthUser);
@@ -13,6 +39,16 @@ function App() {
     const isAuth = Boolean(authUser);
     const userRole = authUser?.role || null;
     const status = authUser?.status || authUser?.accountType || null;
+
+    const refreshServerTestStatus = async (user) => {
+        if (!user || !getAccessToken()) return null;
+
+        const results = await apiMyTestResults();
+        const nextStatus = testStatusFromServerResults(results);
+        saveUserStatus(user, nextStatus);
+        setTestStatus(nextStatus);
+        return nextStatus;
+    };
 
     // При наличии серверного токена восстанавливаем сессию с бэкенда (источник
     // истины об аутентификации). Невалидный/просроченный токен — выходим.
@@ -26,7 +62,17 @@ function App() {
                 if (!active) return;
                 saveAuthUser(user);
                 setAuthUser(user);
-                setTestStatus(readUserStatus(user));
+                const localStatus = readUserStatus(user);
+                setTestStatus(localStatus);
+                try {
+                    const remoteStatus = await apiMyTestResults();
+                    if (!active) return;
+                    const nextStatus = testStatusFromServerResults(remoteStatus);
+                    saveUserStatus(user, nextStatus);
+                    setTestStatus(nextStatus);
+                } catch {
+                    if (active) setTestStatus(localStatus);
+                }
             } catch {
                 clearAccessToken();
                 clearAuthUser();
@@ -50,7 +96,11 @@ function App() {
         }
 
         setAuthUser(user);
-        setTestStatus(readUserStatus(user));
+        const localStatus = readUserStatus(user);
+        setTestStatus(localStatus);
+        refreshServerTestStatus(user).catch(() => {
+            setTestStatus(localStatus);
+        });
     };
 
     const handleLogout = () => {
@@ -99,14 +149,19 @@ function App() {
             apiSubmitTestResult({
                 testCode: testId,
                 score: result.score ?? fallbackScore ?? 0,
+                scoreLabel: result.scoreLabel || '',
                 level: result.level || '',
+                summary: result.summary || '',
+                domains: result.domains || [],
                 answers: Object.entries(answers || {}).map(([questionIndex, value]) => ({
                     questionIndex: Number(questionIndex),
                     value: Number(value),
                 })),
-            }).catch(() => {
-                /* отправка результата — best-effort, не мешаем UX */
-            });
+            })
+                .then(() => refreshServerTestStatus(authUser))
+                .catch(() => {
+                    /* отправка результата — best-effort, не мешаем UX */
+                });
         }
     };
 

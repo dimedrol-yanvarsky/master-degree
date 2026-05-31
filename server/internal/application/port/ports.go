@@ -16,6 +16,7 @@ import (
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/domain/emotion"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/domain/feedback"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/domain/recommendation"
+	"github.com/dimedrol-yanvarsky/master-degree/server/internal/domain/specialist"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/domain/test"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/domain/user"
 )
@@ -83,6 +84,15 @@ type CollaborationRepository interface {
 	// тех специалистов, кто с ним сотрудничает).
 	ListByClient(ctx context.Context, clientID string) ([]collaboration.Collaboration, error)
 	Update(ctx context.Context, c collaboration.Collaboration) error
+}
+
+// SpecialistRepository читает публичный каталог специалистов.
+type SpecialistRepository interface {
+	List(ctx context.Context) ([]specialist.Profile, error)
+}
+
+type ClientCollaborationRepository interface {
+	ListByClient(ctx context.Context, clientID string) ([]collaboration.ClientSpecialist, error)
 }
 
 // PasswordHasher хеширует и проверяет пароли (реализуется через bcrypt).

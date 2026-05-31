@@ -29,3 +29,13 @@ type Collaboration struct {
 func (c Collaboration) GrantsAccess() bool {
 	return c.Status == StatusAccepted
 }
+
+type ClientSpecialist struct {
+	ID                    string
+	SpecialistID          string
+	SpecialistName        string
+	SpecialistExperience  string
+	SpecialistDescription string
+	StartedAt             time.Time
+	Status                Status
+}

@@ -5,7 +5,9 @@ import (
 	"log"
 
 	appauth "github.com/dimedrol-yanvarsky/master-degree/server/internal/application/auth"
+	appcollaboration "github.com/dimedrol-yanvarsky/master-degree/server/internal/application/collaboration"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/application/port"
+	appspecialist "github.com/dimedrol-yanvarsky/master-degree/server/internal/application/specialist"
 	appsupport "github.com/dimedrol-yanvarsky/master-degree/server/internal/application/support"
 	apptesting "github.com/dimedrol-yanvarsky/master-degree/server/internal/application/testing"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/config"
@@ -17,10 +19,13 @@ import (
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/infrastructure/mongodb"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/infrastructure/oauth"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/infrastructure/persistence/memory"
+	mongopersistence "github.com/dimedrol-yanvarsky/master-degree/server/internal/infrastructure/persistence/mongodb"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/infrastructure/security"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/infrastructure/system"
 	apphttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http"
 	authhttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http/auth"
+	collaborationhttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http/collaboration"
+	specialisthttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http/specialist"
 	supporthttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http/support"
 	testinghttp "github.com/dimedrol-yanvarsky/master-degree/server/internal/interfaces/http/testing"
 )
@@ -45,7 +50,15 @@ func main() {
 	sessions := memory.NewSessionRepository()
 	collaborations := memory.NewCollaborationRepository()
 	graphs := memory.NewEmotionGraphRepository()
-	testResults := memory.NewTestResultRepository()
+	var tests port.TestRepository
+	var testResults port.TestResultRepository = memory.NewTestResultRepository()
+	var clientCollaborations port.ClientCollaborationRepository
+	if adapter.Connected() {
+		tests = mongopersistence.NewTestRepository(adapter)
+		testResults = mongopersistence.NewTestResultRepository(adapter)
+		clientCollaborations = mongopersistence.NewClientCollaborationRepository(adapter)
+	}
+	specialists := mongopersistence.NewSpecialistRepository(adapter)
 
 	// Демо-данные для локального запуска: аккаунты (пароль lumen123) и принятая
 	// связь специалист↔клиент, чтобы вход и оповещение по почте работали без БД.
@@ -89,6 +102,7 @@ func main() {
 	// Приём результатов тестов: новая вершина графа → письмо сотрудничающим
 	// специалистам клиента.
 	testingService := apptesting.NewService(apptesting.Deps{
+		Tests:          tests,
 		Results:        testResults,
 		Graphs:         graphs,
 		Collaborations: collaborations,
@@ -101,9 +115,14 @@ func main() {
 	router := apphttp.NewRouter(apphttp.Dependencies{
 		SupportHandler: supportHandler,
 		AuthHandler:    authhttp.NewHandler(authService, cfg.FrontendURL),
-		TestingHandler: testinghttp.NewHandler(testingService),
-		Authenticator:  authService,
-		DBConnected:    adapter.Connected,
+		CollaborationHandler: collaborationhttp.NewHandler(appcollaboration.NewService(appcollaboration.Deps{
+			Collaborations: clientCollaborations,
+			Users:          users,
+		})),
+		SpecialistHandler: specialisthttp.NewHandler(appspecialist.NewService(specialists)),
+		TestingHandler:    testinghttp.NewHandler(testingService),
+		Authenticator:     authService,
+		DBConnected:       adapter.Connected,
 	})
 
 	log.Printf("server is running on %s", cfg.HTTPAddress)
