@@ -68,25 +68,55 @@ test('creates, updates and deletes recommendation blocks', () => {
     expect(deleteRecommendationBlock(updatedTree, blockId)[0].blocks).toEqual([]);
 });
 
-test('paginates recommendation blocks by preserving parent sections', () => {
-    const sections = [{
-        id: 'section',
-        title: 'Раздел',
-        description: '',
-        blocks: Array.from({ length: 12 }, (_, index) => ({
-            id: `block-${index + 1}`,
-            title: `Блок ${index + 1}`,
-            summary: '',
-            content: '',
-            tags: [],
-        })),
-        children: [],
-    }];
+test('paginates by sections and recommendations and keeps DB numbering across pages', () => {
+    const sections = [
+        {
+            id: 's1',
+            number: '1',
+            title: 'Первый',
+            description: '',
+            blocks: Array.from({ length: 8 }, (_, index) => ({
+                id: `a-${index + 1}`, title: '', summary: '', content: `A${index + 1}`, tags: [],
+            })),
+            children: [],
+        },
+        {
+            id: 's2',
+            number: '2',
+            title: 'Второй',
+            description: '',
+            blocks: Array.from({ length: 6 }, (_, index) => ({
+                id: `b-${index + 1}`, title: '', summary: '', content: `B${index + 1}`, tags: [],
+            })),
+            children: [],
+        },
+    ];
+    // Блок = раздел ИЛИ рекомендация. Всего узлов: s1 + 8 + s2 + 6 = 16 → 2 страницы по 10.
     const firstPage = paginateRecommendationBase(sections, 1, 10);
     const secondPage = paginateRecommendationBase(sections, 2, 10);
 
+    expect(firstPage.totalBlocks).toBe(16);
     expect(firstPage.pageCount).toBe(2);
-    expect(firstPage.sections[0].blocks).toHaveLength(10);
-    expect(secondPage.sections[0].title).toBe('Раздел');
-    expect(secondPage.sections[0].blocks.map((block) => block.id)).toEqual(['block-11', 'block-12']);
+    // Стр.1: s1 + 8 рекомендаций + s2 (как контекст, без своих рекомендаций в окне).
+    expect(firstPage.sections.map((section) => section.number)).toEqual(['1', '2']);
+    expect(firstPage.sections[0].blocks).toHaveLength(8);
+    expect(firstPage.sections[1].blocks).toHaveLength(0);
+    // Стр.2: рекомендации второго раздела. Его номер берётся из БД (2) и НЕ сбрасывается на 1.
+    expect(secondPage.sections).toHaveLength(1);
+    expect(secondPage.sections[0].number).toBe('2');
+    expect(secondPage.sections[0].title).toBe('Второй');
+    expect(secondPage.sections[0].blocks.map((block) => block.id)).toEqual([
+        'b-1', 'b-2', 'b-3', 'b-4', 'b-5', 'b-6',
+    ]);
+});
+
+test('falls back to computed numbering when DB number is absent', () => {
+    const sections = [
+        { id: 'x', title: 'Без номера', description: '', blocks: [], children: [
+            { id: 'y', title: 'Подраздел', description: '', blocks: [], children: [] },
+        ] },
+    ];
+    const page = paginateRecommendationBase(sections, 1, 10);
+    expect(page.sections[0].number).toBe('1');
+    expect(page.sections[0].children[0].number).toBe('1.1');
 });

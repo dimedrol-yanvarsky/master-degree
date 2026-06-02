@@ -1,4 +1,4 @@
-import { Badge, Button, KitIcon } from '../../../shared/ui/kit';
+import { Button, KitIcon } from '../../../shared/ui/kit';
 import { pluralizeDays } from '../../../features/testing';
 
 export function TestCard({ test, onStart, isCompleted = false, isLocked = false, lockLabel = '', remainingDays = 0, styles }) {
@@ -6,7 +6,6 @@ export function TestCard({ test, onStart, isCompleted = false, isLocked = false,
         <article className={[styles.testCard, isCompleted ? styles.completedTestCard : ''].filter(Boolean).join(' ')}>
             <div className={styles.testTopline}>
                 <h2>{test.title}</h2>
-                {isCompleted && <Badge tone="success">Пройден</Badge>}
             </div>
             <p className={styles.testMeta}>{test.meta}</p>
             <p>{test.description}</p>

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Input, KitIcon, Textarea } from '../../../shared/ui/kit';
 import { getAccountStatus, statusInfo } from '../../../entities/user';
 import { ROUTES } from '../../../shared/routes';
-import { getAccountInitials, getDisplayName } from '../model/accountActions';
 import { getProfileFields } from '../model/profileFields';
 import { validateProfileField } from '../model/profileValidation';
 import { AdminAccountPanel } from './AdminAccountPanel';
@@ -25,7 +24,6 @@ export function ProfileAccount({
 }) {
     const navigate = useNavigate();
     const accountStatus = getAccountStatus(user, status);
-    const accountInfo = statusInfo[accountStatus] || statusInfo.client;
     const isSpecialist = accountStatus === 'specialist';
     const [yandexLinked, setYandexLinked] = useState(Boolean(user?.yandexLinked || user?.authProvider === 'yandex'));
     const [editingField, setEditingField] = useState(null);
@@ -38,10 +36,20 @@ export function ProfileAccount({
         confirmPassword: '',
     });
 
-    const displayName = getDisplayName(user);
-    const initials = getAccountInitials(user);
-
-    const profileFields = getProfileFields(user, isSpecialist);
+    const baseProfileFields = getProfileFields(user, isSpecialist);
+    // «Статус» — роль учётной записи из БД (client/specialist/admin), показываем
+    // подписью из statusInfo. Поле только для чтения: роль пользователь не меняет.
+    const statusField = {
+        key: 'accountStatus',
+        label: 'Статус',
+        value: statusInfo[accountStatus]?.label || statusInfo.client.label,
+        icon: 'shield',
+        readOnly: true,
+    };
+    const aboutIndex = baseProfileFields.findIndex((field) => field.key === 'about');
+    const profileFields = aboutIndex === -1
+        ? [...baseProfileFields, statusField]
+        : [...baseProfileFields.slice(0, aboutIndex), statusField, ...baseProfileFields.slice(aboutIndex)];
 
     useEffect(() => {
         setYandexLinked(Boolean(user?.yandexLinked || user?.authProvider === 'yandex'));
@@ -188,11 +196,8 @@ export function ProfileAccount({
             <div className={styles.accountDashboard}>
                 <div className={styles.profileCard}>
                     <div className={styles.profileHeader}>
-                        <div className={styles.profileAvatar} aria-hidden="true">{initials}</div>
                         <div className={styles.profileHeading}>
-                            <span className={styles.profileEyebrow}>Личный кабинет</span>
-                            <h1>{displayName || 'Профиль'}</h1>
-                            <p>{accountInfo.description}</p>
+                            <h1>Личный кабинет</h1>
                         </div>
                     </div>
 
@@ -219,7 +224,7 @@ export function ProfileAccount({
                                                 </span>
                                                 <span className={styles.fieldLabel}>{field.label}</span>
                                             </span>
-                                            {!isEditing && (
+                                            {!isEditing && !field.readOnly && (
                                                 <button
                                                     type="button"
                                                     className={styles.fieldEditButton}
@@ -314,10 +319,10 @@ export function ProfileAccount({
                             </Button>
                         </form>
                         <div className={styles.profileActions}>
-                            <Button variant={yandexLinked ? 'secondary' : 'ghost'} iconLeft={<KitIcon name="link" />} onClick={handleYandexToggle} disabled={Boolean(securityAction)}>
+                            <Button variant="secondary" iconLeft={<KitIcon name="link" />} onClick={handleYandexToggle} disabled={Boolean(securityAction)}>
                                 {securityAction === 'yandex' ? 'Обрабатываем...' : yandexLinked ? 'Отвязать Yandex' : 'Привязать Yandex'}
                             </Button>
-                            <Button variant="ghost" iconLeft={<KitIcon name="arrowLeft" />} onClick={handleLogout}>
+                            <Button variant="secondary" iconLeft={<KitIcon name="arrowLeft" />} onClick={handleLogout}>
                                 Выйти из аккаунта
                             </Button>
                             <Button variant="destructive" iconLeft={<KitIcon name="trash" />} onClick={handleAccountDelete} disabled={Boolean(securityAction)}>

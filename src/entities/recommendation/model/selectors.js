@@ -1,6 +1,11 @@
 export function getRecommendationSectionOptions(sections, prefix = '') {
     return sections.flatMap((section, index) => {
-        const path = prefix ? `${prefix}.${index + 1}` : String(index + 1);
+        const computed = prefix ? `${prefix}.${index + 1}` : String(index + 1);
+        // Тот же принцип, что и на странице: номер раздела берём из БД (section.number),
+        // а если его нет — вычисляем по позиции в дереве.
+        const path = typeof section.number === 'string' && section.number.trim()
+            ? section.number.trim()
+            : computed;
         const option = {
             value: section.id,
             label: `${path}. ${section.title}`,

@@ -15,22 +15,22 @@ const SUPPORT_LEVELS = [
 ];
 
 const ROWS = SUPPORT_LEVELS.length;
-const ROW_GAP = 96;
-const CHART_TOP = 80;
+const ROW_GAP = 116;
+const CHART_TOP = 92;
 const CHART_BOTTOM = CHART_TOP + (ROWS - 1) * ROW_GAP;
-const SVG_HEIGHT = CHART_BOTTOM + 84;
-const DATE_Y = CHART_BOTTOM + 40;
-const WEEKDAY_Y = CHART_BOTTOM + 66;
+const SVG_HEIGHT = CHART_BOTTOM + 104;
+const DATE_Y = CHART_BOTTOM + 48;
+const WEEKDAY_Y = CHART_BOTTOM + 78;
 
 // Фиксированный (нерастягиваемый) масштаб: ось рисуется в собственном SVG, график — в прокручиваемом.
-const AXIS_WIDTH = 280;
-const SMILEY_X = 46;
-const SMILEY_SIZE = 52;
-const LABEL_X = 90;
+const AXIS_WIDTH = 330;
+const SMILEY_X = 58;
+const SMILEY_SIZE = 64;
+const LABEL_X = 116;
 
 // Фиксированный шаг на колонку — при росте числа колонок график расширяется и прокручивается.
-const COLUMN_GAP = 184;
-const PLOT_PAD = 124;
+const COLUMN_GAP = 230;
+const PLOT_PAD = 120;
 
 const WEEKDAYS_BY_DATE = {
     '20.09.2025': 'Суббота',
@@ -129,13 +129,6 @@ export function EmotionStateGraph({ points }) {
 
     return (
         <section className={styles.root}>
-            <header className={styles.head}>
-                <h2 className={styles.title}>Степень необходимости в&nbsp;поддержке</h2>
-                <p className={styles.subtitle}>
-                    Граф эмоционального состояния пополняется по мере прохождения теста на текущее эмоциональное состояние.
-                </p>
-            </header>
-
             <div className={styles.chartArea}>
                 <svg
                     className={styles.axis}
@@ -215,8 +208,8 @@ export function EmotionStateGraph({ points }) {
                                 tabIndex={0}
                                 role="img"
                                 aria-label={`${point.label}: альтернативный терм — ${point.secondarySupportNeedLabel} необходимость, балл ${point.secondaryScore}, степень истинности ${point.secondaryTruth}`}>
-                                <circle className={styles.secondaryRing} cx={point.x} cy={point.secondaryY} r="11" stroke={point.secondaryColor} />
-                                <circle className={styles.secondaryDot} cx={point.x} cy={point.secondaryY} r="3.4" fill={point.secondaryColor} />
+                                <circle className={styles.secondaryRing} cx={point.x} cy={point.secondaryY} r="13" stroke={point.secondaryColor} />
+                                <circle className={styles.secondaryDot} cx={point.x} cy={point.secondaryY} r="4" fill={point.secondaryColor} />
                                 <g transform={`translate(${point.x} ${point.secondaryY})`}>
                                     <PointTooltip score={point.secondaryScore} truth={point.secondaryTruth} />
                                 </g>
@@ -230,7 +223,7 @@ export function EmotionStateGraph({ points }) {
                                 tabIndex={0}
                                 role="img"
                                 aria-label={`${point.label}: необходимость в поддержке ${point.supportNeedLabel}, балл ${point.score}, степень истинности ${point.truth}`}>
-                                <circle className={styles.pointCircle} cx={point.x} cy={point.y} r="13" fill={point.color} />
+                                <circle className={styles.pointCircle} cx={point.x} cy={point.y} r="15" fill={point.color} />
                                 <g transform={`translate(${point.x} ${point.y})`}>
                                     <PointTooltip score={point.score} truth={point.truth} />
                                 </g>

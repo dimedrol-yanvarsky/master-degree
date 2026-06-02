@@ -57,26 +57,6 @@
     gap: 18px;
 }
 
-.pageMeta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    padding: 12px 16px;
-    border: 1px solid var(--border);
-    border-radius: var(--r-frame);
-    background: var(--bg-2);
-    color: var(--fg-3);
-    font-size: 13.5px;
-}
-
-.pageMeta span:last-child {
-    color: var(--fg-4);
-    font-family: var(--font-mono);
-    font-size: 11px;
-    text-transform: uppercase;
-}
-
 .statusMessage {
     margin: 0;
     padding: 18px 20px;
@@ -160,7 +140,7 @@
     display: grid;
     gap: 12px;
     min-width: 0;
-    padding: 18px;
+    padding: 16px 18px;
     border: 1px solid var(--border);
     border-radius: var(--r-frame);
     background:
@@ -175,24 +155,43 @@
     gap: 18px;
 }
 
-.blockTop strong {
+.blockBody {
+    display: grid;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.blockEyebrow {
+    color: var(--fg-4);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.blockBody strong {
     display: block;
     color: var(--fg);
     font-size: 17px;
     line-height: 1.25;
 }
 
-.blockTop p,
-.blockContent {
-    margin: 6px 0 0;
+.blockSummary {
+    margin: 0;
     color: var(--fg-3);
-    font-size: 14.5px;
-    line-height: 1.58;
+    font-size: 13.5px;
+    line-height: 1.5;
 }
 
 .blockContent {
     margin: 0;
     color: var(--fg-2);
+    font-size: 14.5px;
+    line-height: 1.62;
+    /* Сохраняем переносы строк: рекомендации-списки приходят как многострочный текст. */
+    white-space: pre-line;
 }
 
 .tags {
@@ -208,6 +207,15 @@
     margin-left: 28px;
     padding-left: 18px;
     border-left: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+}
+
+/* Дочерний раздел — без карточки (рамка/фон/тень/паддинг). Рамки блоков
+   рекомендаций (.block) при этом не трогаем. */
+.children .section {
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
 }
 
 .pagination {
@@ -251,11 +259,6 @@
 
     .actions {
         justify-content: flex-start;
-    }
-
-    .pageMeta {
-        align-items: flex-start;
-        flex-direction: column;
     }
 
     .children {

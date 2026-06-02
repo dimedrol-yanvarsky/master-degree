@@ -76,11 +76,11 @@ export function RecommendationSection({
 
             {hasChildren && (
                 <div className={styles.children}>
-                    {section.children.map((child, index) => (
+                    {section.children.map((child) => (
                         <RecommendationSection
                             key={child.id}
                             section={child}
-                            number={`${number}.${index + 1}`}
+                            number={child.number}
                             permissions={permissions}
                             editingId={editingId}
                             onDeleteBlock={onDeleteBlock}

@@ -180,7 +180,7 @@
     line-height: 1.22;
 }
 
-.cardHead span {
+.cardHead h2 + span {
     display: block;
     margin-top: 5px;
     color: var(--fg-4);

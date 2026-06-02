@@ -524,9 +524,11 @@ export function SpecialistAccountPanel({ notify, styles }) {
                         <h2>Заявки на сотрудничество</h2>
                         <p>Входящие заявки от клиентов и исходящие приглашения специалиста.</p>
                     </div>
-                    <Badge tone={incomingRequests.length > 0 ? 'warning' : pendingRequests.length > 0 ? 'accent' : 'success'}>
-                        {pendingRequests.length > 0 ? `${pendingRequests.length} ожидает` : 'Нет заявок'}
-                    </Badge>
+                    {pendingRequests.length > 0 && (
+                        <Badge tone={incomingRequests.length > 0 ? 'warning' : 'accent'}>
+                            {`${pendingRequests.length} ожидает`}
+                        </Badge>
+                    )}
                 </div>
                 <form className={styles.compactForm} onSubmit={handleSendRequest}>
                     <Select

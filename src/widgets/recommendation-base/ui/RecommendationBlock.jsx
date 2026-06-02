@@ -4,6 +4,9 @@ import styles from '../RecommendationBase.module.css';
 
 export function RecommendationBlock({ block, permissions, editingId, onDelete, onEdit, onEditCancel, onEditSave }) {
     const isEditing = editingId === block.id;
+    const hasTitle = Boolean(block.title);
+    const canManage = permissions.canEdit || permissions.canDelete;
+    const deleteLabel = block.title || 'рекомендацию';
 
     return (
         <article className={styles.block}>
@@ -17,11 +20,16 @@ export function RecommendationBlock({ block, permissions, editingId, onDelete, o
             ) : (
                 <>
                     <div className={styles.blockTop}>
-                        <div>
-                            <strong>{block.title}</strong>
-                            <p>{block.summary}</p>
+                        <div className={styles.blockBody}>
+                            {hasTitle ? (
+                                <strong>{block.title}</strong>
+                            ) : (
+                                <span className={styles.blockEyebrow}>Рекомендация</span>
+                            )}
+                            {block.summary && <p className={styles.blockSummary}>{block.summary}</p>}
+                            {block.content && <p className={styles.blockContent}>{block.content}</p>}
                         </div>
-                        {(permissions.canEdit || permissions.canDelete) && (
+                        {canManage && (
                             <div className={styles.actions}>
                                 {permissions.canEdit && (
                                     <Button size="sm" variant="secondary" iconLeft={<KitIcon name="edit" />} onClick={() => onEdit(block.id)}>
@@ -29,14 +37,13 @@ export function RecommendationBlock({ block, permissions, editingId, onDelete, o
                                     </Button>
                                 )}
                                 {permissions.canDelete && (
-                                    <Button size="sm" variant="destructive" iconLeft={<KitIcon name="trash" />} onClick={() => onDelete(block.id, block.title)}>
+                                    <Button size="sm" variant="destructive" iconLeft={<KitIcon name="trash" />} onClick={() => onDelete(block.id, deleteLabel)}>
                                         Удалить
                                     </Button>
                                 )}
                             </div>
                         )}
                     </div>
-                    <p className={styles.blockContent}>{block.content}</p>
                     {block.tags?.length > 0 && (
                         <div className={styles.tags}>
                             {block.tags.map((tag) => (

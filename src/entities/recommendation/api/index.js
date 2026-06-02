@@ -23,6 +23,9 @@ function normalizeRecommendationBlock(block) {
 function normalizeRecommendationSection(section) {
     return {
         id: section.id || '',
+        // Номер раздела из БД (section_number). Источник истины для нумерации на
+        // странице — благодаря ему нумерация не сбрасывается при пагинации.
+        number: typeof section.number === 'string' ? section.number.trim() : '',
         title: section.title || '',
         description: section.description || '',
         blocks: Array.isArray(section.blocks) ? section.blocks.map(normalizeRecommendationBlock).filter((block) => block.id) : [],

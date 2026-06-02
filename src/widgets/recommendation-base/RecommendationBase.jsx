@@ -1,5 +1,4 @@
 import { Badge, KitIcon } from '../../shared/ui/kit';
-import { RECOMMENDATION_BLOCKS_PER_PAGE } from '../../entities/recommendation';
 import { RecommendationEditorPanel } from '../../features/recommendation-editor';
 import { useRecommendationBase } from './model/useRecommendationBase';
 import styles from './RecommendationBase.module.css';
@@ -28,9 +27,11 @@ export function RecommendationBase({ status = null }) {
         <section className={styles.root}>
             <header className={styles.hero}>
                 <div>
-                    <Badge tone={status === 'admin' ? 'warning' : status === 'specialist' ? 'success' : 'accent'}>
-                        {permissions.roleLabel}
-                    </Badge>
+                    {permissions.roleLabel !== 'Просмотр' && (
+                        <Badge tone={status === 'admin' ? 'warning' : 'success'}>
+                            {permissions.roleLabel}
+                        </Badge>
+                    )}
                     <h1>Рекомендательная база</h1>
                     <p>
                         Иерархия разделов, подразделов и блоков рекомендаций для работы специалиста с клиентскими сценариями.
@@ -61,18 +62,11 @@ export function RecommendationBase({ status = null }) {
 
             {!isLoading && !loadError && paginatedBase.totalBlocks > 0 && (
                 <div className={styles.tree}>
-                    <div className={styles.pageMeta}>
-                        <span>
-                            Показаны блоки {paginatedBase.startBlock}-{paginatedBase.endBlock} из {paginatedBase.totalBlocks}
-                        </span>
-                        <span>До {RECOMMENDATION_BLOCKS_PER_PAGE} блоков на странице</span>
-                    </div>
-
-                    {paginatedBase.sections.map((section, index) => (
+                    {paginatedBase.sections.map((section) => (
                         <RecommendationSection
                             key={section.id}
                             section={section}
-                            number={String(index + 1)}
+                            number={section.number}
                             permissions={permissions}
                             editingId={editingId}
                             onDeleteBlock={handleDeleteBlock}

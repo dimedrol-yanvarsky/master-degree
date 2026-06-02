@@ -60,21 +60,27 @@ function formatTruth(value) {
 }
 
 function normalizeGraphColumn(point = {}) {
-    const supportNeed = Number(point.supportNeed ?? point.score);
-    const hasSupportNeedLevel = Number.isFinite(Number(point.supportNeedLevel));
+    const supportNeedLevel = point.supportNeedLevel ?? point.support_need_level;
+    const secondarySupportNeedLevel = point.secondarySupportNeedLevel ?? point.secondary_support_need_level;
+    const supportNeed = Number(point.supportNeed ?? point.support_need ?? point.score);
+    const hasSupportNeedLevel = Number.isFinite(Number(supportNeedLevel));
     const activeRow = hasSupportNeedLevel
-        ? getRowBySupportNeedLevel(Number(point.supportNeedLevel))
+        ? getRowBySupportNeedLevel(Number(supportNeedLevel))
         : getRowBySupportNeedScore(supportNeed);
-    const secondaryRow = Number.isFinite(Number(point.secondarySupportNeedLevel))
-        ? getRowBySupportNeedLevel(Number(point.secondarySupportNeedLevel))
+    const secondaryRow = Number.isFinite(Number(secondarySupportNeedLevel))
+        ? getRowBySupportNeedLevel(Number(secondarySupportNeedLevel))
         : activeRow;
+    const score = point.score ?? point.supportNeed ?? point.support_need ?? '';
+    const secondaryScore = point.secondaryScore ?? point.secondary_score ?? score;
 
     return {
         ...point,
         label: point.label || formatDateLabel(point.date),
-        score: point.score ?? point.supportNeed ?? '',
-        supportNeedLevel: point.supportNeedLevel,
-        secondaryScore: point.secondaryScore ?? point.score ?? point.supportNeed ?? '',
+        score,
+        supportNeedLevel,
+        supportNeed: point.supportNeed ?? point.support_need,
+        secondarySupportNeedLevel,
+        secondaryScore,
         truth: point.truth ?? 1,
         secondaryRow,
     };

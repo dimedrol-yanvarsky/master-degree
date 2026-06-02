@@ -40,7 +40,6 @@
 
 .visual {
     position: relative;
-    grid-row: 1;
     display: grid;
     align-self: stretch;
     justify-self: center;
@@ -94,7 +93,6 @@
 }
 
 .formPanel {
-    grid-row: 1;
     display: grid;
     justify-self: stretch;
     min-width: 0;
@@ -469,17 +467,15 @@
         radial-gradient(circle at 16% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%),
         color-mix(in srgb, var(--bg) 80%, var(--bg-2));
     box-shadow: var(--shadow-1);
-    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .fieldRow:hover {
-    transform: translateY(-2px);
     border-color: color-mix(in srgb, var(--accent) 26%, var(--border));
     box-shadow: var(--shadow-2);
 }
 
 .fieldRow:focus-within {
-    transform: none;
     border-color: color-mix(in srgb, var(--accent) 36%, var(--border));
     box-shadow: var(--shadow-2);
 }
@@ -896,7 +892,7 @@
 
 .collaborationCard {
     display: flex;
-    align-items: flex-start;
+    align-items: stretch;
     justify-content: space-between;
     gap: 16px;
     min-width: 0;
@@ -933,8 +929,10 @@
 }
 
 .collaborationSide {
-    display: grid;
-    justify-items: end;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
     gap: 8px;
     flex: 0 0 auto;
     color: var(--fg-3);
@@ -1026,7 +1024,7 @@
 
 .emptyState a:hover,
 .emptyState a:focus-visible {
-    color: var(--fg);
+    color: var(--accent);
     text-decoration: underline;
     text-underline-offset: 3px;
 }
@@ -1119,7 +1117,25 @@
     }
 }
 
-@media (max-width: 1040px) {
+@media (max-width: 1040px) and (min-width: 861px) {
+    .card {
+        grid-template-columns: minmax(300px, .95fr) minmax(390px, 1fr);
+        width: min(100%, 960px);
+        padding: clamp(28px, 4vw, 44px);
+        gap: clamp(28px, 4vw, 44px);
+    }
+
+    .visual {
+        width: min(100%, 390px);
+        height: clamp(380px, 43vw, 430px);
+    }
+
+    .formPanel {
+        max-width: none;
+    }
+}
+
+@media (max-width: 860px) {
     .card,
     .register {
         grid-template-columns: 1fr;
@@ -1181,7 +1197,7 @@
     }
 
     .collaborationSide {
-        justify-items: start;
+        align-items: flex-start;
     }
 
     .identityGrid,
