@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/entities/emotion"
+	domainsupport "github.com/dimedrol-yanvarsky/master-degree/server/internal/entities/support"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/entities/test"
 	apptesting "github.com/dimedrol-yanvarsky/master-degree/server/internal/usecases/testing"
 )
@@ -225,16 +226,8 @@ func toSubmitResponse(r apptesting.SubmitResult) submitResponse {
 		NotifiedSpecialists: len(r.NotifiedEmails),
 	}
 	if r.VertexAdded {
-		response.Point = &pointDTO{
-			Date:                      r.Point.Date.Format(time.RFC3339),
-			SupportNeed:               r.Point.SupportNeed,
-			SupportNeedLevel:          r.Point.SupportNeedLevel,
-			SecondarySupportNeedLevel: r.Point.SecondarySupportNeedLevel,
-			Score:                     r.Point.Score,
-			SecondaryScore:            r.Point.SecondaryScore,
-			Truth:                     r.Point.Truth,
-			Level:                     r.Point.Level,
-		}
+		point := toPointDTO(r.Point)
+		response.Point = &point
 	}
 	return response
 }
@@ -247,16 +240,20 @@ type graphResponse struct {
 func toGraphResponse(g emotion.Graph) graphResponse {
 	points := make([]pointDTO, 0, len(g.Points))
 	for _, p := range g.Points {
-		points = append(points, pointDTO{
-			Date:                      p.Date.Format(time.RFC3339),
-			SupportNeed:               p.SupportNeed,
-			SupportNeedLevel:          p.SupportNeedLevel,
-			SecondarySupportNeedLevel: p.SecondarySupportNeedLevel,
-			Score:                     p.Score,
-			SecondaryScore:            p.SecondaryScore,
-			Truth:                     p.Truth,
-			Level:                     p.Level,
-		})
+		points = append(points, toPointDTO(p))
 	}
 	return graphResponse{UserID: g.UserID, Points: points}
+}
+
+func toPointDTO(p emotion.Point) pointDTO {
+	return pointDTO{
+		Date:                      p.Date.Format(time.RFC3339),
+		SupportNeed:               domainsupport.RoundScore(p.SupportNeed),
+		SupportNeedLevel:          p.SupportNeedLevel,
+		SecondarySupportNeedLevel: p.SecondarySupportNeedLevel,
+		Score:                     domainsupport.RoundScore(p.Score),
+		SecondaryScore:            domainsupport.RoundScore(p.SecondaryScore),
+		Truth:                     p.Truth,
+		Level:                     p.Level,
+	}
 }

@@ -12,7 +12,7 @@ export function TestCard({ test, onStart, isCompleted = false, isLocked = false,
             {isLocked ? (
                 <p className={styles.lockNote}>
                     <KitIcon name="lock" size={15} />
-                    {lockLabel || `Будет доступен через ${remainingDays} ${pluralizeDays(remainingDays)}`}
+                    {lockLabel || `Прохождение будет доступно через ${remainingDays} ${pluralizeDays(remainingDays)}`}
                 </p>
             ) : (
                 <Button

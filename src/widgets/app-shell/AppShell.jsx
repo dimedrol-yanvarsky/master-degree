@@ -58,7 +58,7 @@ export function AppShell({ isAuth = false, status = null, user = null }) {
                 />
             </header>
             <main className={[styles.main, isUIKitPage ? styles.uiKitMain : ''].filter(Boolean).join(' ')}>
-                <Outlet context={{ isAuth }} />
+                <Outlet key={location.pathname} context={{ isAuth }} />
             </main>
         </div>
     );

@@ -3,7 +3,7 @@ export { TEST_MANAGER_ROLES } from './model/permissions';
 export { pluralizeDays, pluralizeQuestions } from './model/pluralize';
 export { resolveScale } from './model/scale';
 export { getStoredResult } from './model/testResultStatus';
-export { buildTestResult, formatResultDate } from './model/testResults';
+export { buildTestResult, formatDomainLabel, formatResultDate } from './model/testResults';
 export { AttemptDetail } from './ui/AttemptDetail';
 export { AttemptResultSummary } from './ui/AttemptResultSummary';
 export { AuthModal } from './ui/AuthModal';

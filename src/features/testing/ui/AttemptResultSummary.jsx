@@ -1,13 +1,19 @@
+import { formatDomainLabel } from '../model/testResults';
+
 export function AttemptResultSummary({ test, result, styles }) {
     if (result?.domains?.length > 0) {
         return (
             <div className={styles.attemptTraits}>
-                {result.domains.map((domain) => (
-                    <div className={styles.attemptTrait} key={domain.label}>
-                        <span>{domain.label}</span>
-                        <strong>{domain.score} из 5</strong>
-                    </div>
-                ))}
+                {result.domains.map((domain) => {
+                    const label = formatDomainLabel(domain.label);
+
+                    return (
+                        <div className={styles.attemptTrait} key={label}>
+                            <span>{label}</span>
+                            <strong>{domain.score} из 5</strong>
+                        </div>
+                    );
+                })}
             </div>
         );
     }

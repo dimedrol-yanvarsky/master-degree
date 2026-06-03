@@ -31,6 +31,7 @@ function getRowBySupportNeedLevel(supportNeedLevel) {
 }
 
 function getRowBySupportNeedScore(score) {
+    if (score === '' || score === null || score === undefined) return 2;
     const normalizedScore = Number(score);
     if (!Number.isFinite(normalizedScore)) return 2;
     const scorePercent = normalizedScore > 0 && normalizedScore <= 5
@@ -54,15 +55,57 @@ function formatDateLabel(value) {
     }).format(date);
 }
 
+function parseDateLabel(value) {
+    const match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(String(value || '').trim());
+    if (!match) return null;
+
+    const [, day, month, year] = match;
+    const dayNumber = Number(day);
+    const monthIndex = Number(month) - 1;
+    const yearNumber = Number(year);
+    const date = new Date(yearNumber, monthIndex, dayNumber);
+
+    if (
+        Number.isNaN(date.getTime())
+        || date.getFullYear() !== yearNumber
+        || date.getMonth() !== monthIndex
+        || date.getDate() !== dayNumber
+    ) {
+        return null;
+    }
+
+    return date;
+}
+
+function capitalize(value) {
+    return value ? value.charAt(0).toUpperCase() + value.slice(1) : '';
+}
+
+function formatWeekdayLabel(value) {
+    if (!value) return '';
+    const parsedDate = parseDateLabel(value);
+    const date = parsedDate || new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const weekday = new Intl.DateTimeFormat('ru-RU', { weekday: 'long' }).format(date);
+    return capitalize(weekday);
+}
+
 function formatTruth(value) {
     const truth = Number(value);
     return Number.isFinite(truth) ? truth.toFixed(2) : '1.00';
 }
 
+function roundSupportScore(value) {
+    const score = Number(value);
+    if (!Number.isFinite(score)) return value ?? '';
+    return Math.ceil(score);
+}
+
 function normalizeGraphColumn(point = {}) {
     const supportNeedLevel = point.supportNeedLevel ?? point.support_need_level;
     const secondarySupportNeedLevel = point.secondarySupportNeedLevel ?? point.secondary_support_need_level;
-    const supportNeed = Number(point.supportNeed ?? point.support_need ?? point.score);
+    const supportNeed = roundSupportScore(point.supportNeed ?? point.support_need ?? point.score);
     const hasSupportNeedLevel = Number.isFinite(Number(supportNeedLevel));
     const activeRow = hasSupportNeedLevel
         ? getRowBySupportNeedLevel(Number(supportNeedLevel))
@@ -70,15 +113,18 @@ function normalizeGraphColumn(point = {}) {
     const secondaryRow = Number.isFinite(Number(secondarySupportNeedLevel))
         ? getRowBySupportNeedLevel(Number(secondarySupportNeedLevel))
         : activeRow;
-    const score = point.score ?? point.supportNeed ?? point.support_need ?? '';
-    const secondaryScore = point.secondaryScore ?? point.secondary_score ?? score;
+    const score = roundSupportScore(point.score ?? point.supportNeed ?? point.support_need);
+    const secondaryScore = roundSupportScore(point.secondaryScore ?? point.secondary_score ?? score);
+    const label = point.label || formatDateLabel(point.date);
+    const weekday = point.weekday || formatWeekdayLabel(point.date) || formatWeekdayLabel(label);
 
     return {
         ...point,
-        label: point.label || formatDateLabel(point.date),
+        label,
+        weekday,
         score,
         supportNeedLevel,
-        supportNeed: point.supportNeed ?? point.support_need,
+        supportNeed,
         secondarySupportNeedLevel,
         secondaryScore,
         truth: point.truth ?? 1,

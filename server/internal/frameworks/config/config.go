@@ -1,8 +1,10 @@
 package config
 
 import (
+	"bufio"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -76,6 +78,9 @@ type SecurityConfig struct {
 
 // Load читает конфигурацию из окружения, подставляя значения по умолчанию.
 func Load() Config {
+	loadDotEnv()
+	smtpUsername := getEnv("SMTP_USERNAME", "")
+
 	return Config{
 		HTTPAddress: getEnv("HTTP_ADDRESS", defaultHTTPAddress),
 		FrontendURL: getEnv("FRONTEND_URL", defaultFrontendURL),
@@ -101,11 +106,64 @@ func Load() Config {
 		SMTP: SMTPConfig{
 			Host:     getEnv("SMTP_HOST", ""),
 			Port:     getIntEnv("SMTP_PORT", defaultSMTPPort),
-			Username: getEnv("SMTP_USERNAME", ""),
+			Username: smtpUsername,
 			Password: getEnv("SMTP_PASSWORD", ""),
-			From:     getEnv("SMTP_FROM", ""),
+			From:     getEnv("SMTP_FROM", smtpUsername),
 		},
 	}
+}
+
+func loadDotEnv() {
+	// air запускается из папки server, а некоторые ручные команды могут
+	// запускаться из корня репозитория. Пробуем оба пути и не перезаписываем
+	// переменные, которые уже заданы окружением процесса.
+	loadDotEnvFile(".env")
+	loadDotEnvFile("server/.env")
+}
+
+func loadDotEnvFile(path string) {
+	file, err := os.Open(path)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		line = strings.TrimPrefix(line, "export ")
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
+			continue
+		}
+
+		key = strings.TrimSpace(key)
+		if key == "" || os.Getenv(key) != "" {
+			continue
+		}
+
+		_ = os.Setenv(key, cleanEnvValue(value))
+	}
+}
+
+func cleanEnvValue(value string) string {
+	value = strings.TrimSpace(value)
+	if len(value) < 2 {
+		return value
+	}
+
+	if value[0] == '"' && value[len(value)-1] == '"' {
+		if unquoted, err := strconv.Unquote(value); err == nil {
+			return unquoted
+		}
+	}
+	if value[0] == '\'' && value[len(value)-1] == '\'' {
+		return value[1 : len(value)-1]
+	}
+	return value
 }
 
 func getEnv(key, fallback string) string {

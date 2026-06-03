@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, KitIcon } from '../../../shared/ui/kit';
 import { ROUTES } from '../../../shared/routes';
@@ -6,10 +6,53 @@ import { buildTestResult } from '../model/testResults';
 import { pluralizeQuestions } from '../model/pluralize';
 import { resolveScale } from '../model/scale';
 
+function normalizeImportedAnswers(payload, questionCount, allowedValues) {
+    const entries = [];
+
+    if (Array.isArray(payload)) {
+        payload.forEach((value, index) => entries.push([index, value, false]));
+    } else if (Array.isArray(payload?.answers)) {
+        payload.answers.forEach((item, index) => {
+            if (item && typeof item === 'object') {
+                const rawIndex = item.questionIndex ?? item.index ?? item.question ?? item.number ?? index;
+                const isOneBased = item.questionIndex === undefined && Number(rawIndex) >= 1 && Number(rawIndex) <= questionCount;
+                entries.push([rawIndex, item.value ?? item.answer, isOneBased]);
+                return;
+            }
+            entries.push([index, item, false]);
+        });
+    } else if (payload && typeof payload === 'object') {
+        const keys = Object.keys(payload);
+        const looksOneBased = !keys.includes('0') && keys.some((key) => Number(key) === questionCount);
+        keys.forEach((key) => entries.push([Number(key), payload[key], looksOneBased]));
+    }
+
+    const nextAnswers = {};
+    entries.forEach(([rawIndex, rawValue, isOneBased]) => {
+        const index = Number(rawIndex);
+        const value = Number(rawValue);
+        const normalizedIndex = isOneBased ? index - 1 : index;
+
+        if (
+            Number.isInteger(normalizedIndex)
+            && normalizedIndex >= 0
+            && normalizedIndex < questionCount
+            && allowedValues.has(value)
+        ) {
+            nextAnswers[normalizedIndex] = value;
+        }
+    });
+
+    return nextAnswers;
+}
+
 export function QuestionnairePage({ test, onComplete, styles }) {
     const [answers, setAnswers] = useState({});
     const [formError, setFormError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const fileInputRef = useRef(null);
     const scale = useMemo(() => resolveScale(test), [test]);
+    const allowedValues = useMemo(() => new Set(scale.map((option) => Number(option.value))), [scale]);
     const answeredCount = Object.keys(answers).length;
     const progress = Math.round((answeredCount / test.questions.length) * 100);
 
@@ -21,7 +64,32 @@ export function QuestionnairePage({ test, onComplete, styles }) {
         setFormError('');
     };
 
-    const handleSubmit = (event) => {
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleImportAnswers = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+
+        try {
+            const payload = JSON.parse(await file.text());
+            const nextAnswers = normalizeImportedAnswers(payload, test.questions.length, allowedValues);
+
+            if (Object.keys(nextAnswers).length !== test.questions.length) {
+                setFormError(`В JSON должно быть ${test.questions.length} корректных ответов для этого теста.`);
+                return;
+            }
+
+            setAnswers(nextAnswers);
+            setFormError('');
+        } catch {
+            setFormError('Не удалось прочитать JSON с ответами.');
+        }
+    };
+
+    const handleSubmit = async (event) => {
         event.preventDefault();
 
         if (answeredCount !== test.questions.length) {
@@ -29,7 +97,15 @@ export function QuestionnairePage({ test, onComplete, styles }) {
             return;
         }
 
-        onComplete?.(test.id, answers, buildTestResult(test, answers));
+        setIsSubmitting(true);
+        setFormError('');
+        try {
+            await onComplete?.(test.id, answers, buildTestResult(test, answers));
+        } catch (error) {
+            setFormError(error.message || 'Не удалось сохранить результат теста. Проверьте авторизацию и попробуйте ещё раз.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -41,6 +117,16 @@ export function QuestionnairePage({ test, onComplete, styles }) {
                 </Link>
                 <div className={styles.headTop}>
                     <span className={styles.headMeta}>{test.questions.length} {pluralizeQuestions(test.questions.length)}</span>
+                    <Button type="button" variant="secondary" size="sm" iconLeft={<KitIcon name="upload" />} onClick={handleImportClick}>
+                        Загрузить ответы
+                    </Button>
+                    <input
+                        ref={fileInputRef}
+                        className={styles.answerUploadInput}
+                        type="file"
+                        accept="application/json,.json"
+                        onChange={handleImportAnswers}
+                    />
                 </div>
                 <h1>{test.title}</h1>
                 <p>{test.description}</p>
@@ -80,6 +166,7 @@ export function QuestionnairePage({ test, onComplete, styles }) {
                                                 name={`${test.id}-${index}`}
                                                 value={option.value}
                                                 checked={answers[index] === option.value}
+                                                disabled={isSubmitting}
                                                 onChange={() => handleAnswerChange(index, option.value)}
                                             />
                                             <span className={styles.scaleMark} aria-hidden="true">{option.value}</span>
@@ -97,8 +184,8 @@ export function QuestionnairePage({ test, onComplete, styles }) {
                     </p>
                 )}
                 <div className={styles.submitRow}>
-                    <Button type="submit" variant="gradient" gradient="radial" size="lg" iconRight={<KitIcon name="arrowRight" />}>
-                        Завершить тест
+                    <Button type="submit" variant="gradient" gradient="radial" size="lg" loading={isSubmitting} iconRight={<KitIcon name="arrowRight" />}>
+                        {isSubmitting ? 'Сохраняем результат' : 'Завершить тест'}
                     </Button>
                 </div>
             </form>

@@ -25,3 +25,25 @@ export function testStatusFromServerResults(results) {
 
     return nextStatus;
 }
+
+export function mergePendingCompletedTests(remoteStatus, localStatus) {
+    const nextStatus = { ...DEFAULT_USER_STATUS, ...(remoteStatus || {}) };
+
+    ['bfi2', 'bds'].forEach((statusKey) => {
+        if (localStatus?.[statusKey] !== 'completed' || nextStatus[statusKey] === 'completed') return;
+
+        nextStatus[statusKey] = 'completed';
+        const resultKey = `${statusKey}Result`;
+        if (localStatus?.[resultKey]) {
+            nextStatus[resultKey] = localStatus[resultKey];
+        }
+    });
+
+    return nextStatus;
+}
+
+export function enqueueTestResultSubmission(currentQueue, submit) {
+    return Promise.resolve(currentQueue)
+        .catch(() => undefined)
+        .then(submit);
+}

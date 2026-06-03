@@ -11,7 +11,13 @@ import (
 )
 
 type treeResponse struct {
-	Items []sectionDTO `json:"items"`
+	Items       []sectionDTO `json:"items"`
+	Page        int          `json:"page,omitempty"`
+	PageCount   int          `json:"pageCount,omitempty"`
+	TotalBlocks int          `json:"totalBlocks,omitempty"`
+	StartBlock  int          `json:"startBlock,omitempty"`
+	EndBlock    int          `json:"endBlock,omitempty"`
+	PerPage     int          `json:"perPage,omitempty"`
 }
 
 type sectionDTO struct {
@@ -33,6 +39,7 @@ type blockDTO struct {
 
 type sectionRequest struct {
 	ParentID    string `json:"parentId"`
+	Number      string `json:"number"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 }
@@ -135,6 +142,88 @@ func toTreeResponse(items []domainrecommendation.Block) treeResponse {
 	return treeResponse{Items: buildSections("")}
 }
 
+func paginateTreeResponse(response treeResponse, page, perPage int) treeResponse {
+	if perPage < 1 {
+		perPage = recommendationItemsPerPage
+	}
+
+	nodeIDs := collectTreeNodeIDs(response.Items)
+	totalBlocks := len(nodeIDs)
+	pageCount := 1
+	if totalBlocks > 0 {
+		pageCount = (totalBlocks + perPage - 1) / perPage
+	}
+
+	currentPage := page
+	if currentPage < 1 {
+		currentPage = 1
+	}
+	if currentPage > pageCount {
+		currentPage = pageCount
+	}
+
+	startIndex := (currentPage - 1) * perPage
+	endIndex := startIndex + perPage
+	if endIndex > totalBlocks {
+		endIndex = totalBlocks
+	}
+
+	visibleIDs := make(map[string]struct{}, endIndex-startIndex)
+	for _, id := range nodeIDs[startIndex:endIndex] {
+		visibleIDs[id] = struct{}{}
+	}
+
+	response.Items = filterTreeSectionsByVisibleIDs(response.Items, visibleIDs)
+	response.Page = currentPage
+	response.PageCount = pageCount
+	response.TotalBlocks = totalBlocks
+	response.PerPage = perPage
+	if totalBlocks > 0 {
+		response.StartBlock = startIndex + 1
+		response.EndBlock = endIndex
+	}
+	return response
+}
+
+func collectTreeNodeIDs(sections []sectionDTO) []string {
+	ids := make([]string, 0)
+	for _, section := range sections {
+		ids = append(ids, section.ID)
+		for _, block := range section.Blocks {
+			ids = append(ids, block.ID)
+		}
+		ids = append(ids, collectTreeNodeIDs(section.Children)...)
+	}
+	return ids
+}
+
+func filterTreeSectionsByVisibleIDs(sections []sectionDTO, visibleIDs map[string]struct{}) []sectionDTO {
+	out := make([]sectionDTO, 0, len(sections))
+	for _, section := range sections {
+		blocks := filterTreeBlocksByVisibleIDs(section.Blocks, visibleIDs)
+		children := filterTreeSectionsByVisibleIDs(section.Children, visibleIDs)
+		_, visible := visibleIDs[section.ID]
+		if !visible && len(blocks) == 0 && len(children) == 0 {
+			continue
+		}
+
+		section.Blocks = blocks
+		section.Children = children
+		out = append(out, section)
+	}
+	return out
+}
+
+func filterTreeBlocksByVisibleIDs(blocks []blockDTO, visibleIDs map[string]struct{}) []blockDTO {
+	out := make([]blockDTO, 0, len(blocks))
+	for _, block := range blocks {
+		if _, visible := visibleIDs[block.ID]; visible {
+			out = append(out, block)
+		}
+	}
+	return out
+}
+
 func toAssignmentsResponse(items []apprecommendation.AssignmentView) assignmentsResponse {
 	response := assignmentsResponse{Items: make([]assignmentDTO, 0, len(items))}
 	for _, item := range items {
@@ -215,8 +304,17 @@ func splitPlainRecommendationText(text string) (string, string) {
 	if trimmed == "" {
 		return "", ""
 	}
+	if parts := strings.SplitN(trimmed, "\n\n", 2); len(parts) == 2 {
+		return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
+	}
 	if index := strings.Index(trimmed, ". "); index > 0 {
 		return strings.TrimSpace(trimmed[:index]), strings.TrimSpace(trimmed[index+2:])
+	}
+	if index := strings.Index(trimmed, ": "); index > 0 {
+		return strings.TrimSpace(trimmed[:index+1]), strings.TrimSpace(trimmed[index+2:])
+	}
+	if parts := strings.SplitN(trimmed, "\n", 2); len(parts) == 2 {
+		return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
 	}
 	return trimmed, trimmed
 }
@@ -235,10 +333,28 @@ func encodeBlockText(request blockRequest) string {
 	return string(raw)
 }
 
+func endsWithSentencePunctuation(value string) bool {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return false
+	}
+	return strings.ContainsAny(trimmed[len(trimmed)-1:], ".!?:;")
+}
+
 func cleanTags(tags []string) []string {
 	out := make([]string, 0, len(tags))
 	for _, tag := range tags {
 		if trimmed := strings.TrimSpace(tag); trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	return out
+}
+
+func nonEmptyStrings(values ...string) []string {
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		if trimmed := strings.TrimSpace(value); trimmed != "" {
 			out = append(out, trimmed)
 		}
 	}

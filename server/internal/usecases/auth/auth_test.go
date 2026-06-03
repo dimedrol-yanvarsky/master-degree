@@ -416,6 +416,54 @@ func TestDeleteAccountRevokesSessions(t *testing.T) {
 	}
 }
 
+// РПЗ §3.5: смена пароля завершает активные сессии — старый токен перестаёт
+// аутентифицировать, пользователь входит повторно.
+func TestChangePasswordRevokesSessions(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService()
+
+	if _, err := svc.Register(ctx, RegisterInput{Email: "rotate@example.com", Password: "old-password", Name: "Rotate", Surname: "User", Role: shared.RoleClient}); err != nil {
+		t.Fatalf("register: %v", err)
+	}
+	result, err := svc.Login(ctx, LoginInput{Email: "rotate@example.com", Password: "old-password"})
+	if err != nil {
+		t.Fatalf("login: %v", err)
+	}
+	if _, err := svc.Authenticate(ctx, result.AccessToken); err != nil {
+		t.Fatalf("authenticate before change: %v", err)
+	}
+
+	if err := svc.ChangePassword(ctx, result.User.ID, ChangePasswordInput{CurrentPassword: "old-password", NewPassword: "new-password"}); err != nil {
+		t.Fatalf("change password: %v", err)
+	}
+	if _, err := svc.Authenticate(ctx, result.AccessToken); !errors.Is(err, shared.ErrUnauthorized) {
+		t.Fatalf("authenticate after change: got %v, want ErrUnauthorized", err)
+	}
+}
+
+// РПЗ §3.2: токен привязан к сессии по хешу — токен с валидными claims, но иным
+// строковым представлением (иной хеш) не аутентифицирует, а легитимный — да.
+func TestAuthenticateRejectsTokenNotMatchingSession(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService()
+
+	if _, err := svc.Register(ctx, RegisterInput{Email: "bind@example.com", Password: "secret-password", Name: "Bind", Surname: "User", Role: shared.RoleClient}); err != nil {
+		t.Fatalf("register: %v", err)
+	}
+	result, err := svc.Login(ctx, LoginInput{Email: "bind@example.com", Password: "secret-password"})
+	if err != nil {
+		t.Fatalf("login: %v", err)
+	}
+
+	tampered := result.AccessToken + " " // те же claims, другой хеш
+	if _, err := svc.Authenticate(ctx, tampered); !errors.Is(err, shared.ErrUnauthorized) {
+		t.Fatalf("tampered token: got %v, want ErrUnauthorized", err)
+	}
+	if _, err := svc.Authenticate(ctx, result.AccessToken); err != nil {
+		t.Fatalf("authenticate legitimate token: %v", err)
+	}
+}
+
 type fakeOAuth struct {
 	configured bool
 	identity   port.OAuthIdentity

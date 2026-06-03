@@ -18,6 +18,7 @@ const VARIANT_CLASS = {
     ghost:       styles.ghost,
     success:     styles.success,
     destructive: styles.destructive,
+    danger:      styles.danger,
     link:        styles.link,
 };
 

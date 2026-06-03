@@ -35,7 +35,16 @@ func (r *TestResultRepository) Create(ctx context.Context, result domaintest.Tes
 		return err
 	}
 
-	testCode := firstNonEmpty(result.TestCode, result.TestID)
+	testID, err := r.storedTestID(ctx, result)
+	if err != nil {
+		return err
+	}
+
+	_, err = collection.InsertOne(ctx, testResultToDocument(result, testID))
+	return err
+}
+
+func testResultToDocument(result domaintest.TestResult, testID any) bson.D {
 	answers := make([]bson.D, 0, len(result.Answers))
 	for _, answer := range result.Answers {
 		answers = append(answers, bson.D{
@@ -51,11 +60,10 @@ func (r *TestResultRepository) Create(ctx context.Context, result domaintest.Tes
 		})
 	}
 
-	_, err = collection.InsertOne(ctx, bson.D{
+	return bson.D{
 		{Key: "_id", Value: mongoIDValue(result.ID)},
 		{Key: "user_id", Value: mongoIDValue(result.UserID)},
-		{Key: "test_id", Value: mongoIDValue(result.TestID)},
-		{Key: "test_code", Value: testCode},
+		{Key: "test_id", Value: testID},
 		{Key: "answers", Value: answers},
 		{Key: "verdict", Value: bson.D{
 			{Key: "score", Value: result.Score},
@@ -65,8 +73,60 @@ func (r *TestResultRepository) Create(ctx context.Context, result domaintest.Tes
 			{Key: "domains", Value: domains},
 		}},
 		{Key: "completed_at", Value: result.CompletedAt},
-	})
-	return err
+	}
+}
+
+func (r *TestResultRepository) storedTestID(ctx context.Context, result domaintest.TestResult) (any, error) {
+	rawID := strings.TrimSpace(result.TestID)
+	if rawID == "" {
+		rawID = strings.TrimSpace(result.TestCode)
+	}
+	if objectID, err := bson.ObjectIDFromHex(rawID); err == nil {
+		return objectID, nil
+	}
+
+	for _, code := range []string{result.TestCode, result.TestID} {
+		if id, ok, err := r.findStoredTestID(ctx, code); err != nil {
+			return nil, err
+		} else if ok {
+			return id, nil
+		}
+	}
+
+	return nil, fmt.Errorf("%w: test %q is not stored", shared.ErrValidation, firstNonEmpty(result.TestCode, result.TestID))
+}
+
+func (r *TestResultRepository) findStoredTestID(ctx context.Context, code string) (any, bool, error) {
+	normalizedCode := strings.ToLower(strings.TrimSpace(code))
+	if normalizedCode == "" {
+		return nil, false, nil
+	}
+
+	collection, err := r.adapter.Collection(testsCollection)
+	if err != nil {
+		return nil, false, err
+	}
+
+	cursor, err := collection.Find(ctx, bson.D{})
+	if err != nil {
+		return nil, false, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var document testDocument
+		if err := cursor.Decode(&document); err != nil {
+			return nil, false, err
+		}
+		item := document.toDomain()
+		if strings.EqualFold(item.ID, normalizedCode) || strings.EqualFold(item.Code, normalizedCode) {
+			return document.ID, true, nil
+		}
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, false, err
+	}
+	return nil, false, nil
 }
 
 func (r *TestResultRepository) ListByUser(ctx context.Context, userID string) ([]domaintest.TestResult, error) {
@@ -298,9 +358,9 @@ func domainScoreFromDocument(document bson.D) domaintest.DomainScore {
 func numberAsFloat(value any) float64 {
 	switch number := value.(type) {
 	case float64:
-		return math.Round(number*10) / 10
+		return math.Round(number*100) / 100
 	case float32:
-		return math.Round(float64(number)*10) / 10
+		return math.Round(float64(number)*100) / 100
 	case int:
 		return float64(number)
 	case int32:

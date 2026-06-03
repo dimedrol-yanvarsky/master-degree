@@ -2,22 +2,32 @@ import { Button, KitIcon } from '../../../shared/ui/kit';
 import { RecommendationInlineEditor } from '../../../features/recommendation-editor';
 import styles from '../RecommendationBase.module.css';
 import { RecommendationBlock } from './RecommendationBlock';
+import { RecommendationInsertPoint } from './RecommendationInsertPoint';
 
 export function RecommendationSection({
     section,
     number,
     permissions,
     editingId,
+    selectionMode = false,
+    selectedBlockIds = [],
+    getAssignmentState,
     onDeleteBlock,
+    onDeleteAssignment,
     onDeleteSection,
     onEdit,
     onEditCancel,
+    onAddSection,
+    onAddBlock,
     onSaveBlock,
     onSaveSection,
+    onToggleBlockSelection,
 }) {
     const isEditing = editingId === section.id;
     const hasBlocks = section.blocks?.length > 0;
     const hasChildren = section.children?.length > 0;
+    const canInsert = permissions.canCreate && !selectionMode;
+    const nextChildNumber = `${number}.${(section.children?.length || 0) + 1}`;
 
     return (
         <article className={styles.section}>
@@ -41,7 +51,7 @@ export function RecommendationSection({
                     </div>
                 </div>
 
-                {!isEditing && (permissions.canEdit || permissions.canDelete) && (
+                {!selectionMode && !isEditing && (permissions.canEdit || permissions.canDelete) && (
                     <div className={styles.actions}>
                         {permissions.canEdit && (
                             <Button size="sm" variant="secondary" iconLeft={<KitIcon name="edit" />} onClick={() => onEdit(section.id)}>
@@ -59,19 +69,50 @@ export function RecommendationSection({
 
             {hasBlocks && (
                 <div className={styles.blocks}>
-                    {section.blocks.map((block) => (
-                        <RecommendationBlock
-                            key={block.id}
-                            block={block}
-                            permissions={permissions}
-                            editingId={editingId}
-                            onDelete={onDeleteBlock}
-                            onEdit={onEdit}
-                            onEditCancel={onEditCancel}
-                            onEditSave={onSaveBlock}
-                        />
-                    ))}
+                    {section.blocks.map((block) => {
+                        const assignmentState = getAssignmentState?.(block) || {};
+
+                        return (
+                            <div className={styles.blockSlot} key={block.id}>
+                                <RecommendationBlock
+                                    block={block}
+                                    permissions={permissions}
+                                    editingId={editingId}
+                                    selectionMode={selectionMode}
+                                    isSelected={selectedBlockIds.includes(block.id)}
+                                    assignedAssignment={assignmentState.assignedAssignment}
+                                    isFullyAssigned={assignmentState.isFullyAssigned}
+                                    isPartiallyAssigned={assignmentState.isPartiallyAssigned}
+                                    onDelete={onDeleteBlock}
+                                    onDeleteAssignment={onDeleteAssignment}
+                                    onEdit={onEdit}
+                                    onEditCancel={onEditCancel}
+                                    onEditSave={onSaveBlock}
+                                    onToggleSelect={onToggleBlockSelection}
+                                />
+                                {canInsert && (
+                                    <RecommendationInsertPoint
+                                        sectionId={section.id}
+                                        nextSectionNumber={nextChildNumber}
+                                        canAddSection
+                                        onAddSection={onAddSection}
+                                        onAddBlock={onAddBlock}
+                                    />
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
+            )}
+
+            {canInsert && !hasBlocks && (
+                <RecommendationInsertPoint
+                    sectionId={section.id}
+                    nextSectionNumber={nextChildNumber}
+                    canAddSection
+                    onAddSection={onAddSection}
+                    onAddBlock={onAddBlock}
+                />
             )}
 
             {hasChildren && (
@@ -83,16 +124,24 @@ export function RecommendationSection({
                             number={child.number}
                             permissions={permissions}
                             editingId={editingId}
+                            selectionMode={selectionMode}
+                            selectedBlockIds={selectedBlockIds}
+                            getAssignmentState={getAssignmentState}
                             onDeleteBlock={onDeleteBlock}
+                            onDeleteAssignment={onDeleteAssignment}
                             onDeleteSection={onDeleteSection}
                             onEdit={onEdit}
                             onEditCancel={onEditCancel}
+                            onAddSection={onAddSection}
+                            onAddBlock={onAddBlock}
                             onSaveBlock={onSaveBlock}
                             onSaveSection={onSaveSection}
+                            onToggleBlockSelection={onToggleBlockSelection}
                         />
                     ))}
                 </div>
             )}
+
         </article>
     );
 }

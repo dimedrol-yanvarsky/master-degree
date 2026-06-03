@@ -19,6 +19,18 @@ function stripTestCodeFromTitle(title) {
     return String(title || '').replace(/\s*\((BFI-2|BDS)\)\s*$/i, '').trim();
 }
 
+function normalizeDomainLabel(label) {
+    const rawLabel = String(label || '').trim();
+    const normalizedLabel = rawLabel.toLowerCase();
+    const legacyNeuroticismMarker = '\u043d\u0435\u0433\u0430\u0442\u0438\u0432';
+
+    if (normalizedLabel.includes('negative') || normalizedLabel.includes(legacyNeuroticismMarker)) {
+        return 'Нейротизм';
+    }
+
+    return rawLabel;
+}
+
 function formatTestMeta(questionCount, passingMinutes) {
     const count = Number(questionCount) || 0;
     const minutes = Number(passingMinutes) || 0;
@@ -79,7 +91,7 @@ function mapServerTestResult(result) {
         level: result.level || '',
         summary: result.summary || '',
         domains: Array.isArray(result.domains)
-            ? result.domains.map((domain) => ({ label: domain.label || '', score: domain.score })).filter((domain) => domain.label)
+            ? result.domains.map((domain) => ({ label: normalizeDomainLabel(domain.label), score: domain.score })).filter((domain) => domain.label)
             : [],
         answers: Array.isArray(result.answers)
             ? result.answers.map((answer) => ({

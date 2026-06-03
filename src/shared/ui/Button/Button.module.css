@@ -115,6 +115,19 @@
 }
 .destructive:hover:not(:disabled) { background: var(--danger-600); }
 
+/* Мягкий «красноватый» вариант (outline) — для необратимых, но не удаляющих действий (напр. «Завершить»). */
+.danger {
+    --btn-ring: var(--danger-600);
+    background: color-mix(in srgb, var(--danger-500) 9%, var(--bg));
+    color: var(--danger-600);
+    border-color: color-mix(in srgb, var(--danger-500) 32%, var(--border));
+    box-shadow: var(--shadow-1);
+}
+.danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--danger-500) 16%, var(--bg));
+    border-color: color-mix(in srgb, var(--danger-500) 48%, var(--border));
+}
+
 .success {
     --btn-ring: var(--success-600);
     background: var(--success-500);

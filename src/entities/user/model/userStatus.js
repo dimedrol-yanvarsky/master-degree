@@ -27,7 +27,7 @@ export const COMPLETED_TEST_USER_STATUS = {
             { label: 'Экстраверсия', score: 3.8 },
             { label: 'Доброжелательность', score: 4.2 },
             { label: 'Добросовестность', score: 3.5 },
-            { label: 'Негативная эмоциональность', score: 2.4 },
+            { label: 'Нейротизм', score: 2.4 },
             { label: 'Открытость опыту', score: 4.0 },
         ],
         answers: buildPresetAnswers(60, [4, 3, 2, 4, 5, 3, 4, 2, 4, 3]),

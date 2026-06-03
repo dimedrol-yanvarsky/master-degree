@@ -91,7 +91,7 @@ function GraphPendingPlaceholder() {
     );
 }
 
-export default function MyEmotionsPage({ isAuth = false, status = null }) {
+export default function MyEmotionsPage({ isAuth = false, status = null, testStatus = null }) {
     const [remotePoints, setRemotePoints] = useState([]);
     const [testResults, setTestResults] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -133,7 +133,7 @@ export default function MyEmotionsPage({ isAuth = false, status = null }) {
         return () => {
             active = false;
         };
-    }, [canLoadPersonalGraph]);
+    }, [canLoadPersonalGraph, testStatus]);
 
     if (!isAuth) return <GuestPlaceholder />;
 

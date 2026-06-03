@@ -11,15 +11,12 @@ const ROOT_OPTION = {
 const emptySectionDraft = {
     parentId: 'root',
     title: '',
-    description: '',
 };
 
 const emptyBlockDraft = {
     sectionId: '',
     title: '',
-    summary: '',
     content: '',
-    tags: '',
 };
 
 export function RecommendationEditorPanel({ sectionOptions, onAddSection, onAddBlock }) {
@@ -42,7 +39,7 @@ export function RecommendationEditorPanel({ sectionOptions, onAddSection, onAddB
         event.preventDefault();
         if (!sectionDraft.title.trim()) return;
 
-        onAddSection(sectionDraft.parentId, sectionDraft);
+        onAddSection(sectionDraft.parentId, { title: sectionDraft.title, description: '' });
         setSectionDraft(emptySectionDraft);
     };
 
@@ -50,7 +47,7 @@ export function RecommendationEditorPanel({ sectionOptions, onAddSection, onAddB
         event.preventDefault();
         if (!blockDraft.sectionId || !blockDraft.title.trim()) return;
 
-        onAddBlock(blockDraft.sectionId, blockDraft);
+        onAddBlock(blockDraft.sectionId, { title: blockDraft.title, summary: '', content: blockDraft.content, tags: '' });
         setBlockDraft({
             ...emptyBlockDraft,
             sectionId: blockDraft.sectionId,
@@ -86,13 +83,6 @@ export function RecommendationEditorPanel({ sectionOptions, onAddSection, onAddB
                         onChange={(event) => updateSectionDraft('title', event.target.value)}
                         required
                     />
-                    <Textarea
-                        label="Описание"
-                        placeholder="Коротко опишите назначение раздела"
-                        value={sectionDraft.description}
-                        onChange={(event) => updateSectionDraft('description', event.target.value)}
-                        autoGrow
-                    />
                     <Button type="submit" variant="gradient" gradient="radial" iconRight={<KitIcon name="plus" />}>
                         Добавить раздел
                     </Button>
@@ -118,12 +108,6 @@ export function RecommendationEditorPanel({ sectionOptions, onAddSection, onAddB
                         onChange={(event) => updateBlockDraft('title', event.target.value)}
                         required
                     />
-                    <Input
-                        label="Краткое описание"
-                        placeholder="Когда и зачем использовать рекомендацию"
-                        value={blockDraft.summary}
-                        onChange={(event) => updateBlockDraft('summary', event.target.value)}
-                    />
                     <Textarea
                         label="Текст рекомендации"
                         placeholder="Опишите конкретные действия"
@@ -131,12 +115,6 @@ export function RecommendationEditorPanel({ sectionOptions, onAddSection, onAddB
                         onChange={(event) => updateBlockDraft('content', event.target.value)}
                         autoGrow
                         required
-                    />
-                    <Input
-                        label="Теги"
-                        placeholder="сон, тревога, границы"
-                        value={blockDraft.tags}
-                        onChange={(event) => updateBlockDraft('tags', event.target.value)}
                     />
                     <Button
                         type="submit"

@@ -217,61 +217,61 @@ export function ProfileAccount({
                                     <article
                                         key={field.key}
                                         className={[styles.fieldRow, field.type === 'textarea' ? styles.fieldRowWide : ''].filter(Boolean).join(' ')}>
-                                        <div className={styles.fieldRowTop}>
+                                        <div className={styles.fieldBody}>
                                             <span className={styles.fieldLabelGroup}>
                                                 <span className={styles.fieldIcon} aria-hidden="true">
                                                     <KitIcon name={field.icon} size={15} />
                                                 </span>
                                                 <span className={styles.fieldLabel}>{field.label}</span>
                                             </span>
-                                            {!isEditing && !field.readOnly && (
-                                                <button
-                                                    type="button"
-                                                    className={styles.fieldEditButton}
-                                                    aria-label={`Изменить поле «${field.label}»`}
-                                                    disabled={Boolean(savingField)}
-                                                    onClick={() => startFieldEdit(field)}>
-                                                    <KitIcon name="edit" size={15} />
-                                                </button>
+                                            {isEditing ? (
+                                                <form
+                                                    className={styles.fieldEditForm}
+                                                    onSubmit={(event) => { event.preventDefault(); handleFieldSave(field); }}>
+                                                    {field.type === 'textarea' ? (
+                                                        <Textarea
+                                                            value={draft}
+                                                            onChange={(event) => setDraft(event.target.value)}
+                                                            placeholder={field.placeholder}
+                                                            maxLength={320}
+                                                            showCount
+                                                            resize="vertical"
+                                                            disabled={isSaving}
+                                                            autoFocus
+                                                        />
+                                                    ) : (
+                                                        <Input
+                                                            type={field.type}
+                                                            value={draft}
+                                                            onChange={(event) => setDraft(event.target.value)}
+                                                            placeholder={field.placeholder}
+                                                            autoComplete={field.autoComplete}
+                                                            disabled={isSaving}
+                                                            autoFocus
+                                                        />
+                                                    )}
+                                                    <div className={styles.fieldEditActions}>
+                                                        <Button type="submit" size="sm" variant="gradient" gradient="radial" iconRight={<KitIcon name="check" />} disabled={isSaving}>
+                                                            {isSaving ? 'Сохраняем...' : 'Сохранить'}
+                                                        </Button>
+                                                        <Button type="button" size="sm" variant="ghost" onClick={cancelFieldEdit} disabled={isSaving}>
+                                                            Отмена
+                                                        </Button>
+                                                    </div>
+                                                </form>
+                                            ) : (
+                                                <strong className={styles.fieldValue}>{field.value || 'Не указано'}</strong>
                                             )}
                                         </div>
-                                        {isEditing ? (
-                                            <form
-                                                className={styles.fieldEditForm}
-                                                onSubmit={(event) => { event.preventDefault(); handleFieldSave(field); }}>
-                                                {field.type === 'textarea' ? (
-                                                    <Textarea
-                                                        value={draft}
-                                                        onChange={(event) => setDraft(event.target.value)}
-                                                        placeholder={field.placeholder}
-                                                        maxLength={320}
-                                                        showCount
-                                                        resize="vertical"
-                                                        disabled={isSaving}
-                                                        autoFocus
-                                                    />
-                                                ) : (
-                                                    <Input
-                                                        type={field.type}
-                                                        value={draft}
-                                                        onChange={(event) => setDraft(event.target.value)}
-                                                        placeholder={field.placeholder}
-                                                        autoComplete={field.autoComplete}
-                                                        disabled={isSaving}
-                                                        autoFocus
-                                                    />
-                                                )}
-                                                <div className={styles.fieldEditActions}>
-                                                    <Button type="submit" size="sm" variant="gradient" gradient="radial" iconRight={<KitIcon name="check" />} disabled={isSaving}>
-                                                        {isSaving ? 'Сохраняем...' : 'Сохранить'}
-                                                    </Button>
-                                                    <Button type="button" size="sm" variant="ghost" onClick={cancelFieldEdit} disabled={isSaving}>
-                                                        Отмена
-                                                    </Button>
-                                                </div>
-                                            </form>
-                                        ) : (
-                                            <strong className={styles.fieldValue}>{field.value || 'Не указано'}</strong>
+                                        {!isEditing && !field.readOnly && (
+                                            <button
+                                                type="button"
+                                                className={styles.fieldEditButton}
+                                                aria-label={`Изменить поле «${field.label}»`}
+                                                disabled={Boolean(savingField)}
+                                                onClick={() => startFieldEdit(field)}>
+                                                <KitIcon name="edit" size={15} />
+                                            </button>
                                         )}
                                     </article>
                                 );

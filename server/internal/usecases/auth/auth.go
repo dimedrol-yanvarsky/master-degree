@@ -382,7 +382,11 @@ func (s *Service) Authenticate(ctx context.Context, token string) (Identity, err
 	} else if err != nil {
 		return Identity{}, err
 	}
-	if !session.Active(s.deps.Clock.Now()) {
+	// Сессия должна быть активна (не отозвана и не истекла) И предъявленный токен —
+	// именно тот, что был выпущен для неё: его хеш совпадает с сохранённым. Поэтому
+	// устаревшие и подменённые токены отклоняются, даже если подпись валидна
+	// (РПЗ §3.2–3.3).
+	if !session.Authorizes(hashToken(token), s.deps.Clock.Now()) {
 		return Identity{}, shared.ErrUnauthorized
 	}
 
@@ -479,8 +483,15 @@ func (s *Service) ChangePassword(ctx context.Context, userID string, in ChangePa
 	u.PasswordHash = hash
 	u.PasswordResetTokenHash = ""
 	u.PasswordResetExpiresAt = nil
-
-	return s.deps.Users.Update(ctx, u)
+	if err := s.deps.Users.Update(ctx, u); err != nil {
+		return err
+	}
+	// Смена пароля завершает все активные сессии: ранее выданные токены становятся
+	// недействительными, и пользователь проходит авторизацию повторно (РПЗ §3.5).
+	if err := s.deps.Sessions.RevokeAllForUser(ctx, userID); err != nil && !errors.Is(err, shared.ErrNotFound) {
+		return err
+	}
+	return nil
 }
 
 // RequestPasswordReset создаёт короткоживущий одноразовый токен и отправляет ссылку сброса.

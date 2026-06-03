@@ -457,8 +457,9 @@
 
 .fieldRow {
     display: grid;
-    align-content: start;
-    gap: 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 14px;
     min-width: 0;
     padding: 18px;
     border: 1px solid var(--border);
@@ -484,10 +485,9 @@
     grid-column: 1 / -1;
 }
 
-.fieldRowTop {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.fieldBody {
+    display: grid;
+    align-content: start;
     gap: 12px;
     min-width: 0;
 }
@@ -512,7 +512,7 @@
 
 .fieldLabel {
     min-width: 0;
-    color: var(--fg-2);
+    color: var(--fg-3);
     font-size: 12.5px;
     font-weight: 750;
     letter-spacing: .01em;
@@ -778,6 +778,10 @@
     min-width: 0;
 }
 
+.clientCareGrid {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .roleCard {
     display: flex;
     align-items: flex-start;
@@ -789,6 +793,10 @@
     border-radius: var(--r-lg);
     background: color-mix(in srgb, var(--bg) 82%, var(--bg-2));
     transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.clientCareCard {
+    width: 100%;
 }
 
 .roleCard:hover {
@@ -897,9 +905,15 @@
     gap: 16px;
     min-width: 0;
     padding: 17px;
-    border: 1px solid color-mix(in srgb, var(--success-500) 18%, var(--border));
+    border: 1px solid var(--border);
     border-radius: var(--r-lg);
-    background: color-mix(in srgb, var(--success-500) 8%, var(--bg));
+    background: color-mix(in srgb, var(--bg) 82%, var(--bg-2));
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.collaborationCard:hover {
+    border-color: color-mix(in srgb, var(--accent) 22%, var(--border));
+    box-shadow: var(--shadow-1);
 }
 
 .collaborationCard > div:first-child {
@@ -971,6 +985,18 @@
     flex-wrap: wrap;
 }
 
+.finishClientButton {
+    color: var(--danger-600) !important;
+    border-color: color-mix(in srgb, var(--danger-500) 34%, var(--border)) !important;
+    background: color-mix(in srgb, var(--danger-100) 30%, var(--bg)) !important;
+}
+
+.finishClientButton:hover:not(:disabled) {
+    color: var(--danger-700) !important;
+    border-color: color-mix(in srgb, var(--danger-500) 48%, var(--border)) !important;
+    background: color-mix(in srgb, var(--danger-100) 48%, var(--bg)) !important;
+}
+
 .roleList,
 .timelineList,
 .adminList {
@@ -1027,6 +1053,117 @@
     color: var(--accent);
     text-decoration: underline;
     text-underline-offset: 3px;
+}
+
+.clientModalLayer {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: color-mix(in srgb, var(--fg) 18%, transparent);
+    backdrop-filter: blur(8px);
+}
+
+.clientModal {
+    position: relative;
+    display: grid;
+    gap: 18px;
+    width: min(100%, 880px);
+    max-height: calc(100vh - 48px);
+    min-width: 0;
+    padding: 26px;
+    overflow: auto;
+    border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+    border-radius: var(--r-frame);
+    background: var(--bg);
+    box-shadow: var(--shadow-2);
+}
+
+.clientModalClose {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--bg-2);
+    color: var(--fg-3);
+    cursor: pointer;
+    transition: border-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.clientModalClose:hover,
+.clientModalClose:focus-visible {
+    outline: 0;
+    border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+    color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.clientModalHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 0;
+    padding-right: 46px;
+}
+
+.clientModalHeader > div {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.clientModalHeader span {
+    color: var(--accent);
+    font-size: 12.5px;
+    font-weight: 800;
+}
+
+.clientModalHeader h2 {
+    margin: 0;
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-size: 26px;
+    line-height: 1.14;
+}
+
+.clientModalHeader p {
+    margin: 0;
+    color: var(--fg-3);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.clientModalContent,
+.modalList {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+}
+
+.modalEmpty {
+    display: grid;
+    min-height: 86px;
+    align-items: center;
+    padding: 18px;
+    border: 1px dashed var(--border);
+    border-radius: var(--r-lg);
+    background: color-mix(in srgb, var(--bg) 74%, var(--bg-2));
+}
+
+.modalEmpty p {
+    margin: 0;
+    color: var(--fg-3);
+    font-size: 14px;
+    line-height: 1.5;
 }
 
 .traitGrid {
@@ -1215,6 +1352,19 @@
     .inlineForm,
     .securityForm {
         grid-template-columns: 1fr;
+    }
+
+    .clientModalLayer {
+        padding: 14px;
+    }
+
+    .clientModal {
+        max-height: calc(100vh - 28px);
+        padding: 22px;
+    }
+
+    .clientModalHeader {
+        padding-right: 40px;
     }
 
     .profileHeader {

@@ -2,9 +2,21 @@ const BFI2_DOMAIN_KEYS = [
     { label: 'Экстраверсия', items: ['1', '6', '11R', '16R', '21', '26R', '31R', '36R', '41', '46', '51R', '56'] },
     { label: 'Доброжелательность', items: ['2', '7', '12R', '17R', '22R', '27', '32', '37R', '42R', '47R', '52', '57'] },
     { label: 'Добросовестность', items: ['3R', '8R', '13', '18', '23R', '28R', '33', '38', '43', '48R', '53', '58R'] },
-    { label: 'Негативная эмоциональность', items: ['4R', '9R', '14', '19', '24R', '29R', '34', '39', '44R', '49R', '54', '59'] },
+    { label: 'Нейротизм', items: ['4R', '9R', '14', '19', '24R', '29R', '34', '39', '44R', '49R', '54', '59'] },
     { label: 'Открытость опыту', items: ['5R', '10', '15', '20', '25R', '30R', '35', '40', '45R', '50R', '55R', '60'] },
 ];
+
+export function formatDomainLabel(label) {
+    const rawLabel = String(label || '').trim();
+    const normalizedLabel = rawLabel.toLowerCase();
+    const legacyNeuroticismMarker = '\u043d\u0435\u0433\u0430\u0442\u0438\u0432';
+
+    if (normalizedLabel.includes('negative') || normalizedLabel.includes(legacyNeuroticismMarker)) {
+        return 'Нейротизм';
+    }
+
+    return rawLabel;
+}
 
 export function formatResultDate(value) {
     if (!value) return 'Не зафиксировано';
@@ -64,7 +76,7 @@ function getResultLevel(testId, averageScore) {
         if (averageScore <= 3.6) {
             return {
                 level: 'Сбалансированный профиль ответов',
-                summary: 'Ответы распределены вокруг середины шкалы; результат полезен как базовая точка для дальнейшей интерпретации.',
+                summary: 'Личностные черты выражены умеренно и сбалансированно, без явного преобладания какого-либо полюса.',
             };
         }
 
@@ -99,10 +111,10 @@ export function buildTestResult(test, answers) {
 
                 return isReverse ? 6 - value : value;
             });
-            const domainAverage = Math.round((domainValues.reduce((sum, value) => sum + value, 0) / domainValues.length) * 10) / 10;
+            const domainAverage = Math.round((domainValues.reduce((sum, value) => sum + value, 0) / domainValues.length) * 100) / 100;
 
             return {
-                label: domain.label,
+                label: formatDomainLabel(domain.label),
                 score: domainAverage,
             };
         })

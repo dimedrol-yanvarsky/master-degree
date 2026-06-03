@@ -94,7 +94,7 @@ func TestInferActivatesRules(t *testing.T) {
 	}
 }
 
-// TestInferReproducesWorkedExample прогоняет полный конвейер вывода 
+// TestInferReproducesWorkedExample прогоняет полный конвейер вывода
 func TestInferReproducesWorkedExample(t *testing.T) {
 	e := NewEngine()
 
@@ -107,7 +107,7 @@ func TestInferReproducesWorkedExample(t *testing.T) {
 		VarEmotionalState:    44,
 	})
 
-	approx(t, "степень необходимости в поддержке", result.Score, 61.82, 0.5)
+	approx(t, "степень необходимости в поддержке", result.Score, 62, 0.01)
 
 	if result.Term != TermSupHigh {
 		t.Errorf("доминирующий терм = %q, ожидался %q", result.Term, TermSupHigh)
@@ -123,5 +123,22 @@ func TestInferReproducesWorkedExample(t *testing.T) {
 		if got := result.Activations[term]; math.Abs(got-want) > 0.01 {
 			t.Errorf("активация %q = %.3f, ожидалась %.3f", term, got, want)
 		}
+	}
+}
+
+func TestInferRoundsSupportScoreUp(t *testing.T) {
+	e := NewEngine()
+
+	result := e.Infer(map[string]float64{
+		VarExtraversion:      3.45,
+		VarAgreeableness:     3.22,
+		VarConscientiousness: 3.52,
+		VarNeuroticism:       3.09,
+		VarOpenness:          3.83,
+		VarEmotionalState:    44,
+	})
+
+	if result.Score != 62 {
+		t.Fatalf("rounded support score = %.2f, want 62", result.Score)
 	}
 }

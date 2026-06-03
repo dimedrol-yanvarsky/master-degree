@@ -1,4 +1,4 @@
-export const RECOMMENDATION_BLOCKS_PER_PAGE = 10;
+export const RECOMMENDATION_BLOCKS_PER_PAGE = 20;
 
 // Иерархический номер раздела берётся из БД (section_number, приходит как
 // section.number). Если его нет (офлайн-база по умолчанию, свежесозданный узел) —

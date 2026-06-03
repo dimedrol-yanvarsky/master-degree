@@ -99,7 +99,7 @@ func (e *Engine) Infer(inputs map[string]float64) Result {
 	}
 
 	aggregated := e.aggregate(activations)
-	score := centroid(aggregated, outputLow, outputHigh, defuzzStep)
+	score := RoundScore(centroid(aggregated, outputLow, outputHigh, defuzzStep))
 
 	memberships := make(map[string]float64, len(e.output))
 	for term, mf := range e.output {

@@ -4,6 +4,7 @@ import styles from './RecommendationInlineEditor.module.css';
 
 export function RecommendationInlineEditor({ kind, initialValue, onCancel, onSave }) {
     const isBlock = kind === 'block';
+    const [validationError, setValidationError] = useState('');
     const [draft, setDraft] = useState({
         title: initialValue.title || '',
         description: initialValue.description || '',
@@ -18,8 +19,22 @@ export function RecommendationInlineEditor({ kind, initialValue, onCancel, onSav
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        if (!draft.title.trim()) return;
-        onSave(draft);
+        const title = draft.title.trim();
+        const content = draft.content.trim();
+
+        if (!isBlock && !title) {
+            setValidationError('Укажите название раздела.');
+            return;
+        }
+        if (isBlock && !content) {
+            setValidationError('Укажите текст рекомендации.');
+            return;
+        }
+
+        setValidationError('');
+        onSave(isBlock
+            ? { title, summary: '', content, tags: '' }
+            : { title, description: '' });
     };
 
     return (
@@ -27,37 +42,29 @@ export function RecommendationInlineEditor({ kind, initialValue, onCancel, onSav
             <Input
                 label="Название"
                 value={draft.title}
-                onChange={(event) => updateDraft('title', event.target.value)}
-                required
+                onChange={(event) => {
+                    updateDraft('title', event.target.value);
+                    setValidationError('');
+                }}
+                error={!isBlock && validationError ? validationError : undefined}
+                required={!isBlock}
+                optional={isBlock}
             />
             {isBlock ? (
                 <>
-                    <Input
-                        label="Краткое описание"
-                        value={draft.summary}
-                        onChange={(event) => updateDraft('summary', event.target.value)}
-                    />
                     <Textarea
                         label="Текст рекомендации"
                         value={draft.content}
-                        onChange={(event) => updateDraft('content', event.target.value)}
+                        onChange={(event) => {
+                            updateDraft('content', event.target.value);
+                            setValidationError('');
+                        }}
+                        error={validationError || undefined}
                         autoGrow
                         required
                     />
-                    <Input
-                        label="Теги"
-                        value={draft.tags}
-                        onChange={(event) => updateDraft('tags', event.target.value)}
-                    />
                 </>
-            ) : (
-                <Textarea
-                    label="Описание"
-                    value={draft.description}
-                    onChange={(event) => updateDraft('description', event.target.value)}
-                    autoGrow
-                />
-            )}
+            ) : null}
             <div className={styles.actions}>
                 <Button type="submit" variant="gradient" gradient="radial" iconRight={<KitIcon name="check" />}>
                     Сохранить

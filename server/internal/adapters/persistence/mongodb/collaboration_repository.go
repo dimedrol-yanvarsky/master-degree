@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/entities/collaboration"
@@ -74,12 +75,50 @@ func (r *CollaborationRepository) FindBetween(ctx context.Context, specialistID,
 }
 
 func (r *CollaborationRepository) ListByClient(ctx context.Context, clientID string) ([]collaboration.Collaboration, error) {
+	return r.listByClientFilter(ctx, idMatchFilter("client_id", mongoIDValue(clientID)))
+}
+
+func (r *CollaborationRepository) ListByClientEmail(ctx context.Context, email string) ([]collaboration.Collaboration, error) {
+	users, err := r.adapter.Collection(usersCollection)
+	if err != nil {
+		return nil, err
+	}
+
+	cursor, err := users.Find(ctx, bson.D{{Key: "email", Value: strings.ToLower(strings.TrimSpace(email))}})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	clientIDs := bson.A{}
+	for cursor.Next(ctx) {
+		var user struct {
+			ID any `bson:"_id,omitempty"`
+		}
+		if err := cursor.Decode(&user); err != nil {
+			return nil, err
+		}
+		if user.ID != nil {
+			clientIDs = append(clientIDs, user.ID)
+		}
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+	if len(clientIDs) == 0 {
+		return nil, shared.ErrNotFound
+	}
+
+	return r.listByClientFilter(ctx, bson.D{{Key: "client_id", Value: bson.D{{Key: "$in", Value: clientIDs}}}})
+}
+
+func (r *CollaborationRepository) listByClientFilter(ctx context.Context, filter bson.D) ([]collaboration.Collaboration, error) {
 	collection, err := r.adapter.Collection(collaborationsCollection)
 	if err != nil {
 		return nil, err
 	}
 
-	cursor, err := collection.Find(ctx, idMatchFilter("client_id", mongoIDValue(clientID)), options.Find().SetSort(bson.D{{Key: "started_at", Value: -1}}))
+	cursor, err := collection.Find(ctx, filter, options.Find().SetSort(bson.D{{Key: "started_at", Value: -1}}))
 	if err != nil {
 		return nil, err
 	}

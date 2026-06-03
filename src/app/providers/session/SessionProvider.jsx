@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { clearAccessToken, getAccessToken } from '../../../shared/api';
 import {
     apiChangePassword,
@@ -19,27 +19,49 @@ import {
     saveAuthUser,
     saveUserStatus,
 } from './model/sessionStorage';
-import { testStatusFromServerResults } from './model/testCompletion';
+import {
+    enqueueTestResultSubmission,
+    mergePendingCompletedTests,
+    testStatusFromServerResults,
+} from './model/testCompletion';
+
+function readInitialAuthUser() {
+    if (!getAccessToken()) {
+        clearAuthUser();
+        return null;
+    }
+
+    return readAuthUser();
+}
 
 export function SessionProvider({ children }) {
-    const [authUser, setAuthUser] = useState(readAuthUser);
-    const [testStatus, setTestStatus] = useState(() => readUserStatus(readAuthUser()));
-    const isAuth = Boolean(authUser);
+    const [authUser, setAuthUser] = useState(readInitialAuthUser);
+    const [testStatus, setTestStatus] = useState(() => readUserStatus(readInitialAuthUser()));
+    const submissionQueueRef = useRef(Promise.resolve());
+    const isAuth = Boolean(authUser && getAccessToken());
     const userRole = authUser?.role || null;
     const status = authUser?.status || authUser?.accountType || null;
 
-    const refreshServerTestStatus = async (user) => {
+    const refreshServerTestStatus = async (user, options = {}) => {
         if (!user || !getAccessToken()) return null;
 
         const results = await apiMyTestResults();
-        const nextStatus = testStatusFromServerResults(results);
+        const remoteStatus = testStatusFromServerResults(results);
+        const nextStatus = options.preserveLocal
+            ? mergePendingCompletedTests(remoteStatus, readUserStatus(user))
+            : remoteStatus;
         saveUserStatus(user, nextStatus);
         setTestStatus(nextStatus);
         return nextStatus;
     };
 
     useEffect(() => {
-        if (!getAccessToken()) return undefined;
+        if (!getAccessToken()) {
+            clearAuthUser();
+            setAuthUser(null);
+            setTestStatus(readUserStatus(null));
+            return undefined;
+        }
 
         let active = true;
         (async () => {
@@ -136,37 +158,49 @@ export function SessionProvider({ children }) {
     };
 
     const handleTestComplete = (testId, answers, result = {}) => {
+        if (!getAccessToken()) {
+            return Promise.reject(new Error('Сессия истекла. Войдите в аккаунт заново, чтобы сохранить результат теста.'));
+        }
+
         const answerValues = Object.values(answers || {});
         const fallbackScore = answerValues.length
             ? Math.round((answerValues.reduce((sum, value) => sum + Number(value), 0) / answerValues.length) * 10) / 10
             : null;
-        const nextTestStatus = markTestCompleted(testStatus, testId, {
+        const completedStatusDraft = {
             ...result,
             answers,
             score: result.score ?? fallbackScore,
+        };
+        const payload = {
+            testCode: testId,
+            score: result.score ?? fallbackScore ?? 0,
+            scoreLabel: result.scoreLabel || '',
+            level: result.level || '',
+            summary: result.summary || '',
+            domains: result.domains || [],
+            answers: Object.entries(answers || {}).map(([questionIndex, value]) => ({
+                questionIndex: Number(questionIndex),
+                value: Number(value),
+            })),
+        };
+        const applyLocalCompletedStatus = () => {
+            const nextTestStatus = markTestCompleted(testStatus, testId, completedStatusDraft);
+            saveUserStatus(authUser, nextTestStatus);
+            setTestStatus(nextTestStatus);
+            return nextTestStatus;
+        };
+
+        const submission = enqueueTestResultSubmission(submissionQueueRef.current, async () => {
+            await apiSubmitTestResult(payload);
+            try {
+                return await refreshServerTestStatus(authUser, { preserveLocal: true });
+            } catch {
+                return applyLocalCompletedStatus();
+            }
         });
 
-        saveUserStatus(authUser, nextTestStatus);
-        setTestStatus(nextTestStatus);
-
-        if (getAccessToken()) {
-            apiSubmitTestResult({
-                testCode: testId,
-                score: result.score ?? fallbackScore ?? 0,
-                scoreLabel: result.scoreLabel || '',
-                level: result.level || '',
-                summary: result.summary || '',
-                domains: result.domains || [],
-                answers: Object.entries(answers || {}).map(([questionIndex, value]) => ({
-                    questionIndex: Number(questionIndex),
-                    value: Number(value),
-                })),
-            })
-                .then(() => refreshServerTestStatus(authUser))
-                .catch(() => {
-                    /* Отправка результата best-effort, UX не блокируем. */
-                });
-        }
+        submissionQueueRef.current = submission.catch(() => undefined);
+        return submission;
     };
 
     const value = {

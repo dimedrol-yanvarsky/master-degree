@@ -32,20 +32,16 @@ const LABEL_X = 116;
 const COLUMN_GAP = 230;
 const PLOT_PAD = 120;
 
-const WEEKDAYS_BY_DATE = {
-    '20.09.2025': 'Суббота',
-    '23.09.2025': 'Вторник',
-    '26.09.2025': 'Пятница',
-    '29.09.2025': 'Понедельник',
-    '02.10.2025': 'Четверг',
-};
-
 function getY(row) {
     return CHART_TOP + row * ROW_GAP;
 }
 
 function getColumnX(index) {
     return PLOT_PAD + index * COLUMN_GAP;
+}
+
+function getGradientOffset(index, total) {
+    return `${total > 1 ? (index / (total - 1)) * 100 : 0}%`;
 }
 
 function getSupportRow(point) {
@@ -90,12 +86,16 @@ function MoodGlyph({ level, cx, cy, size }) {
     );
 }
 
-function PointTooltip({ score, truth }) {
+function PointTooltip({ score, truth, showScore = true }) {
+    const boxY = showScore ? -70 : -58;
+    const boxHeight = showScore ? 50 : 34;
+    const truthY = showScore ? -30 : -37;
+
     return (
         <g className={styles.nodeTooltip}>
-            <rect className={styles.nodeTooltipBox} x="-118" y="-70" width="236" height="50" rx="12" />
-            <text x="0" y="-48">Набранный балл: {score}</text>
-            <text x="0" y="-30">Степень истинности: {truth}</text>
+            <rect className={styles.nodeTooltipBox} x="-118" y={boxY} width="236" height={boxHeight} rx="12" />
+            {showScore && <text x="0" y="-48">Набранный балл: {score}</text>}
+            <text x="0" y={truthY}>Степень истинности: {truth}</text>
         </g>
     );
 }
@@ -116,7 +116,7 @@ export function EmotionStateGraph({ points }) {
             secondaryRow,
             secondaryY: getY(secondaryRow),
             secondaryColor: SUPPORT_LEVELS[secondaryRow]?.color || '#f2a11a',
-            weekday: WEEKDAYS_BY_DATE[point.label] || '',
+            weekday: point.weekday || '',
         };
     }), [points]);
     const smoothPath = useMemo(() => createSmoothPath(data), [data]);
@@ -159,16 +159,28 @@ export function EmotionStateGraph({ points }) {
                                 {data.map((point, index) => (
                                     <stop
                                         key={`trend-stop-${point.label}`}
-                                        offset={`${data.length > 1 ? (index / (data.length - 1)) * 100 : 0}%`}
+                                        offset={getGradientOffset(index, data.length)}
                                         stopColor={point.color}
                                     />
                                 ))}
                             </linearGradient>
-                            <linearGradient id={`${graphId}-area`} x1="0" y1={CHART_TOP} x2="0" y2={CHART_BOTTOM} gradientUnits="userSpaceOnUse">
-                                <stop offset="0%" stopColor="#f36a1d" stopOpacity="0.22" />
-                                <stop offset="55%" stopColor="#f36a1d" stopOpacity="0.08" />
-                                <stop offset="100%" stopColor="#f36a1d" stopOpacity="0" />
+                            <linearGradient id={`${graphId}-area-color`} x1={firstX} y1="0" x2={lastX} y2="0" gradientUnits="userSpaceOnUse">
+                                {data.map((point, index) => (
+                                    <stop
+                                        key={`area-color-stop-${point.label}`}
+                                        offset={getGradientOffset(index, data.length)}
+                                        stopColor={point.color}
+                                    />
+                                ))}
                             </linearGradient>
+                            <linearGradient id={`${graphId}-area-fade`} x1="0" y1={CHART_TOP} x2="0" y2={CHART_BOTTOM} gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stopColor="#fff" stopOpacity="0.22" />
+                                <stop offset="55%" stopColor="#fff" stopOpacity="0.08" />
+                                <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+                            </linearGradient>
+                            <mask id={`${graphId}-area-mask`} maskUnits="userSpaceOnUse" x="0" y={CHART_TOP} width={plotWidth} height={CHART_BOTTOM - CHART_TOP}>
+                                <rect x="0" y={CHART_TOP} width={plotWidth} height={CHART_BOTTOM - CHART_TOP} fill={`url(#${graphId}-area-fade)`} />
+                            </mask>
                         </defs>
 
                         {Array.from({ length: ROWS }).map((_, row) => {
@@ -197,7 +209,14 @@ export function EmotionStateGraph({ points }) {
                             />
                         ))}
 
-                        {areaPath && <path className={styles.areaFill} d={areaPath} fill={`url(#${graphId}-area)`} />}
+                        {areaPath && (
+                            <path
+                                className={styles.areaFill}
+                                d={areaPath}
+                                fill={`url(#${graphId}-area-color)`}
+                                mask={`url(#${graphId}-area-mask)`}
+                            />
+                        )}
 
                         <path className={styles.trendLine} d={smoothPath} stroke={`url(#${graphId}-trend)`} />
 
@@ -207,11 +226,11 @@ export function EmotionStateGraph({ points }) {
                                 className={styles.secondaryPoint}
                                 tabIndex={0}
                                 role="img"
-                                aria-label={`${point.label}: альтернативный терм — ${point.secondarySupportNeedLabel} необходимость, балл ${point.secondaryScore}, степень истинности ${point.secondaryTruth}`}>
+                                aria-label={`${point.label}: альтернативный терм — ${point.secondarySupportNeedLabel} необходимость, степень истинности ${point.secondaryTruth}`}>
                                 <circle className={styles.secondaryRing} cx={point.x} cy={point.secondaryY} r="13" stroke={point.secondaryColor} />
                                 <circle className={styles.secondaryDot} cx={point.x} cy={point.secondaryY} r="4" fill={point.secondaryColor} />
                                 <g transform={`translate(${point.x} ${point.secondaryY})`}>
-                                    <PointTooltip score={point.secondaryScore} truth={point.secondaryTruth} />
+                                    <PointTooltip truth={point.secondaryTruth} showScore={false} />
                                 </g>
                             </g>
                         ))}

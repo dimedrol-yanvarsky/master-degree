@@ -38,7 +38,7 @@ function CollaborationMiniCard({ specialist, styles, isUpdating, onFinish }) {
                 </Badge>
                 {!isFinished && (
                     <Button
-                        variant="secondary"
+                        variant="danger"
                         size="sm"
                         iconRight={<KitIcon name="check" />}
                         disabled={isUpdating}
@@ -70,7 +70,8 @@ function RequestCard({ request, styles, isUpdating, onRespond }) {
                 {isIncoming && request.canRespond ? (
                     <>
                         <Button
-                            variant="success"
+                            variant="gradient"
+                            gradient="radial"
                             iconRight={<KitIcon name="check" />}
                             disabled={isUpdating}
                             onClick={() => onRespond(request.id, 'accepted')}>
@@ -195,9 +196,9 @@ export function ClientAccountPanel({
                         <h2>Специалисты в работе</h2>
                         <p>Перечень специалистов, с которыми клиент сотрудничает сейчас или сотрудничал раньше.</p>
                     </div>
-                    <Badge tone={collaboratingSpecialists.length > 0 ? 'success' : 'accent'}>
-                        {collaboratingSpecialists.length > 0 ? `${collaboratingSpecialists.length} в работе` : 'Нет сотрудничества'}
-                    </Badge>
+                    {collaboratingSpecialists.length > 0 && (
+                        <Badge tone="success">{`${collaboratingSpecialists.length} в работе`}</Badge>
+                    )}
                 </div>
                 {collaborationsError ? (
                     <div className={styles.emptyState}>
@@ -218,7 +219,7 @@ export function ClientAccountPanel({
                 ) : (
                     <div className={styles.emptyState}>
                         <p>Пока нет специалистов, с которыми клиент уже сотрудничает.</p>
-                        <Link to={ROUTES.specialists}>Перейти к специалистам</Link>
+                        <Link to={ROUTES.specialistsPage(1)}>Перейти к специалистам</Link>
                     </div>
                 )}
             </section>
@@ -240,7 +241,7 @@ export function ClientAccountPanel({
                         <p>{requestsError}</p>
                     </div>
                 ) : pendingRequests.length > 0 ? (
-                    <div className={styles.roleGrid}>
+                    <div className={`${styles.roleGrid} ${styles.clientCareGrid}`}>
                         {pendingRequests.map((request) => (
                             <RequestCard
                                 key={request.id}
@@ -254,7 +255,7 @@ export function ClientAccountPanel({
                 ) : (
                     <div className={styles.emptyState}>
                         <p>Сейчас нет входящих или исходящих заявок на сотрудничество.</p>
-                        <Link to={ROUTES.specialists}>Найти специалиста</Link>
+                        <Link to={ROUTES.specialistsPage(1)}>Найти специалиста</Link>
                     </div>
                 )}
             </section>

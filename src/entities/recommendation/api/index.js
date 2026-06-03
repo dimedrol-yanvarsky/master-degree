@@ -1,6 +1,7 @@
 // API сущности «рекомендация»: дерево разделов/блоков, его правки (специалист/
 // админ) и персональные назначения клиенту.
 import { apiFetch } from '../../../shared/api';
+import { RECOMMENDATION_BLOCKS_PER_PAGE } from '../model/pagination';
 
 function normalizeTags(tags) {
     if (Array.isArray(tags)) return tags.map((tag) => String(tag).trim()).filter(Boolean);
@@ -37,6 +38,29 @@ function normalizeRecommendationSections(items) {
     return Array.isArray(items) ? items.map(normalizeRecommendationSection).filter((section) => section.id) : [];
 }
 
+function normalizePositiveInteger(value, fallback = 1) {
+    const number = Number(value);
+    return Number.isFinite(number) && number >= 1 ? number : fallback;
+}
+
+function normalizeNonNegativeInteger(value, fallback = 0) {
+    const number = Number(value);
+    return Number.isFinite(number) && number >= 0 ? number : fallback;
+}
+
+function normalizeRecommendationPage(payload, fallbackPage = 1) {
+    const items = normalizeRecommendationSections(payload?.items);
+    return {
+        items,
+        page: normalizePositiveInteger(payload?.page, fallbackPage),
+        pageCount: normalizePositiveInteger(payload?.pageCount, 1),
+        totalBlocks: normalizeNonNegativeInteger(payload?.totalBlocks),
+        startBlock: normalizeNonNegativeInteger(payload?.startBlock),
+        endBlock: normalizeNonNegativeInteger(payload?.endBlock),
+        perPage: normalizePositiveInteger(payload?.perPage, RECOMMENDATION_BLOCKS_PER_PAGE),
+    };
+}
+
 function mapServerAssignedRecommendation(item) {
     return {
         id: item?.id || `${item?.clientId || 'client'}-${item?.assignedAt || ''}`,
@@ -56,6 +80,12 @@ function mapServerAssignedRecommendation(item) {
 export async function apiRecommendations() {
     const payload = await apiFetch('/recommendations');
     return normalizeRecommendationSections(payload?.items);
+}
+
+export async function apiRecommendationsPage(page = 1) {
+    const requestedPage = normalizePositiveInteger(page);
+    const payload = await apiFetch(`/recommendations?page=${encodeURIComponent(String(requestedPage))}`);
+    return normalizeRecommendationPage(payload, requestedPage);
 }
 
 export async function apiMyAssignedRecommendations() {
@@ -85,11 +115,13 @@ export async function apiDeleteAssignedRecommendation(assignmentId) {
     return Array.isArray(payload?.items) ? payload.items.map(mapServerAssignedRecommendation) : [];
 }
 
-export async function apiCreateRecommendationSection({ parentId, title, description }) {
+export async function apiCreateRecommendationSection({
+    parentId, number, title, description,
+}) {
     const payload = await apiFetch('/recommendations/sections', {
         method: 'POST',
         auth: true,
-        body: { parentId, title, description },
+        body: { parentId, number, title, description },
     });
     return normalizeRecommendationSections(payload?.items);
 }

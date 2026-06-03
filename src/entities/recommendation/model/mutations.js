@@ -13,6 +13,7 @@ function normalizeTags(tags) {
 function createSection(draft) {
     return {
         id: createId('section'),
+        number: String(draft.number || '').trim(),
         title: String(draft.title || '').trim(),
         description: String(draft.description || '').trim(),
         blocks: [],

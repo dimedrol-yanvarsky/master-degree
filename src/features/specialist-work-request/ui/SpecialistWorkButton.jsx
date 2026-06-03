@@ -35,13 +35,33 @@ function AuthPromptModal({ onClose, onLogin }) {
     );
 }
 
-export function SpecialistWorkButton({ isAuth = false, status = null, specialistId = '', targetRole = 'specialist', onRequestCreated }) {
+function relationshipButtonLabel(relationshipStatus, targetRole) {
+    if (relationshipStatus === 'accepted') return targetRole === 'client' ? 'В работе' : 'Сотрудничаете';
+    if (relationshipStatus.startsWith('pending')) return 'Запрос отправлен';
+    return '';
+}
+
+export function SpecialistWorkButton({
+    isAuth = false,
+    status = null,
+    specialistId = '',
+    targetRole = 'specialist',
+    relationshipStatus = '',
+    onRequestCreated,
+}) {
     const navigate = useNavigate();
     const [isPromptOpen, setIsPromptOpen] = useState(false);
-    const [isRequested, setIsRequested] = useState(false);
+    const [localRelationshipStatus, setLocalRelationshipStatus] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
     const requestState = getSpecialistWorkRequestState({ isAuth, status, targetRole });
+    const serverRelationshipStatus = String(relationshipStatus || '').trim().toLowerCase();
+    const localRequestStatus = String(localRelationshipStatus || '').trim().toLowerCase();
+    const effectiveRelationshipStatus = serverRelationshipStatus === 'accepted'
+        ? serverRelationshipStatus
+        : localRequestStatus || serverRelationshipStatus;
+    const relationshipLabel = relationshipButtonLabel(effectiveRelationshipStatus, targetRole);
+    const hasKnownRelationship = Boolean(relationshipLabel);
 
     const handleClick = async () => {
         if (requestState.requiresAuth) {
@@ -55,11 +75,11 @@ export function SpecialistWorkButton({ isAuth = false, status = null, specialist
         setSubmitError('');
         try {
             const request = await apiCreateCollaborationRequest({ targetUserId: specialistId });
-            setIsRequested(true);
+            setLocalRelationshipStatus(request?.status || 'pending');
             onRequestCreated?.(request);
         } catch (error) {
             if (error.status === 409) {
-                setIsRequested(true);
+                setLocalRelationshipStatus('pending');
                 setSubmitError('Заявка уже отправлена или сотрудничество уже активно.');
             } else {
                 setSubmitError(error.message || 'Не удалось отправить заявку.');
@@ -73,12 +93,12 @@ export function SpecialistWorkButton({ isAuth = false, status = null, specialist
         <>
             <div className={styles.root}>
                 <Button
-                    variant={isRequested ? 'secondary' : 'gradient'}
+                    variant={hasKnownRelationship ? 'secondary' : 'gradient'}
                     gradient="radial"
-                    iconRight={!isRequested ? <KitIcon name="arrowRight" size={15} /> : <KitIcon name="check" size={15} />}
-                    disabled={requestState.disabled || isRequested || isSubmitting}
+                    iconRight={!hasKnownRelationship ? <KitIcon name="arrowRight" size={15} /> : <KitIcon name="check" size={15} />}
+                    disabled={requestState.disabled || hasKnownRelationship || isSubmitting}
                     onClick={handleClick}>
-                    {isSubmitting ? 'Отправляем...' : isRequested ? 'Запрос отправлен' : requestState.label}
+                    {isSubmitting ? 'Отправляем...' : relationshipLabel || requestState.label}
                 </Button>
                 {submitError && <p className={styles.submitError}>{submitError}</p>}
             </div>

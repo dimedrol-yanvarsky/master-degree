@@ -44,3 +44,10 @@ type Session struct {
 func (s Session) Active(now time.Time) bool {
 	return s.RevokedAt == nil && now.Before(s.ExpiresAt)
 }
+
+// Authorizes сообщает, что предъявленный токен (по его хешу) принадлежит этой
+// сессии и сессия активна. Хранение хеша выданного токена позволяет отклонять
+// устаревшие или подменённые токены, не раскрывая сам токен в БД (РПЗ §3.2).
+func (s Session) Authorizes(tokenHash string, now time.Time) bool {
+	return s.Active(now) && s.TokenHash != "" && s.TokenHash == tokenHash
+}

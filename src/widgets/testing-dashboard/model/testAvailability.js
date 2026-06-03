@@ -1,5 +1,6 @@
 import { hasCompletedTest } from '../../../entities/user';
-import { getRemainingCooldownDays, getStoredResult } from '../../../features/testing';
+import { getRemainingCooldownDays } from '../../../features/testing/model/cooldown';
+import { getStoredResult } from '../../../features/testing/model/testResultStatus';
 
 export function canViewCompletedTests(isAuth, status) {
     return isAuth && (status === 'client' || status === 'specialist');
@@ -7,12 +8,11 @@ export function canViewCompletedTests(isAuth, status) {
 
 export function getTestAvailability(test, testStatus) {
     const isCompleted = hasCompletedTest(testStatus, test.id);
-    const isPersonalityLocked = isCompleted && test.id === 'bfi-2';
-    const remainingDays = isCompleted && !isPersonalityLocked
+    const remainingDays = isCompleted
         ? getRemainingCooldownDays(test.id, getStoredResult(testStatus, test.id)?.completedAt)
         : 0;
-    const isLocked = isPersonalityLocked || remainingDays > 0;
-    const lockLabel = isPersonalityLocked ? 'Повторное прохождение недоступно' : '';
+    const isLocked = remainingDays > 0;
+    const lockLabel = '';
 
     return { isCompleted, isLocked, lockLabel, remainingDays };
 }

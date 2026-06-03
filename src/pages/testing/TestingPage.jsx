@@ -102,7 +102,7 @@ export default function TestingPage({ isAuth = false, user = null, userRole = nu
         const result = getStoredResult(testStatus, test.id);
         const remainingDays = getRemainingCooldownDays(test.id, result?.completedAt);
 
-        if (test.id === 'bfi-2' || remainingDays > 0) {
+        if (remainingDays > 0) {
             return <CompletedTestPage test={test} result={result} remainingDays={remainingDays} styles={styles} />;
         }
     }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Avatar, Badge, Button, KitIcon } from '../../shared/ui/kit';
+import { apiCollaborationRequests } from '../../entities/collaboration';
 import { apiClients, apiUsers } from '../../entities/user';
 import { apiSpecialists, getSpecialistsPage } from '../../entities/specialist';
 import { SpecialistWorkButton } from '../../features/specialist-work-request';
@@ -29,13 +30,48 @@ function formatAccountDate(value) {
     }).format(date);
 }
 
+function relationshipStatusFromRequest(request) {
+    const status = String(request?.status || '').trim().toLowerCase();
+    if (status === 'accepted') return 'accepted';
+    if (status.startsWith('pending')) return status;
+    return '';
+}
+
+function relationKeyFromRequest(request, targetRole) {
+    return targetRole === 'client'
+        ? request?.clientId || request?.counterpartId || ''
+        : request?.specialistId || request?.counterpartId || '';
+}
+
+function buildWorkRelations(requests, targetRole) {
+    return (requests || []).reduce((relations, request) => {
+        const key = relationKeyFromRequest(request, targetRole);
+        const status = relationshipStatusFromRequest(request);
+        if (!key || !status) return relations;
+        if (relations[key] === 'accepted') return relations;
+        return {
+            ...relations,
+            [key]: status,
+        };
+    }, {});
+}
+
+function getCatalogDescription(item, isClientCatalog) {
+    if (isClientCatalog) {
+        return item.about || 'Клиент сервиса, доступный для приглашения к совместной психологической работе.';
+    }
+    return item.description;
+}
+
 export function SpecialistCatalog({ isAuth = false, status = null }) {
     const [searchParams, setSearchParams] = useSearchParams();
     const [items, setItems] = useState([]);
+    const [workRelations, setWorkRelations] = useState({});
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
     const isUserCatalog = isAuth && status === 'admin';
     const isClientCatalog = isAuth && status === 'specialist';
+    const targetRole = isClientCatalog ? 'client' : 'specialist';
     const pageParam = searchParams.get('page');
     const requestedPage = Number(pageParam || 1);
 
@@ -61,6 +97,39 @@ export function SpecialistCatalog({ isAuth = false, status = null }) {
             isActual = false;
         };
     }, [isUserCatalog, isClientCatalog]);
+
+    useEffect(() => {
+        let isActual = true;
+        const shouldLoadRelations = isAuth && !isUserCatalog && (status === 'client' || status === 'specialist');
+        if (!shouldLoadRelations) {
+            setWorkRelations({});
+            return () => {
+                isActual = false;
+            };
+        }
+
+        apiCollaborationRequests()
+            .then((requests) => {
+                if (isActual) setWorkRelations(buildWorkRelations(requests, targetRole));
+            })
+            .catch(() => {
+                if (isActual) setWorkRelations({});
+            });
+
+        return () => {
+            isActual = false;
+        };
+    }, [isAuth, isUserCatalog, status, targetRole]);
+
+    const handleRequestCreated = (request) => {
+        const key = relationKeyFromRequest(request, targetRole);
+        const nextStatus = relationshipStatusFromRequest(request) || 'pending';
+        if (!key) return;
+        setWorkRelations((currentRelations) => ({
+            ...currentRelations,
+            [key]: nextStatus,
+        }));
+    };
 
     const catalogPage = useMemo(
         () => getSpecialistsPage(items, requestedPage),
@@ -110,14 +179,14 @@ export function SpecialistCatalog({ isAuth = false, status = null }) {
                                 />
                                 <div className={styles.specialistHead}>
                                     <h2>{item.displayName || item.name}</h2>
-                                    {isUserCatalog || isClientCatalog ? (
+                                    {isUserCatalog ? (
                                         <div className={styles.tags}>
                                             <Badge tone="accent" appearance="glass">{roleLabels[item.role] || item.role}</Badge>
                                             <Badge tone={item.status === 'active' ? 'success' : item.status === 'blocked' ? 'warning' : 'danger'} appearance="glass">
                                                 {accountStatusLabels[item.status] || item.status}
                                             </Badge>
                                         </div>
-                                    ) : item.experience && (
+                                    ) : !isClientCatalog && item.experience && (
                                         <div className={styles.tags}>
                                             <Badge tone="accent" appearance="glass">стаж: {item.experience}</Badge>
                                         </div>
@@ -126,9 +195,9 @@ export function SpecialistCatalog({ isAuth = false, status = null }) {
                             </div>
 
                             <p className={styles.description}>
-                                {isUserCatalog || isClientCatalog
+                                {isUserCatalog
                                     ? [item.email, formatAccountDate(item.createdAt) && `создана ${formatAccountDate(item.createdAt)}`].filter(Boolean).join(' · ')
-                                    : item.description}
+                                    : getCatalogDescription(item, isClientCatalog)}
                             </p>
 
                             {!isUserCatalog && (
@@ -137,7 +206,9 @@ export function SpecialistCatalog({ isAuth = false, status = null }) {
                                         isAuth={isAuth}
                                         status={status}
                                         specialistId={item.id}
-                                        targetRole={isClientCatalog ? 'client' : 'specialist'}
+                                        targetRole={targetRole}
+                                        relationshipStatus={workRelations[item.id] || ''}
+                                        onRequestCreated={handleRequestCreated}
                                     />
                                 </div>
                             )}

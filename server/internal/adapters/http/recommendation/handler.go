@@ -3,6 +3,8 @@ package recommendation
 import (
 	"context"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/adapters/http/middleware"
 	domainrecommendation "github.com/dimedrol-yanvarsky/master-degree/server/internal/entities/recommendation"
@@ -10,9 +12,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const recommendationItemsPerPage = 20
+
 type Service interface {
 	List(ctx context.Context) ([]domainrecommendation.Block, error)
-	CreateSection(ctx context.Context, authorID, parentID, title string) (domainrecommendation.Block, error)
+	CreateSection(ctx context.Context, authorID, parentID, title, number string) (domainrecommendation.Block, error)
 	CreateBlock(ctx context.Context, authorID, sectionID, text string) (domainrecommendation.Block, error)
 	UpdateSection(ctx context.Context, id, title string) (domainrecommendation.Block, error)
 	UpdateBlock(ctx context.Context, id, text string) (domainrecommendation.Block, error)
@@ -35,6 +39,10 @@ func NewHandler(service Service) *Handler {
 }
 
 func (h *Handler) List(c *gin.Context) {
+	if page, ok := readPageQuery(c.Query("page")); ok {
+		h.respondTreePage(c, http.StatusOK, page)
+		return
+	}
 	h.respondTree(c, http.StatusOK)
 }
 
@@ -50,7 +58,7 @@ func (h *Handler) CreateSection(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body", "details": err.Error()})
 		return
 	}
-	if _, err := h.service.CreateSection(c.Request.Context(), identity.UserID, request.ParentID, request.Title); err != nil {
+	if _, err := h.service.CreateSection(c.Request.Context(), identity.UserID, request.ParentID, request.Title, request.Number); err != nil {
 		_ = c.Error(err)
 		return
 	}
@@ -195,4 +203,25 @@ func (h *Handler) respondTree(c *gin.Context, status int) {
 		return
 	}
 	c.JSON(status, toTreeResponse(items))
+}
+
+func (h *Handler) respondTreePage(c *gin.Context, status int, page int) {
+	items, err := h.service.List(c.Request.Context())
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	c.JSON(status, paginateTreeResponse(toTreeResponse(items), page, recommendationItemsPerPage))
+}
+
+func readPageQuery(value string) (int, bool) {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return 0, false
+	}
+	page, err := strconv.Atoi(trimmed)
+	if err != nil || page < 1 {
+		return 1, true
+	}
+	return page, true
 }

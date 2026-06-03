@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/dimedrol-yanvarsky/master-degree/server/internal/entities/collaboration"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/entities/emotion"
 	"github.com/dimedrol-yanvarsky/master-degree/server/internal/entities/shared"
 	domainsupport "github.com/dimedrol-yanvarsky/master-degree/server/internal/entities/support"
@@ -166,7 +167,7 @@ func (s *Service) Submit(ctx context.Context, in SubmitInput) (SubmitResult, err
 	if err != nil {
 		return SubmitResult{}, err
 	}
-	point.Date = s.deps.Clock.Now()
+	point.Date = result.CompletedAt
 	if err := s.deps.Graphs.AppendPoint(ctx, in.UserID, point); err != nil {
 		return SubmitResult{}, err
 	}
@@ -184,6 +185,10 @@ func (s *Service) Submit(ctx context.Context, in SubmitInput) (SubmitResult, err
 
 type testResultRepositoryByEmail interface {
 	ListByUserEmail(ctx context.Context, email string) ([]test.TestResult, error)
+}
+
+type collaborationRepositoryByClientEmail interface {
+	ListByClientEmail(ctx context.Context, email string) ([]collaboration.Collaboration, error)
 }
 
 func (s *Service) ListTests(ctx context.Context) ([]test.Test, error) {
@@ -453,9 +458,59 @@ func (s *Service) supportPoint(bfiResult, bdsResult test.TestResult) (emotion.Po
 	}
 
 	return emotion.Point{
-		SupportNeed: result.Score,
-		Level:       domainsupport.Label(result.Term),
+		SupportNeed:               result.Score,
+		SupportNeedLevel:          supportTermLevel(result.Term),
+		SecondarySupportNeedLevel: supportTermLevel(secondarySupportTerm(result)),
+		Score:                     result.Score,
+		SecondaryScore:            domainsupport.RoundScore(100 - result.Score),
+		Truth:                     roundTruth(result.Memberships[result.Term]),
+		Level:                     domainsupport.Label(result.Term),
 	}, nil
+}
+
+func supportTermLevel(term string) int {
+	orderedTerms := domainsupport.OutputTermOrder()
+	for index, candidate := range orderedTerms {
+		if candidate == term {
+			return len(orderedTerms) - index
+		}
+	}
+	return 0
+}
+
+func secondarySupportTerm(result domainsupport.Result) string {
+	orderedTerms := domainsupport.OutputTermOrder()
+	bestTerm := ""
+	bestValue := -1.0
+	for _, term := range orderedTerms {
+		if term == result.Term {
+			continue
+		}
+		if value := result.Memberships[term]; value > bestValue {
+			bestTerm = term
+			bestValue = value
+		}
+	}
+	if bestValue > 0 {
+		return bestTerm
+	}
+
+	for index, term := range orderedTerms {
+		if term != result.Term {
+			continue
+		}
+		if index > 0 {
+			return orderedTerms[index-1]
+		}
+		if index+1 < len(orderedTerms) {
+			return orderedTerms[index+1]
+		}
+	}
+	return bestTerm
+}
+
+func roundTruth(value float64) float64 {
+	return math.Round(value*100) / 100
 }
 
 func supportInputs(bfiResult, bdsResult test.TestResult) (map[string]float64, error) {
@@ -534,7 +589,7 @@ func bfi2DomainsFromAnswers(answers []test.Answer) ([]test.DomainScore, bool) {
 			}
 			sum += float64(value)
 		}
-		score := math.Round((sum/float64(len(definition.items)))*10) / 10
+		score := math.Round((sum/float64(len(definition.items)))*100) / 100
 		domains = append(domains, test.DomainScore{Label: definition.label, Score: score})
 	}
 
@@ -580,6 +635,7 @@ func bdsTotalFromAnswers(answers []test.Answer) (float64, bool) {
 func bfiDomainVariable(label string) string {
 	normalized := strings.ToLower(strings.TrimSpace(label))
 	normalized = strings.ReplaceAll(normalized, "ё", "е")
+	legacyNeuroticismMarker := "\u043d\u0435\u0433\u0430\u0442\u0438\u0432"
 
 	switch {
 	case normalized == domainsupport.VarExtraversion || strings.Contains(normalized, "экстрав") || strings.Contains(normalized, "extrav"):
@@ -588,7 +644,7 @@ func bfiDomainVariable(label string) string {
 		return domainsupport.VarConscientiousness
 	case normalized == domainsupport.VarAgreeableness || strings.Contains(normalized, "доброж") || strings.Contains(normalized, "agree"):
 		return domainsupport.VarAgreeableness
-	case normalized == domainsupport.VarNeuroticism || strings.Contains(normalized, "нейрот") || strings.Contains(normalized, "негатив") || strings.Contains(normalized, "neuro") || strings.Contains(normalized, "negative"):
+	case normalized == domainsupport.VarNeuroticism || strings.Contains(normalized, "нейрот") || strings.Contains(normalized, legacyNeuroticismMarker) || strings.Contains(normalized, "neuro") || strings.Contains(normalized, "negative"):
 		return domainsupport.VarNeuroticism
 	case normalized == domainsupport.VarOpenness || strings.Contains(normalized, "открыт") || strings.Contains(normalized, "open"):
 		return domainsupport.VarOpenness
@@ -700,15 +756,32 @@ func (s *Service) notifySpecialists(ctx context.Context, clientID string, point 
 		return nil, nil
 	}
 
-	collaborations, err := s.deps.Collaborations.ListByClient(ctx, clientID)
+	client, err := s.deps.Users.FindByID(ctx, clientID)
 	if err != nil {
-		if errors.Is(err, shared.ErrNotFound) {
-			return nil, nil
-		}
 		return nil, err
 	}
 
+	collaborations, err := s.deps.Collaborations.ListByClient(ctx, clientID)
+	if err != nil {
+		if errors.Is(err, shared.ErrNotFound) {
+			collaborations = nil
+		} else {
+			return nil, err
+		}
+	}
+
+	if byEmail, ok := s.deps.Collaborations.(collaborationRepositoryByClientEmail); ok && strings.TrimSpace(client.Email) != "" {
+		emailCollaborations, err := byEmail.ListByClientEmail(ctx, client.Email)
+		if err != nil && !errors.Is(err, shared.ErrNotFound) {
+			return nil, err
+		}
+		if err == nil {
+			collaborations = mergeCollaborations(collaborations, emailCollaborations)
+		}
+	}
+
 	var recipients []string
+	seenRecipients := make(map[string]struct{})
 	for _, c := range collaborations {
 		if !c.GrantsAccess() { // только принятые связи открывают доступ к данным клиента
 			continue
@@ -720,17 +793,19 @@ func (s *Service) notifySpecialists(ctx context.Context, clientID string, point 
 		if err != nil {
 			return nil, err
 		}
-		if strings.TrimSpace(specialist.Email) != "" {
-			recipients = append(recipients, specialist.Email)
+		email := strings.TrimSpace(specialist.Email)
+		if email == "" {
+			continue
 		}
+		emailKey := strings.ToLower(email)
+		if _, exists := seenRecipients[emailKey]; exists {
+			continue
+		}
+		seenRecipients[emailKey] = struct{}{}
+		recipients = append(recipients, email)
 	}
 	if len(recipients) == 0 {
 		return nil, nil
-	}
-
-	client, err := s.deps.Users.FindByID(ctx, clientID)
-	if err != nil {
-		return nil, err
 	}
 
 	notification := port.SpecialistNotification{
@@ -745,6 +820,24 @@ func (s *Service) notifySpecialists(ctx context.Context, clientID string, point 
 		return nil, err
 	}
 	return recipients, nil
+}
+
+func mergeCollaborations(left, right []collaboration.Collaboration) []collaboration.Collaboration {
+	out := make([]collaboration.Collaboration, 0, len(left)+len(right))
+	seen := make(map[string]struct{}, len(left)+len(right))
+
+	for _, item := range append(left, right...) {
+		key := item.ID
+		if strings.TrimSpace(key) == "" {
+			key = item.SpecialistID + "|" + item.ClientID + "|" + string(item.Status)
+		}
+		if _, exists := seen[key]; exists {
+			continue
+		}
+		seen[key] = struct{}{}
+		out = append(out, item)
+	}
+	return out
 }
 
 func fullName(parts ...string) string {

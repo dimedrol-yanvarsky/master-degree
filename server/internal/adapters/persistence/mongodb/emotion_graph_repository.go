@@ -100,6 +100,7 @@ type emotionLevelDocument struct {
 func pointToDocument(point emotion.Point) emotionLevelDocument {
 	return emotionLevelDocument{
 		MeasuredAt:                point.Date,
+		Label:                     formatGraphPointLabel(point.Date),
 		SupportNeed:               point.SupportNeed,
 		SupportNeedLevel:          point.SupportNeedLevel,
 		SecondarySupportNeedLevel: point.SecondarySupportNeedLevel,
@@ -108,6 +109,13 @@ func pointToDocument(point emotion.Point) emotionLevelDocument {
 		Truth:                     point.Truth,
 		Level:                     point.Level,
 	}
+}
+
+func formatGraphPointLabel(date time.Time) string {
+	if date.IsZero() {
+		return ""
+	}
+	return date.Format("02.01.2006")
 }
 
 func (d emotionGraphDocument) toDomain() emotion.Graph {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -63,7 +64,7 @@ func (s *Service) List(ctx context.Context) ([]domainrecommendation.Block, error
 	return items, nil
 }
 
-func (s *Service) CreateSection(ctx context.Context, authorID, parentID, title string) (domainrecommendation.Block, error) {
+func (s *Service) CreateSection(ctx context.Context, authorID, parentID, title, number string) (domainrecommendation.Block, error) {
 	if s.deps.Repository == nil {
 		return domainrecommendation.Block{}, shared.ErrNotFound
 	}
@@ -82,7 +83,9 @@ func (s *Service) CreateSection(ctx context.Context, authorID, parentID, title s
 		return domainrecommendation.Block{}, err
 	}
 	parentPtr := parentIDPointer(parentID)
-	sectionNumber := nextSectionNumber(items, parent, parentPtr)
+	siblings := sectionSiblings(items, parentPtr)
+	insertPosition := requestedSectionPosition(number, len(siblings)+1)
+	sectionNumber := sectionNumberAtPosition(parent, insertPosition)
 	block := domainrecommendation.Block{
 		ID:            s.deps.IDs.NewID(),
 		ParentID:      parentPtr,
@@ -90,9 +93,12 @@ func (s *Service) CreateSection(ctx context.Context, authorID, parentID, title s
 		SectionNumber: &sectionNumber,
 		AuthorID:      authorID,
 		Status:        "active",
-		SortOrder:     nextSortOrder(items, parentPtr),
+		SortOrder:     insertPosition,
 	}
 	if err := s.deps.Repository.Create(ctx, block); err != nil {
+		return domainrecommendation.Block{}, err
+	}
+	if err := s.renumberSiblingSections(ctx, items, parentPtr, block.ID, insertPosition); err != nil {
 		return domainrecommendation.Block{}, err
 	}
 	return block, nil
@@ -398,6 +404,122 @@ func nextSectionNumber(items []domainrecommendation.Block, parent *domainrecomme
 		return strings.TrimSpace(*parent.SectionNumber) + "." + next
 	}
 	return next
+}
+
+func (s *Service) renumberSiblingSections(ctx context.Context, items []domainrecommendation.Block, parentID *string, newSectionID string, insertPosition int) error {
+	position := 1
+	for _, section := range sectionSiblings(items, parentID) {
+		if position == insertPosition {
+			position++
+		}
+		if section.ID == newSectionID {
+			continue
+		}
+		if err := s.updateSectionTreePlacement(ctx, items, section, sectionNumberAtPosition(sectionParent(items, parentID), position), position); err != nil {
+			return err
+		}
+		position++
+	}
+	return nil
+}
+
+func (s *Service) updateSectionTreePlacement(ctx context.Context, items []domainrecommendation.Block, section domainrecommendation.Block, number string, sortOrder int) error {
+	section.SectionNumber = stringPointer(number)
+	section.SortOrder = sortOrder
+	if err := s.deps.Repository.Update(ctx, section); err != nil {
+		return err
+	}
+
+	for index, child := range sectionSiblings(items, stringPointer(section.ID)) {
+		childNumber := formatSectionNumber(number, index+1)
+		if err := s.updateSectionTreePlacement(ctx, items, child, childNumber, index+1); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func sectionSiblings(items []domainrecommendation.Block, parentID *string) []domainrecommendation.Block {
+	siblings := make([]domainrecommendation.Block, 0)
+	for _, item := range items {
+		if item.IsSection() && sameParent(item.ParentID, parentID) {
+			siblings = append(siblings, item)
+		}
+	}
+	sort.SliceStable(siblings, func(i, j int) bool {
+		if siblings[i].SortOrder != siblings[j].SortOrder {
+			return siblings[i].SortOrder < siblings[j].SortOrder
+		}
+		return sectionNumberText(siblings[i]) < sectionNumberText(siblings[j])
+	})
+	return siblings
+}
+
+func sectionParent(items []domainrecommendation.Block, parentID *string) *domainrecommendation.Block {
+	if parentID == nil || strings.TrimSpace(*parentID) == "" {
+		return nil
+	}
+	for _, item := range items {
+		if item.ID == strings.TrimSpace(*parentID) && item.IsSection() {
+			section := item
+			return &section
+		}
+	}
+	return nil
+}
+
+func requestedSectionPosition(number string, fallback int) int {
+	position, ok := lastSectionNumberSegment(number)
+	if !ok {
+		return fallback
+	}
+	if position > fallback {
+		return fallback
+	}
+	return position
+}
+
+func lastSectionNumberSegment(number string) (int, bool) {
+	parts := strings.Split(strings.TrimSpace(number), ".")
+	if len(parts) == 0 {
+		return 0, false
+	}
+	value := strings.TrimSpace(parts[len(parts)-1])
+	position, err := strconv.Atoi(value)
+	if err != nil || position < 1 {
+		return 0, false
+	}
+	return position, true
+}
+
+func sectionNumberAtPosition(parent *domainrecommendation.Block, position int) string {
+	parentNumber := ""
+	if parent != nil {
+		parentNumber = sectionNumberText(*parent)
+	}
+	return formatSectionNumber(parentNumber, position)
+}
+
+func formatSectionNumber(parentNumber string, position int) string {
+	if strings.TrimSpace(parentNumber) == "" {
+		return strconv.Itoa(position)
+	}
+	return strings.TrimSpace(parentNumber) + "." + strconv.Itoa(position)
+}
+
+func sectionNumberText(section domainrecommendation.Block) string {
+	if section.SectionNumber == nil {
+		return ""
+	}
+	return strings.TrimSpace(*section.SectionNumber)
+}
+
+func stringPointer(value string) *string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return nil
+	}
+	return &trimmed
 }
 
 func descendantIDs(items []domainrecommendation.Block, sectionID string) []string {

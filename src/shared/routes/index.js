@@ -12,6 +12,8 @@ export const ROUTES = Object.freeze({
     components: '/components',
     uiKit: '/ui-kit',
     userAgreement: '/user-agreement',
+    recommendationsPage: (page = 1) => `/recommendations?page=${page}`,
+    specialistsPage: (page = 1) => `/specialists?page=${page}`,
     test: (testId) => `/testing/${testId}`,
 });
 

@@ -301,6 +301,14 @@
     font-weight: 600;
 }
 
+.answerUploadInput {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
 .progressDock {
     display: grid;
     gap: 11px;
@@ -533,9 +541,46 @@
     line-height: 1.45;
 }
 
+.formSuccess {
+    margin: 0;
+    padding: 13px 16px;
+    border: 1px solid color-mix(in srgb, var(--success-500) 28%, var(--border));
+    border-radius: var(--r-frame);
+    background: color-mix(in srgb, var(--success-100) 32%, var(--bg));
+    color: var(--success-600);
+    font-size: 14px;
+    line-height: 1.45;
+}
+
 /* ---------- Completed result ---------- */
 .completedPanel {
     justify-items: start;
+}
+
+.scoreSummary {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 10px;
+    justify-self: start;
+    min-width: 0;
+    padding: 11px 16px;
+    border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--border));
+    border-radius: var(--r-full);
+    background: var(--bg);
+    box-shadow: var(--shadow-1);
+}
+
+.scoreSummary span {
+    color: var(--fg-3);
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.scoreSummary strong {
+    color: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 800;
 }
 
 .resultGrid {
@@ -593,6 +638,52 @@
     overflow: auto;
 }
 
+.answersButton {
+    justify-self: start;
+}
+
+.answerModal {
+    width: min(100%, 940px);
+    max-height: min(88vh, 900px);
+    align-content: start;
+    overflow: hidden;
+}
+
+.answerModalHead {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    padding-right: 48px;
+}
+
+.answerModalBody {
+    width: 100%;
+    max-height: calc(min(88vh, 900px) - 120px);
+    padding-right: 6px;
+    overflow-y: auto;
+}
+
+.answerModal .questionCard {
+    box-shadow: none;
+}
+
+.answerModal .scaleOption {
+    cursor: default;
+}
+
+.answerModal .scaleOption:hover .scaleMark {
+    border-color: var(--border-2);
+    color: var(--fg-2);
+    transform: none;
+}
+
+.answerModal .scaleInput:checked + .scaleMark,
+.answerModal .scaleOption:hover .scaleInput:checked + .scaleMark {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-fg);
+}
+
 .domainGrid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -607,7 +698,7 @@
     padding: 14px 16px;
     border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--border));
     border-radius: var(--r-lg);
-    background: color-mix(in srgb, var(--accent-soft) 28%, var(--bg));
+    background: var(--bg);
 }
 
 .domainGrid span {
@@ -653,7 +744,7 @@
     padding: 10px 14px;
     border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border));
     border-radius: var(--r-full);
-    background: color-mix(in srgb, var(--accent-soft) 32%, transparent);
+    background: var(--bg);
     color: var(--fg-2);
     font-size: 13.5px;
     font-weight: 650;

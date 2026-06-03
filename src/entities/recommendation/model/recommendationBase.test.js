@@ -6,6 +6,7 @@ import {
     getRecommendationBaseStats,
     getRecommendationSectionOptions,
     paginateRecommendationBase,
+    RECOMMENDATION_BLOCKS_PER_PAGE,
     updateRecommendationBlock,
     updateRecommendationSection,
 } from './recommendationBase';
@@ -108,6 +109,28 @@ test('paginates by sections and recommendations and keeps DB numbering across pa
     expect(secondPage.sections[0].blocks.map((block) => block.id)).toEqual([
         'b-1', 'b-2', 'b-3', 'b-4', 'b-5', 'b-6',
     ]);
+});
+
+test('uses twenty blocks per page by default', () => {
+    const sections = [
+        {
+            id: 's1',
+            number: '1',
+            title: 'Default page size',
+            description: '',
+            blocks: Array.from({ length: 19 }, (_, index) => ({
+                id: `default-${index + 1}`, title: '', summary: '', content: '', tags: [],
+            })),
+            children: [],
+        },
+    ];
+
+    const page = paginateRecommendationBase(sections, 1);
+
+    expect(RECOMMENDATION_BLOCKS_PER_PAGE).toBe(20);
+    expect(page.perPage).toBe(20);
+    expect(page.pageCount).toBe(1);
+    expect(page.endBlock).toBe(20);
 });
 
 test('falls back to computed numbering when DB number is absent', () => {
