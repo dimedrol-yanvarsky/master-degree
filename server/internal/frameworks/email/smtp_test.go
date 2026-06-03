@@ -3,6 +3,10 @@ package email
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -53,7 +57,8 @@ func TestGraphPointEmailSubjectAndPlainBodyDoNotMentionSourceTests(t *testing.T)
 }
 
 func TestNotifyNewGraphPointDoesNotReturnSMTPError(t *testing.T) {
-	notifier := NewSMTPNotifier("127.0.0.1", 1, "user", "password", "from@example.com")
+	t.Setenv("EMAIL_OUTBOX_DIR", t.TempDir())
+	notifier := NewSMTPNotifier("", 0, "", "", "from@example.com")
 
 	err := notifier.NotifyNewGraphPoint(context.Background(), port.SpecialistNotification{
 		ClientName: "Голубев Дмитрий Викторович",
@@ -94,5 +99,77 @@ func TestBuildMessageWithHTMLUsesMultipartAlternative(t *testing.T) {
 	}
 	if !strings.Contains(message, "Content-ID: <lumen-brand-logo>") {
 		t.Fatalf("message must contain inline logo content id:\n%s", message)
+	}
+}
+
+func TestSendResendUsesHTTPSAPIWithInlineLogo(t *testing.T) {
+	var got resendEmailRequest
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Fatalf("method = %s, want POST", r.Method)
+		}
+		if r.Header.Get("Authorization") != "Bearer test-key" {
+			t.Fatalf("authorization = %q", r.Header.Get("Authorization"))
+		}
+		if err := json.NewDecoder(r.Body).Decode(&got); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"id":"email_123"}`))
+	}))
+	defer server.Close()
+
+	t.Setenv("RESEND_API_KEY", "test-key")
+	t.Setenv("RESEND_FROM", "Lumen <notify@example.com>")
+	t.Setenv("RESEND_ENDPOINT", server.URL)
+
+	notifier := NewSMTPNotifier("", 0, "", "", "")
+	if err := notifier.sendResend(
+		context.Background(),
+		[]string{"specialist@example.com"},
+		"Новая вершина",
+		"plain body",
+		`<img src="cid:lumen-brand-logo">`,
+		[]byte("png"),
+	); err != nil {
+		t.Fatalf("send resend: %v", err)
+	}
+
+	if got.From != "Lumen <notify@example.com>" || got.Subject != "Новая вершина" {
+		t.Fatalf("unexpected payload = %+v", got)
+	}
+	if len(got.To) != 1 || got.To[0] != "specialist@example.com" {
+		t.Fatalf("to = %#v", got.To)
+	}
+	if got.Text != "plain body" || !strings.Contains(got.HTML, "cid:lumen-brand-logo") {
+		t.Fatalf("body fields = text %q html %q", got.Text, got.HTML)
+	}
+	if len(got.Attachments) != 1 || got.Attachments[0].ContentID != brandLogoContentID || got.Attachments[0].ContentDisposition != "inline" {
+		t.Fatalf("attachments = %+v", got.Attachments)
+	}
+}
+
+func TestWriteOutboxMessageCreatesEML(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("EMAIL_OUTBOX_DIR", dir)
+
+	path, err := writeOutboxMessage("Новая вершина графа", []byte("Subject: test\r\n\r\nbody"))
+	if err != nil {
+		t.Fatalf("write outbox message: %v", err)
+	}
+	if !strings.HasPrefix(path, dir) {
+		t.Fatalf("outbox path = %q, want inside %q", path, dir)
+	}
+	if !strings.HasSuffix(path, ".eml") {
+		t.Fatalf("outbox path = %q, want .eml", path)
+	}
+
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read outbox message: %v", err)
+	}
+	if string(content) != "Subject: test\r\n\r\nbody" {
+		t.Fatalf("outbox content = %q", string(content))
 	}
 }

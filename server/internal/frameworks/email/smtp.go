@@ -5,16 +5,21 @@
 package email
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html"
+	"io"
 	"log"
 	"net"
+	"net/http"
 	"net/smtp"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -22,7 +27,8 @@ import (
 )
 
 const brandLogoContentID = "lumen-brand-logo"
-const smtpSendTimeout = 15 * time.Second
+const smtpSendTimeout = 30 * time.Second
+const defaultResendEndpoint = "https://api.resend.com/emails"
 
 // Проверка на этапе компиляции: нотификатор удовлетворяет порту приложения.
 var _ port.SpecialistNotifier = (*SMTPNotifier)(nil)
@@ -53,6 +59,19 @@ func (n *SMTPNotifier) configured() bool {
 	return n.host != "" && n.from != "" && n.username != "" && n.password != ""
 }
 
+func (n *SMTPNotifier) resendEnabled() bool {
+	return strings.EqualFold(strings.TrimSpace(os.Getenv("EMAIL_TRANSPORT")), "resend") ||
+		strings.TrimSpace(os.Getenv("RESEND_API_KEY")) != ""
+}
+
+func (n *SMTPNotifier) deliveryFrom() string {
+	return firstNonEmpty(
+		strings.TrimSpace(os.Getenv("RESEND_FROM")),
+		strings.TrimSpace(os.Getenv("EMAIL_FROM")),
+		n.from,
+	)
+}
+
 // NotifyNewGraphPoint ставит оповещение всем указанным специалистам в отправку.
 // Ошибка SMTP не должна ломать сохранение результата и вершины графа.
 func (n *SMTPNotifier) NotifyNewGraphPoint(_ context.Context, notification port.SpecialistNotification) error {
@@ -65,13 +84,32 @@ func (n *SMTPNotifier) NotifyNewGraphPoint(_ context.Context, notification port.
 	body := composeBody(notification)
 	logo, hasLogo := readBrandLogo()
 	htmlBody := composeHTMLBody(notification, hasLogo)
+	from := n.deliveryFrom()
 
-	if !n.configured() {
-		log.Printf("[email:fallback] кому=%s | тема=%q\n%s", strings.Join(recipients, ", "), subject, body)
+	if n.resendEnabled() {
+		message := buildMessage(from, recipients, subject, body, htmlBody, logo)
+		log.Printf("[email:queued] transport=resend кому=%s | тема=%q", strings.Join(recipients, ", "), subject)
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), smtpSendTimeout)
+			defer cancel()
+
+			if err := n.sendResend(ctx, recipients, subject, body, htmlBody, logo); err != nil {
+				log.Printf("[email:error] resend: %v", err)
+				logOutboxCopy(subject, message)
+				return
+			}
+			log.Printf("[email:sent] transport=resend кому=%s | тема=%q", strings.Join(recipients, ", "), subject)
+		}()
 		return nil
 	}
 
-	message := buildMessage(n.from, recipients, subject, body, htmlBody, logo)
+	if !n.configured() {
+		log.Printf("[email:fallback] кому=%s | тема=%q\n%s", strings.Join(recipients, ", "), subject, body)
+		logOutboxCopy(subject, buildMessage(from, recipients, subject, body, htmlBody, logo))
+		return nil
+	}
+
+	message := buildMessage(from, recipients, subject, body, htmlBody, logo)
 
 	log.Printf("[email:queued] кому=%s | тема=%q", strings.Join(recipients, ", "), subject)
 	go func() {
@@ -80,6 +118,7 @@ func (n *SMTPNotifier) NotifyNewGraphPoint(_ context.Context, notification port.
 
 		if err := n.send(ctx, recipients, message); err != nil {
 			log.Printf("[email:error] не удалось отправить уведомление о новой вершине графа: %v", err)
+			logOutboxCopy(subject, message)
 			return
 		}
 		log.Printf("[email:sent] кому=%s | тема=%q", strings.Join(recipients, ", "), subject)
@@ -96,26 +135,139 @@ func (n *SMTPNotifier) SendPasswordReset(ctx context.Context, notification port.
 	subject := "Восстановление пароля"
 	body := composePasswordResetBody(notification)
 	recipients := []string{recipient}
+	from := n.deliveryFrom()
+
+	if n.resendEnabled() {
+		message := buildMessage(from, recipients, subject, body, "", nil)
+		ctx, cancel := context.WithTimeout(ctx, smtpSendTimeout)
+		defer cancel()
+
+		if err := n.sendResend(ctx, recipients, subject, body, "", nil); err != nil {
+			logOutboxCopy(subject, message)
+			return err
+		}
+		return nil
+	}
 
 	if !n.configured() {
 		log.Printf("[email:fallback] кому=%s | тема=%q\n%s", recipient, subject, body)
 		return nil
 	}
 
-	message := buildMessage(n.from, recipients, subject, body, "", nil)
+	message := buildMessage(from, recipients, subject, body, "", nil)
 
 	ctx, cancel := context.WithTimeout(ctx, smtpSendTimeout)
 	defer cancel()
 
-	return n.send(ctx, recipients, message)
+	if err := n.send(ctx, recipients, message); err != nil {
+		logOutboxCopy(subject, message)
+		return err
+	}
+	return nil
+}
+
+type resendEmailRequest struct {
+	From        string             `json:"from"`
+	To          []string           `json:"to"`
+	Subject     string             `json:"subject"`
+	Text        string             `json:"text,omitempty"`
+	HTML        string             `json:"html,omitempty"`
+	Attachments []resendAttachment `json:"attachments,omitempty"`
+}
+
+type resendAttachment struct {
+	Filename           string `json:"filename"`
+	Content            string `json:"content"`
+	ContentType        string `json:"content_type,omitempty"`
+	ContentID          string `json:"content_id,omitempty"`
+	ContentDisposition string `json:"content_disposition,omitempty"`
+}
+
+func (n *SMTPNotifier) sendResend(ctx context.Context, recipients []string, subject, textBody, htmlBody string, inlineLogo []byte) error {
+	apiKey := strings.TrimSpace(os.Getenv("RESEND_API_KEY"))
+	if apiKey == "" {
+		return errors.New("resend api key is not configured")
+	}
+	from := n.deliveryFrom()
+	if from == "" {
+		return errors.New("email sender is not configured")
+	}
+
+	payload := resendEmailRequest{
+		From:    from,
+		To:      recipients,
+		Subject: subject,
+		Text:    textBody,
+		HTML:    htmlBody,
+	}
+	if len(inlineLogo) > 0 {
+		payload.Attachments = []resendAttachment{{
+			Filename:           "brand-logo.png",
+			Content:            base64.StdEncoding.EncodeToString(inlineLogo),
+			ContentType:        "image/png",
+			ContentID:          brandLogoContentID,
+			ContentDisposition: "inline",
+		}}
+	}
+
+	content, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	endpoint := firstNonEmpty(strings.TrimSpace(os.Getenv("RESEND_ENDPOINT")), defaultResendEndpoint)
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(content))
+	if err != nil {
+		return err
+	}
+	request.Header.Set("Authorization", "Bearer "+apiKey)
+	request.Header.Set("Content-Type", "application/json")
+
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		body, _ := io.ReadAll(io.LimitReader(response.Body, 4096))
+		return fmt.Errorf("resend api returned %s: %s", response.Status, strings.TrimSpace(string(body)))
+	}
+	return nil
 }
 
 func (n *SMTPNotifier) send(ctx context.Context, recipients []string, message []byte) error {
-	port := n.port
-	if port == 0 {
-		port = 587
+	primary := n.port
+	if primary == 0 {
+		primary = 587
 	}
 
+	// Пробуем основной порт, затем альтернативный порт Gmail. Многие сети режут
+	// 587 (STARTTLS), но пропускают 465 (implicit TLS) — и наоборот, поэтому при
+	// таймауте на одном порту автоматически пробуем второй.
+	ports := []int{primary}
+	switch primary {
+	case 587:
+		ports = append(ports, 465)
+	case 465:
+		ports = append(ports, 587)
+	}
+
+	var lastErr error
+	for _, port := range ports {
+		attemptCtx, cancel := context.WithTimeout(ctx, 12*time.Second)
+		err := n.sendVia(attemptCtx, port, recipients, message)
+		cancel()
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+		log.Printf("[email:retry] порт %d не сработал: %v", port, err)
+	}
+	return lastErr
+}
+
+func (n *SMTPNotifier) sendVia(ctx context.Context, port int, recipients []string, message []byte) error {
 	address := fmt.Sprintf("%s:%d", n.host, port)
 	if port == 465 {
 		return n.sendImplicitTLS(ctx, address, recipients, message)
@@ -269,9 +421,9 @@ func composeHTMLBody(n port.SpecialistNotification, hasLogo bool) string {
 
 	pointDate := n.Date.Format("02.01.2006 15:04")
 	level := firstNonEmpty(strings.TrimSpace(n.Level), "Уровень не указан")
-	logoHTML := `<span style="display:inline-block;color:#2f7d3b;font-size:24px;font-weight:800;line-height:52px;letter-spacing:0;">Л</span>`
+	logoHTML := `<span style="display:inline-block;width:48px;height:48px;color:#2f7d3b;font-size:24px;font-weight:700;line-height:48px;text-align:center;">Л</span>`
 	if hasLogo {
-		logoHTML = `<img src="cid:` + brandLogoContentID + `" width="52" height="52" alt="Lumen" style="display:block;width:52px;height:52px;border:0;object-fit:cover;">`
+		logoHTML = `<img src="cid:` + brandLogoContentID + `" width="48" height="48" alt="Lumen" style="display:block;width:48px;height:48px;border:0;border-radius:11px;">`
 	}
 
 	return fmt.Sprintf(`<!doctype html>
@@ -280,53 +432,52 @@ func composeHTMLBody(n port.SpecialistNotification, hasLogo bool) string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Новая вершина графа эмоционального состояния</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body, table, td, div, h1, p, span, a { font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif !important; }
+  </style>
 </head>
-<body style="margin:0;padding:0;background:#f4f6f1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#151714;">
-  <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="background:#f4f6f1;padding:36px 14px;">
+<body style="margin:0;padding:0;background:#f4f6f1;font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#151714;">
+  <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="background:#f4f6f1;padding:40px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #dfe6d8;border-radius:20px;overflow:hidden;box-shadow:0 16px 48px rgba(34,48,29,.10);">
+        <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #e3eadd;border-radius:24px;overflow:hidden;box-shadow:0 18px 50px rgba(34,48,29,.10);">
           <tr>
-            <td style="padding:26px 28px 18px;background:#ffffff;">
+            <td style="padding:24px 30px;background:#ffffff;border-bottom:1px solid #eef2ea;">
               <table role="presentation" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td style="width:52px;height:52px;border-radius:16px;background:#e8f5e8;border:1px solid #c7dcc5;text-align:center;vertical-align:middle;">%s</td>
-                  <td style="padding-left:14px;vertical-align:middle;">
-                    <div style="font-size:18px;font-weight:800;line-height:1.2;color:#151714;letter-spacing:0;">Lumen</div>
-                    <div style="font-size:13px;line-height:1.45;color:#6f766a;">Граф эмоционального состояния</div>
+                  <td style="vertical-align:middle;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" style="background:#ffffff;border:1px solid #e7efe2;border-radius:14px;box-shadow:0 8px 20px rgba(47,125,59,.10);">
+                      <tr><td style="padding:5px;line-height:0;font-size:0;">%s</td></tr>
+                    </table>
                   </td>
+                  <td style="padding-left:13px;vertical-align:middle;font-size:14px;font-weight:600;letter-spacing:.01em;color:#3f463a;">Граф эмоционального состояния</td>
                 </tr>
               </table>
             </td>
           </tr>
           <tr>
-            <td style="padding:0 28px 22px;">
-              <h1 style="margin:0 0 10px;font-size:28px;line-height:1.12;color:#111411;letter-spacing:0;">Новая вершина графа</h1>
-              <p style="margin:0;font-size:15px;line-height:1.6;color:#6f766a;">В графе эмоционального состояния клиента <strong style="color:#151714;">%s</strong> рассчитана новая вершина.</p>
+            <td style="padding:30px 30px 0;">
+              <h1 style="margin:0 0 12px;font-size:27px;line-height:1.16;font-weight:700;color:#111411;">Новая вершина графа</h1>
+              <p style="margin:0;font-size:15px;line-height:1.62;color:#6f766a;">В графе эмоционального состояния клиента <strong style="color:#151714;font-weight:700;">%s</strong> рассчитана новая вершина.</p>
             </td>
           </tr>
           <tr>
-            <td style="padding:0 28px 24px;">
-              <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="border-radius:16px;background:#2f7d3b;">
+            <td style="padding:24px 30px 6px;">
+              <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="border:1px solid #d6e7d2;border-radius:18px;background:#f2f8f0;">
                 <tr>
-                  <td style="padding:22px 24px;color:#ffffff;">
-                    <div style="font-size:13px;line-height:1.4;color:#d6ecd6;">Новая вершина от %s</div>
-                    <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="margin-top:14px;">
-                      <tr>
-                        <td style="vertical-align:bottom;">
-                          <div style="font-size:13px;font-weight:700;color:#d6ecd6;">Набранный балл</div>
-                          <div style="margin-top:6px;font-size:44px;line-height:1;font-weight:800;letter-spacing:0;color:#ffffff;">%.0f</div>
-                        </td>
-                        <td align="right" style="vertical-align:bottom;">
-                          <div style="font-size:13px;font-weight:700;color:#d6ecd6;">Степень необходимости</div>
-                          <div style="margin-top:8px;">
-                            <span style="display:inline-block;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.16);font-size:15px;font-weight:700;color:#ffffff;">%s</span>
-                          </div>
-                        </td>
-                      </tr>
-                    </table>
-                    <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.18);font-size:12.5px;line-height:1.45;color:#cfe6d0;">
-                      Степень необходимости клиента в поддержке рассчитана алгоритмом по новой вершине графа.
+                  <td style="padding:22px 24px;">
+                    <div style="font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#2f7d3b;">%s</div>
+                    <div style="margin-top:16px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#7f8a78;">Набранный балл</div>
+                    <div style="margin-top:5px;">
+                      <span style="font-size:48px;line-height:1;font-weight:700;letter-spacing:-1px;color:#2f7d3b;">%.0f</span>
+                      <span style="font-size:17px;font-weight:600;color:#8a9085;">&nbsp;/ 100</span>
+                    </div>
+                    <div style="margin-top:16px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#7f8a78;">Степень необходимости в поддержке</div>
+                    <div style="margin-top:7px;">
+                      <span style="display:inline-block;padding:7px 16px;border-radius:999px;background:#e3f1e0;border:1px solid #c7e0c2;font-size:14px;font-weight:700;color:#246b30;">%s</span>
                     </div>
                   </td>
                 </tr>
@@ -334,8 +485,8 @@ func composeHTMLBody(n port.SpecialistNotification, hasLogo bool) string {
             </td>
           </tr>
           <tr>
-            <td style="padding:0 28px 28px;">
-              <p style="margin:0;font-size:13px;line-height:1.55;color:#7f8679;">Письмо отправлено автоматически специалистам, с которыми клиент сейчас сотрудничает.</p>
+            <td style="padding:20px 30px 30px;">
+              <p style="margin:0;padding-top:18px;border-top:1px solid #eef2ea;font-size:12.5px;line-height:1.55;color:#9aa093;">Письмо отправлено автоматически специалистам, с которыми клиент сейчас сотрудничает.</p>
             </td>
           </tr>
         </table>
@@ -384,6 +535,8 @@ func buildMessage(from string, to []string, subject, body, htmlBody string, inli
 	}
 
 	var builder strings.Builder
+
+	// Только текст — простое письмо text/plain.
 	if strings.TrimSpace(htmlBody) == "" {
 		headers = append(headers,
 			"Content-Type: text/plain; charset=UTF-8",
@@ -395,43 +548,58 @@ func buildMessage(from string, to []string, subject, body, htmlBody string, inli
 		return []byte(builder.String())
 	}
 
-	altBoundary := "lumen-alt-" + strconvTime(time.Now())
-	relatedBoundary := "lumen-related-" + strconvTime(time.Now())
-	if len(inlineLogo) > 0 {
-		headers = append(headers, "Content-Type: multipart/related; boundary="+relatedBoundary)
-	} else {
-		headers = append(headers, "Content-Type: multipart/alternative; boundary="+altBoundary)
-	}
+	// Каноническая структура для HTML-письма с встроенными картинками:
+	//   multipart/alternative
+	//   ├── text/plain                (запасной текст)
+	//   └── multipart/related         (HTML + ресурсы, на которые он ссылается)
+	//       ├── text/html
+	//       └── image/png (inline, cid:)
+	// Именно вложенность related ВНУТРИ html-ветки alternative заставляет
+	// почтовые клиенты (Gmail, Yandex, Mail.ru, Outlook) рисовать письмо в теле,
+	// а не прикладывать HTML отдельным файлом.
+	now := time.Now()
+	altBoundary := "lumen-alt-" + strconvTime(now)
+	relatedBoundary := "lumen-rel-" + strconvTime(now)
+
+	headers = append(headers, "Content-Type: multipart/alternative; boundary="+altBoundary)
 	builder.WriteString(strings.Join(headers, "\r\n"))
 	builder.WriteString("\r\n\r\n")
 
-	if len(inlineLogo) > 0 {
-		builder.WriteString("--" + relatedBoundary + "\r\n")
-		builder.WriteString("Content-Type: multipart/alternative; boundary=" + altBoundary + "\r\n\r\n")
-	}
-
+	// Запасная текстовая версия.
 	builder.WriteString("--" + altBoundary + "\r\n")
 	builder.WriteString("Content-Type: text/plain; charset=UTF-8\r\n")
 	builder.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
 	writeBase64Lines(&builder, body)
 	builder.WriteString("\r\n")
 
-	builder.WriteString("--" + altBoundary + "\r\n")
-	builder.WriteString("Content-Type: text/html; charset=UTF-8\r\n")
-	builder.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
-	writeBase64Lines(&builder, htmlBody)
-	builder.WriteString("\r\n")
-	builder.WriteString("--" + altBoundary + "--\r\n")
-
 	if len(inlineLogo) > 0 {
-		builder.WriteString("\r\n--" + relatedBoundary + "\r\n")
-		builder.WriteString("Content-Type: image/png; name=\"brand-logo.png\"\r\n")
+		// HTML вместе со встроенным логотипом.
+		builder.WriteString("--" + altBoundary + "\r\n")
+		builder.WriteString("Content-Type: multipart/related; boundary=" + relatedBoundary + "; type=\"text/html\"\r\n\r\n")
+
+		builder.WriteString("--" + relatedBoundary + "\r\n")
+		builder.WriteString("Content-Type: text/html; charset=UTF-8\r\n")
+		builder.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
+		writeBase64Lines(&builder, htmlBody)
+		builder.WriteString("\r\n")
+
+		builder.WriteString("--" + relatedBoundary + "\r\n")
+		builder.WriteString("Content-Type: image/png\r\n")
 		builder.WriteString("Content-Transfer-Encoding: base64\r\n")
 		builder.WriteString("Content-ID: <" + brandLogoContentID + ">\r\n")
 		builder.WriteString("Content-Disposition: inline; filename=\"brand-logo.png\"\r\n\r\n")
 		writeBase64Bytes(&builder, inlineLogo)
 		builder.WriteString("\r\n--" + relatedBoundary + "--\r\n")
+	} else {
+		// HTML без встроенных ресурсов.
+		builder.WriteString("--" + altBoundary + "\r\n")
+		builder.WriteString("Content-Type: text/html; charset=UTF-8\r\n")
+		builder.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
+		writeBase64Lines(&builder, htmlBody)
+		builder.WriteString("\r\n")
 	}
+
+	builder.WriteString("--" + altBoundary + "--\r\n")
 	return []byte(builder.String())
 }
 
@@ -464,6 +632,57 @@ func readBrandLogo() ([]byte, bool) {
 		}
 	}
 	return nil, false
+}
+
+func logOutboxCopy(subject string, message []byte) {
+	path, err := writeOutboxMessage(subject, message)
+	if err != nil {
+		log.Printf("[email:outbox:error] failed to save email copy: %v", err)
+		return
+	}
+	log.Printf("[email:outbox] saved email copy: %s", path)
+}
+
+func writeOutboxMessage(subject string, message []byte) (string, error) {
+	dir := strings.TrimSpace(os.Getenv("EMAIL_OUTBOX_DIR"))
+	if dir == "" {
+		dir = filepath.Join("tmp", "email-outbox")
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", err
+	}
+
+	name := fmt.Sprintf("email-%s-%s.eml", time.Now().Format("20060102-150405.000000000"), safeFilenamePart(subject))
+	path := filepath.Join(dir, name)
+	if err := os.WriteFile(path, message, 0o644); err != nil {
+		return "", err
+	}
+	return path, nil
+}
+
+func safeFilenamePart(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	var builder strings.Builder
+	for _, r := range value {
+		switch {
+		case r >= 'a' && r <= 'z':
+			builder.WriteRune(r)
+		case r >= '0' && r <= '9':
+			builder.WriteRune(r)
+		case r == '-' || r == '_':
+			builder.WriteRune(r)
+		case r == ' ' || r == '.' || r == ':':
+			builder.WriteRune('-')
+		}
+		if builder.Len() >= 48 {
+			break
+		}
+	}
+	part := strings.Trim(builder.String(), "-")
+	if part == "" {
+		return "message"
+	}
+	return part
 }
 
 func encodeHeader(value string) string {

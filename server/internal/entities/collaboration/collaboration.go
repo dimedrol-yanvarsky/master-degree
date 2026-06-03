@@ -12,8 +12,13 @@ const (
 	StatusPendingClient     Status = "pending_client"
 	StatusPendingSpecialist Status = "pending_specialist"
 	StatusAccepted          Status = "accepted"
-	StatusRejected          Status = "rejected"
-	StatusFinished          Status = "finished"
+	// StatusActive — установленное сотрудничество в нотации сид-данных
+	// (mongo-сид и client_collaboration_repository используют "active" наравне
+	// с "accepted"). Доменная модель тоже должна считать его дающим доступ,
+	// иначе специалист видит клиента в «работе», но не получает оповещений.
+	StatusActive   Status = "active"
+	StatusRejected Status = "rejected"
+	StatusFinished Status = "finished"
 )
 
 // Collaboration связывает специалиста и клиента. Принятое сотрудничество
@@ -29,7 +34,7 @@ type Collaboration struct {
 // GrantsAccess сообщает, открывает ли сотрудничество специалисту доступ к
 // защищённым данным клиента в данный момент.
 func (c Collaboration) GrantsAccess() bool {
-	return c.Status == StatusAccepted
+	return c.Status == StatusAccepted || c.Status == StatusActive
 }
 
 func (c Collaboration) Pending() bool {
